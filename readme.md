@@ -3,6 +3,8 @@
 ![](https://github.com/QuackenbushLab/tcga-data-nf/workflows/build/badge.svg)
 
 Workflow to download and prepare TCGA data
+This replaces the old recount3-access-nf from Kate.
+
 
 ## Configuration
 
@@ -32,4 +34,6 @@ nextflow run QuackenbushLab/tcga-data-nf
 
 ## Authors
 
+- Kate Hoff Shutta
 - Viola Fanfani
+- Panagiotis Mandros
