@@ -1,0 +1,2 @@
+uuid,tcga_uuid,tcga_file,gtex_uuid,gtex_file
+recount_luad,tcga_luad,testdata/recount3/tcga_luad.rds,gtex_lung,testdata/recount3/gtex_lung.rds

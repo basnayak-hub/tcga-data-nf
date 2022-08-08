@@ -27,3 +27,21 @@ LABEL org.opencontainers.image.revision="v0.0.1"
 COPY --chown=micromamba:micromamba ${CONDA_FILE} /tmp
 RUN micromamba install -y -n base -f /tmp/`basename ${CONDA_FILE}` && \
     micromamba clean --all --yes
+
+
+FROM rocker/tidyverse:latest
+# Install R packages
+RUN install2.r --error \
+    tidyverse
+
+# Install R packages
+RUN install2.r --error \
+    BiocManager
+
+# Docker inheritance
+#FROM bioconductor/bioconductor_docker:devel
+
+RUN apt-get update
+    RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
+    "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
+    "TCGAbiolinks", ask = F))'
