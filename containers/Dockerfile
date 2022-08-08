@@ -22,7 +22,7 @@ LABEL org.opencontainers.image.documentation="https://github.com/QuackenbushLab/
 LABEL org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf"
 LABEL org.opencontainers.image.vendor="QuackenbushLab"
 LABEL org.opencontainers.image.authors="Viola Fanfani"
-LABEL org.opencontainers.image.revision="v0.0.1"
+LABEL org.opencontainers.image.revision="v0.0.2"
 
 COPY --chown=micromamba:micromamba ${CONDA_FILE} /tmp
 RUN micromamba install -y -n base -f /tmp/`basename ${CONDA_FILE}` && \
