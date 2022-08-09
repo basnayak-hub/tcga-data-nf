@@ -29,18 +29,27 @@ RUN micromamba install -y -n base -f /tmp/`basename ${CONDA_FILE}` && \
     micromamba clean --all --yes
 
 
-FROM rocker/tidyverse:latest
+#FROM rocker/tidyverse:latest
 # Install R packages
-RUN install2.r --error \
-    tidyverse
 
-# Install R packages
-RUN install2.r --error \
-    BiocManager
 
 # Docker inheritance
-#FROM bioconductor/bioconductor_docker:devel
+FROM bioconductor/bioconductor_docker:devel
 
+#####
+
+# copy install scripts
+COPY containers/*.sh /opt 
+
+RUN mkdir -p /opt/install_scripts && \ 
+    mv /opt/install*.sh /opt/install_scripts && \
+    chmod +x /opt/install_scripts/install*.sh
+
+# install tidyverse
+RUN /opt/install_scripts/install_tidyverse.sh
+
+
+###
 RUN apt-get update
     RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
     "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
