@@ -37,6 +37,7 @@ process downloadMethylation{
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir)
     script:
         """
-            Rscript '${baseDir}/bin/R/download_methylation_gdc.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" 
+            Rscript '${baseDir}/bin/R/download_methylation_gdc.R' ${project}  "${gdc_type}" "${gdc_platform}" "${download_dir}" 
+            bash '${baseDir}/bin/bash/join_methylation_gdc.sh'
         """
 }

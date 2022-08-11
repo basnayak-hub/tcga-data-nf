@@ -36,29 +36,39 @@ ge_manifest = files() %>%
 dim(ge_manifest)
 head(ge_manifest)
 
-write.table(ge_manifest,file = paste(resultsDir,"TCGA_methylation_manifest.txt",sep="/"), sep = "\t", row.names = FALSE, quote = FALSE)
+write.table(apply(ge_manifest,1,paste,sep="/"),file = paste(resultsDir,"TCGA_methylation_manifest.txt",sep="/"), sep = "\t", row.names = FALSE, quote = FALSE)
 
-for(i in 1:nrow(ge_manifest)){
-
+fullpath_list = list()
+for(i in 1:5){ # nrow(ge_manifest)){ # start with MWE to send to join
       options(warn=2)
       print(paste("Processing file:",i))
       
+      # This should be the line that actually downloads the file 
       fullpath = gdcdata(ge_manifest$id[[i]])
       print(paste("fullpath:",fullpath))
-      dirname = names(fullpath)
-      filename = tail(strsplit(fullpath,"/")[[1]],n=1)
-      print(paste("Filename:",filename))
+      fullpath_list[[i]] = fullpath
+      dirname = names(fullpath) 
+      # filename = tail(strsplit(fullpath,"/")[[1]],n=1)
+      # print(paste("Filename:",filename))
       
-      put_object(file=fullpath,
-	object = filename,
-     	bucket = paste(c(s3_bucket,gdc_cases.project.project_id,"/",dirname),collapse=""), 
-       	region="us-east-2",
-       	multipart=F) # multipart=F because there is a warning message with multipart=T
+      # KS: commented out saving to S3
+      # put_object(file=fullpath,
+	# object = filename,
+     	# bucket = paste(c(s3_bucket,gdc_cases.project.project_id,"/",dirname),collapse=""), 
+      #  	region="us-east-2",
+      #  	multipart=F) # multipart=F because there is a warning message with multipart=T
       	
-      # remove file from system
+      # # remove file from system
 
-      splitpath = strsplit(fullpath,"/")[[1]]
-      folderpath = paste(splitpath[-length(splitpath)],collapse="/")
-      system2(command="rm",args=c("-r",folderpath))
+      # splitpath = strsplit(fullpath,"/")[[1]]
+      # folderpath = paste(splitpath[-length(splitpath)],collapse="/")
+      # system2(command="rm",args=c("-r",folderpath))
 
 }
+
+# KS: pathdf is written to a convenience file for the bash join
+# We could probably do it directly from the manifest but
+# this seemed more straightforward
+
+pathdf = data.frame("file"=unlist(fullpath_list))
+write.table(pathdf,file= paste(resultsDir,"TCGA_methylation_paths.txt",sep="/"), sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)

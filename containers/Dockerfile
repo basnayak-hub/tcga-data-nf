@@ -53,4 +53,4 @@ RUN /opt/install_scripts/install_tidyverse.sh
 RUN apt-get update
     RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
     "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
-    "TCGAbiolinks", ask = F))'
+    "TCGAbiolinks", "GenomicDataCommons",ask = F))'
