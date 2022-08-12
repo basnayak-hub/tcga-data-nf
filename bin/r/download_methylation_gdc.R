@@ -20,12 +20,19 @@ library(GenomicDataCommons)
 
 args<-commandArgs(TRUE)
 
-resultsDir = args[1]
-gdc_cases.project.project_id = args[2]
-gdc_type = args[3]
-gdc_platform = args[4]
+gdc_cases.project.project_id = args[1]
+gdc_type = args[2]
+gdc_platform = args[3]
+downloads_dir = args[4]
+output_dir = args[5]
 
-gdc_set_cache(directory = paste(c(resultsDir,"tcga_methylation",gdc_cases.project.project_id),collapse="/"))
+# Make output dir if it doesn't exist
+# KS @VF: how do we avoid this?
+
+#if(!file.exists(output_dir))
+#   dir.create(output_dir)
+
+gdc_set_cache(directory = paste(c(downloads_dir,"tcga_methylation",gdc_cases.project.project_id),collapse="/"))
 
 ge_manifest = files() %>%
   GenomicDataCommons::filter( cases.project.project_id == gdc_cases.project.project_id) %>%
@@ -36,7 +43,7 @@ ge_manifest = files() %>%
 dim(ge_manifest)
 head(ge_manifest)
 
-write.table(apply(ge_manifest,1,paste,sep="/"),file = paste(resultsDir,"TCGA_methylation_manifest.txt",sep="/"), sep = "\t", row.names = FALSE, quote = FALSE)
+# write.table(apply(ge_manifest,1,paste,sep="/"),file = paste(output_dir,"TCGA_methylation_manifest.txt",sep="/"), sep = "\t", row.names = FALSE, quote = FALSE)
 
 fullpath_list = list()
 for(i in 1:5){ # nrow(ge_manifest)){ # start with MWE to send to join
@@ -71,4 +78,4 @@ for(i in 1:5){ # nrow(ge_manifest)){ # start with MWE to send to join
 # this seemed more straightforward
 
 pathdf = data.frame("file"=unlist(fullpath_list))
-write.table(pathdf,file= paste(resultsDir,"TCGA_methylation_paths.txt",sep="/"), sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+write.table(pathdf,file = "TCGA_methylation_paths.txt", sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)

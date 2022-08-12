@@ -41,7 +41,7 @@ workflow downloadWf{
 
         modalities = params.download_metadata.keySet()
 
-        if (modalities.contains('expression_recount3')){
+         if (modalities.contains('expression_recount3')){
             // Channel for recount3 data download
             channelRecount = Channel.from(params.download_metadata.expression_recount3.entrySet())
                                         .map{
@@ -72,9 +72,9 @@ workflow downloadWf{
                                     }.view()
 
             downloadMutations(channelMutation)
-        }
+        } 
         if (modalities.contains('methylation_gdc')){
-        channelMutation = Channel.from(params.download_metadata.methylation_gdc.entrySet())
+        channelMethylation = Channel.from(params.download_metadata.methylation_gdc.entrySet())
                                     .map{
                                         item -> tuple(
                                             item.getKey(),
