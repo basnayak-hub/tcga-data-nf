@@ -26,4 +26,18 @@ process downloadMutations{
             Rscript '${baseDir}/bin/R/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv"
         """
 
+} 
+
+process downloadMethylation{
+    publishDir "${params.resultsDir}/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
+    
+    input:
+        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir)
+    output:
+        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),file("TCGA_methylation_paths.txt"),file("${uuid}_methylations.txt")
+    script:
+        """
+            Rscript '${baseDir}/bin/R/download_methylation_gdc.R' ${project}  "${gdc_type}" "${gdc_platform}" "${download_dir}" "${params.resultsDir}methylation"
+            bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt"
+        """
 }

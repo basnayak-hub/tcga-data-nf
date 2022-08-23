@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 
 
 // import from modules
-include { downloadRecount; downloadMutations} from './modules/download.nf'
+include { downloadRecount; downloadMutations; downloadMethylation} from './modules/download.nf'
 include { prepareRecount} from './modules/prepare.nf'
 //include { getMethylationData } from './modules/rsteps.nf'
 //include { createBetaMatrix } from './modules/rsteps.nf'
@@ -41,7 +41,7 @@ workflow downloadWf{
 
         modalities = params.download_metadata.keySet()
 
-        if (modalities.contains('expression_recount3')){
+         if (modalities.contains('expression_recount3')){
             // Channel for recount3 data download
             channelRecount = Channel.from(params.download_metadata.expression_recount3.entrySet())
                                         .map{
@@ -72,6 +72,20 @@ workflow downloadWf{
                                     }.view()
 
             downloadMutations(channelMutation)
+        } 
+        if (modalities.contains('methylation_gdc')){
+        channelMethylation = Channel.from(params.download_metadata.methylation_gdc.entrySet())
+                                    .map{
+                                        item -> tuple(
+                                            item.getKey(),
+                                            item.getValue().project,
+                                            item.getValue().gdc_type,
+                                            item.getValue().gdc_platform,
+                                            item.getValue().download_dir,
+                                        )
+                                    }.view()
+
+            downloadMethylation(channelMethylation)
         }
 }
 
