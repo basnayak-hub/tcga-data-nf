@@ -3,11 +3,8 @@ nextflow.enable.dsl=2
 
 
 // import from modules
-include { downloadRecount; downloadMutations; downloadMethylation} from './modules/download.nf'
+include { downloadRecount; downloadMutations; downloadMethylation; downloadClinical} from './modules/download.nf'
 include { prepareRecount} from './modules/prepare.nf'
-//include { getMethylationData } from './modules/rsteps.nf'
-//include { createBetaMatrix } from './modules/rsteps.nf'
-//include { uploadData } from './modules/shell.nf'
 
 
 
@@ -87,6 +84,23 @@ workflow downloadWf{
 
             downloadMethylation(channelMethylation)
         }
+
+        if (modalities.contains('clinical_tcgabiolinks')){
+        channelClinical = Channel.from(params.download_metadata.clinical_tcgabiolinks.entrySet())
+                                    .map{
+                                        item -> tuple(
+                                            item.getKey(),
+                                            item.getValue().project,
+                                            item.getValue().data_category,
+                                            item.getValue().data_type,
+                                            item.getValue().data_format,
+                                        )
+                                    }.view()
+
+            downloadClinical(channelClinical)
+        }
+
+
 }
 
 workflow prepareWf{

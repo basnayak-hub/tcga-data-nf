@@ -1,4 +1,5 @@
 library(TCGAbiolinks)
+library(tidyverse)
 args<-commandArgs(TRUE)
 
 # args[1] = project for TCGA (e.g., TCGA-BRCA)
@@ -27,19 +28,19 @@ query <- GDCquery(project = project,
                   data.category = data_category,
                   data.type = data_type, 
                   data.format = data_format)
-GDCdownload(query,directory = directory)
+GDCdownload(query)
 clinical.BCRtab.all <- GDCprepare(query)
 print('Data most probably have been downloaded...')
 
 print('Names of clinical files: ')
 print(names(clinical.BCRtab.all))
 
-# print('Saving the data...')
-# for(clinical_file in names(clinical.BCRtab.all)){
-#   write_csv(clinical.BCRtab.all[[clinical_file]],
-#             paste(directory,clinical_file,sep = .Platform$file.sep))
-# }
-# print('Data most probably have been saved...')
+print('Saving the data...')
+for(clinical_file in names(clinical.BCRtab.all)){
+  write_csv(clinical.BCRtab.all[[clinical_file]],
+            paste(paste(directory,clinical_file,sep = .Platform$file.sep),'.csv', sep=''))
+}
+print('Data most probably have been saved...')
 
 print('Goodbye and I hope you had fun.')
 
