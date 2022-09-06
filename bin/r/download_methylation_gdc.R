@@ -46,7 +46,7 @@ head(ge_manifest)
 # write.table(apply(ge_manifest,1,paste,sep="/"),file = paste(output_dir,"TCGA_methylation_manifest.txt",sep="/"), sep = "\t", row.names = FALSE, quote = FALSE)
 
 fullpath_list = list()
-for(i in 1:5){ # nrow(ge_manifest)){ # start with MWE to send to join
+for(i in 1:nrow(ge_manifest)){
       options(warn=2)
       print(paste("Processing file:",i))
       
@@ -55,22 +55,6 @@ for(i in 1:5){ # nrow(ge_manifest)){ # start with MWE to send to join
       print(paste("fullpath:",fullpath))
       fullpath_list[[i]] = fullpath
       dirname = names(fullpath) 
-      # filename = tail(strsplit(fullpath,"/")[[1]],n=1)
-      # print(paste("Filename:",filename))
-      
-      # KS: commented out saving to S3
-      # put_object(file=fullpath,
-	# object = filename,
-     	# bucket = paste(c(s3_bucket,gdc_cases.project.project_id,"/",dirname),collapse=""), 
-      #  	region="us-east-2",
-      #  	multipart=F) # multipart=F because there is a warning message with multipart=T
-      	
-      # # remove file from system
-
-      # splitpath = strsplit(fullpath,"/")[[1]]
-      # folderpath = paste(splitpath[-length(splitpath)],collapse="/")
-      # system2(command="rm",args=c("-r",folderpath))
-
 }
 
 # KS: pathdf is written to a convenience file for the bash join
