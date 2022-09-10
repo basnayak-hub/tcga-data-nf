@@ -37,7 +37,10 @@ print(names(clinical.BCRtab.all))
 
 print('Saving the data...')
 for(clinical_file in names(clinical.BCRtab.all)){
-  write_csv(clinical.BCRtab.all[[clinical_file]],
+  # remove escapes
+  data <- data.frame(lapply(clinical.BCRtab.all[[clinical_file]], function(x) {gsub("'", " ", x)}))
+  
+  write_csv(data,
             paste(paste(directory,clinical_file,sep = .Platform$file.sep),'.csv', sep=''))
 }
 print('Data most probably have been saved...')
