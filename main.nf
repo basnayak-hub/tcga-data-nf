@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 
 // import from modules
 include { downloadRecount; downloadMutations; downloadMethylation; downloadClinical} from './modules/download.nf'
-include { prepareRecount} from './modules/prepare.nf'
+include { prepareTCGARecount} from './modules/prepare.nf'
 
 
 
@@ -103,17 +103,24 @@ workflow downloadWf{
 
 }
 
+
 workflow prepareWf{
     main:
+
+    channelTissues = Channel.from(params.tissues.entrySet())
+                                        .map{
+                                            item -> tuple(
+                                                item.getKey(),
+                                                item.getValue()
+                                            )
+                                        }.transpose()
 
         prepareRecountCh = Channel
                 .fromPath( params.recount.metadata_prepare)
                 .splitCsv( header: true)
-                .map { row -> tuple( row.uuid, row.tcga_uuid, file(row.tcga_file),row.gtex_uuid, file(row.gtex_file) ) }.view()
-        
+                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }.view()
 
-
-        prepareRecount(prepareRecountCh.combine(params.recount.norm).combine(params.recount.th))
+        prepareTCGARecount(prepareRecountCh.combine(params.recount.norm).combine(params.recount.min_tpm).combine(params.recount.frac_samples).combine(params.recount.th_purity).join(channelTissues))
 }
 
 workflow {

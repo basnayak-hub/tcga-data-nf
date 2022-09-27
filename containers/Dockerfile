@@ -38,6 +38,10 @@ FROM bioconductor/bioconductor_docker:devel
 
 #####
 
+WORKDIR /Users/violafanfani/Documents/uni-harvard/repos/
+ADD  NetSciDataCompanion /opt/NetSciDataCompanion
+RUN R -e "devtools::install_local('/opt/NetSciDataCompanion', force=TRUE)"
+
 # copy install scripts
 COPY containers/*.sh /opt 
 
@@ -48,9 +52,19 @@ RUN mkdir -p /opt/install_scripts && \
 # install tidyverse
 RUN /opt/install_scripts/install_tidyverse.sh
 
-
 ###
 RUN apt-get update
-    RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
+## Install cran packages
+RUN R -e "install.packages(c('devtools','optparse'),\
+                            dependencies=TRUE, \
+                           repos='http://cran.rstudio.com/')"
+
+
+## Install our own package
+
+#COPY /Users/violafanfani/Documents/uni-harvard/repos/NetSciDataCompanion /opt/NetSciDataCompanion 
+#RUN R -e "devtools::install_local('/opt/NetSciDataCompanion', force=TRUE)"
+## Install bioconductior packages                           
+RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
     "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
     "TCGAbiolinks", "GenomicDataCommons",ask = F))'
