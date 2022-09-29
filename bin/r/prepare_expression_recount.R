@@ -81,6 +81,11 @@ normal_tissues=c("Solid Tissue Normal",
                   "sample type 15",
                   "sample type 16")
 
+with_purity = c("ACC","BLCA","BRCA","CESC","COAD","GBM",
+              "HNSC","KIRC","KIRP","KICH","LGG","LIHC",
+              "LUAD","LUSC","OV","PRAD","READ","SKCM",
+              "THCA","UCEC","UCS")
+
 # Create Companion Object
 print('Creating Object from...')
 print(paste0('Patient data:',patient_data))
@@ -131,7 +136,11 @@ if (normalization=='logtpm'){
 } 
 
 # Get indices of samples passing purity filtering
+if (project_name %in% with_purity){
 idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity)
+} else {
+  print(paste("WARNING: no purity for",project_name))
+  idcs_purity = idcs_nonduplicate}
 
 print("Tissue type: ")
 print(tissue_type)
