@@ -36,12 +36,6 @@ RUN micromamba install -y -n base -f /tmp/`basename ${CONDA_FILE}` && \
 # Docker inheritance
 FROM bioconductor/bioconductor_docker:devel
 
-#####
-
-WORKDIR /Users/violafanfani/Documents/uni-harvard/repos/
-ADD  NetSciDataCompanion /opt/NetSciDataCompanion
-RUN R -e "devtools::install_local('/opt/NetSciDataCompanion', force=TRUE)"
-
 # copy install scripts
 COPY containers/*.sh /opt 
 
@@ -68,3 +62,8 @@ RUN R -e "install.packages(c('devtools','optparse'),\
 RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
     "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
     "TCGAbiolinks", "GenomicDataCommons",ask = F))'
+
+
+ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
+RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
+RUN R -e "devtools::install_local('/opt/NetSciDataCompanion/', force=TRUE, dependencies=T)"

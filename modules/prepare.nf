@@ -14,7 +14,7 @@ process prepareTCGARecount{
     script:
         """
 
-        Rscript '${baseDir}/bin/R/prepare_expression_recount.R' -p ${tcga_project} -c ${tcga_patient_fn}\
+        Rscript '${baseDir}/bin/r/prepare_expression_recount.R' -p ${tcga_project} -c ${tcga_patient_fn}\
             -e ${tcga_expression_fn} \
                 -r recount3_${tcga_uuid}_purity${th_purity}_mintpm${min_tpm}_fracsamples${frac_samples}_tissue${tissue_type}.rds \
                 -t recount3_${tcga_uuid}_purity${th_purity}_mintpm${min_tpm}_fracsamples${frac_samples}_tissue${tissue_type}.txt \
