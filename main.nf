@@ -118,9 +118,17 @@ workflow prepareWf{
         prepareRecountCh = Channel
                 .fromPath( params.recount.metadata_prepare)
                 .splitCsv( header: true)
-                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }.view()
+                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }
 
-        prepareTCGARecount(prepareRecountCh.combine(params.recount.norm).combine(params.recount.min_tpm).combine(params.recount.frac_samples).combine(params.recount.th_purity).join(channelTissues))
+
+        prepareCh = (prepareRecountCh
+                    .combine(Channel.from(params.recount.norm))
+                    .combine(Channel.from(params.recount.min_tpm))
+                    .combine(Channel.from(params.recount.frac_samples))
+                   .combine(Channel.from(params.recount.th_purity))).combine(channelTissues, by: 0).view()
+
+        
+        prepareTCGARecount(prepareCh)
 }
 
 workflow {
