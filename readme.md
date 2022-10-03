@@ -11,6 +11,12 @@ The workflow divides the process of downloading the data in two steps:
 
 The idea is that data should be downloaded once, and then prepared for the task at hand.
 
+:warning: For the moment the NetSciDataCompanion package needs to be installed locally. Once the package is ready, it
+will be migrated to a public repo and installed from github.
+
+:warning: GitHub is still not allowing the QuackenbushLab to run actions. The docker image is built and pushed 
+manually.
+
 ## Configuration
 
 ### Download
@@ -56,8 +62,23 @@ params{
 
 For now, only gene expression data needs to be prepared (harmonized with gtex and normalised).
 
-Specify in the configuration file which `recount.metadata_prepare = table.csv` contains the info about 
-the gtex-tcga data. One example is the one in the conf folder.
+Specify in the configuration file which `recount.metadata_prepare = table.csv` contains the info about the gtex-tcga data. One example is the one in the conf folder.
+
+#### Prepare recount3 expression for TCGA
+
+This workflow uses the NetSciDataCompanion package to manage and filter TCGA data. 
+
+The function `prepare_expression_recount.R` takes the expression rds file and clinical data and generates filtered rds
+and txt files. Counts are normalised, non-expressed genes are removed, samples are filtered to remove doublets and
+impure samples.
+
+Preprocessing:
+ - Normalization: raw counts can be returned as counts/TPM/logTPM
+ - Min TPM and frac samples: only genes that have at least a min tpm value in a fraction of the samples are kept. This allows to remove genes that are never expressed
+  - purity threshold: cancer samples are filtered based on the purity score
+  - Tissue types: separate files can be returned of specific samples. One can pass a specific tissue type, as specified
+    by the TCGA GDC conventions (like "Primary Solid Tumor") or one of all/tumor/normal that return either all samples,
+    tumor only samples, normal only samples, ignoring the details of the tumor/normal type/.
 
 ## Running the workflow
 

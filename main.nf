@@ -3,11 +3,8 @@ nextflow.enable.dsl=2
 
 
 // import from modules
-include { downloadRecount; downloadMutations; downloadMethylation} from './modules/download.nf'
-include { prepareRecount} from './modules/prepare.nf'
-//include { getMethylationData } from './modules/rsteps.nf'
-//include { createBetaMatrix } from './modules/rsteps.nf'
-//include { uploadData } from './modules/shell.nf'
+include { downloadRecount; downloadMutations; downloadMethylation; downloadClinical} from './modules/download.nf'
+include { prepareTCGARecount} from './modules/prepare.nf'
 
 
 
@@ -87,19 +84,51 @@ workflow downloadWf{
 
             downloadMethylation(channelMethylation)
         }
+
+        if (modalities.contains('clinical_tcgabiolinks')){
+        channelClinical = Channel.from(params.download_metadata.clinical_tcgabiolinks.entrySet())
+                                    .map{
+                                        item -> tuple(
+                                            item.getKey(),
+                                            item.getValue().project,
+                                            item.getValue().data_category,
+                                            item.getValue().data_type,
+                                            item.getValue().data_format,
+                                        )
+                                    }.view()
+
+            downloadClinical(channelClinical)
+        }
+
+
 }
+
 
 workflow prepareWf{
     main:
 
+    channelTissues = Channel.from(params.tissues.entrySet())
+                                        .map{
+                                            item -> tuple(
+                                                item.getKey(),
+                                                item.getValue()
+                                            )
+                                        }.transpose()
+
         prepareRecountCh = Channel
                 .fromPath( params.recount.metadata_prepare)
                 .splitCsv( header: true)
-                .map { row -> tuple( row.uuid, row.tcga_uuid, file(row.tcga_file),row.gtex_uuid, file(row.gtex_file) ) }.view()
+                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }
+
+
+        prepareCh = (prepareRecountCh
+                    .combine(Channel.from(params.recount.norm))
+                    .combine(Channel.from(params.recount.min_tpm))
+                    .combine(Channel.from(params.recount.frac_samples))
+                   .combine(Channel.from(params.recount.th_purity))).combine(channelTissues, by: 0).view()
+
         
-
-
-        prepareRecount(prepareRecountCh.combine(params.recount.norm).combine(params.recount.th))
+        prepareTCGARecount(prepareCh)
 }
 
 workflow {

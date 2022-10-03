@@ -1,2 +1,2 @@
-uuid,tcga_uuid,tcga_file,gtex_uuid,gtex_file
-recount_luad,tcga_luad,testdata/recount3/tcga_luad.rds,gtex_lung,testdata/recount3/gtex_lung.rds
+tcga_uuid,tcga_project,tcga_expression_file,tcga_patient_file
+tcga_blca,TCGA_BLCA,testdata/tcga_blca.rds,testdata/clinical_patient_blca.csv
