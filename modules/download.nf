@@ -37,8 +37,9 @@ process downloadMethylation{
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),file("TCGA_methylation_paths.txt"),file("${uuid}_methylations.txt")
     script:
         """
-            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' ${project}  "${gdc_type}" "${gdc_platform}" "${download_dir}" "${params.resultsDir}methylation"
+            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' ${project}  "${gdc_type}" "${gdc_platform}" "${download_dir}" "${params.resultsDir}/${uuid}/methylation" "${baseDir}"
             bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt"
+	    cat  '${baseDir}/${params.resultsDir}/${uuid}/methylation/TCGA_methylation_header.txt' "${baseDir}/${params.resultsDir}/${uuid}/methylation/${uuid}_methylations.txt" > "${baseDir}/${params.resultsDir}/${uuid}/methylation/${uuid}_methylations_labeled.txt"
         """
 }
 

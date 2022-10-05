@@ -25,6 +25,7 @@ gdc_type = args[2]
 gdc_platform = args[3]
 downloads_dir = args[4]
 output_dir = args[5]
+base_dir = args[6]
 
 # Make output dir if it doesn't exist
 # KS @VF: how do we avoid this?
@@ -43,10 +44,15 @@ ge_manifest = files() %>%
 dim(ge_manifest)
 head(ge_manifest)
 
-# write.table(apply(ge_manifest,1,paste,sep="/"),file = paste(output_dir,"TCGA_methylation_manifest.txt",sep="/"), sep = "\t", row.names = FALSE, quote = FALSE)
+# save manifest
+write.table(ge_manifest,file = paste(c(base_dir,output_dir,"TCGA_methylation_manifest.txt"),collapse="/"), sep = "\t", row.names = FALSE, quote = FALSE)
+
+# write header column for methylation data
+outstring = paste(c("probeID",ge_manifest$id[1:5]),collapse=" ") # delimeter is " " to match the bash join results
+write.table(outstring, file = paste(c(base_dir,output_dir,"TCGA_methylation_header.txt"),collapse="/"),row.names=F,quote=F,col.names=F)
 
 fullpath_list = list()
-for(i in 1:nrow(ge_manifest)){
+for(i in 1:5){
       options(warn=2)
       print(paste("Processing file:",i))
       
@@ -63,3 +69,4 @@ for(i in 1:nrow(ge_manifest)){
 
 pathdf = data.frame("file"=unlist(fullpath_list))
 write.table(pathdf,file = "TCGA_methylation_paths.txt", sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+write.table(pathdf,file = paste(c(base_dir,output_dir,"TCGA_methylation_paths.txt"),collapse="/"), sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
