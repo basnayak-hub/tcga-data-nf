@@ -30,16 +30,17 @@ process downloadMutations{
 
 process downloadMethylation{
     publishDir "${params.resultsDir}/${uuid}/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${uuid}/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
     
     input:
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir)
     output:
-        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),file("TCGA_methylation_paths.txt"),file("${uuid}_methylations.txt")
+        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),file("${uuid}_methylation_paths.txt"),file("${uuid}_methylations.txt")
     script:
         """
-            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' ${project}  "${gdc_type}" "${gdc_platform}" "${download_dir}" "${params.resultsDir}/${uuid}/methylation" "${baseDir}"
+            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' -o '${params.resultsDir}/${uuid}/methylation' -b '${baseDir}'
             bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt"
-	    cat  '${baseDir}/${params.resultsDir}/${uuid}/methylation/TCGA_methylation_header.txt' "${baseDir}/${params.resultsDir}/${uuid}/methylation/${uuid}_methylations.txt" > "${baseDir}/${params.resultsDir}/${uuid}/methylation/${uuid}_methylations_labeled.txt"
+	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
         """
 }
 
