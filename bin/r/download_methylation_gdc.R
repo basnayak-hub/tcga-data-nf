@@ -26,7 +26,6 @@ library(optparse)
 # gdc_platform = args[3]
 # downloads_dir = args[4]
 # output_dir = args[5]
-# base_dir = args[6]
 
 option_list = list(
   make_option(c("-p", "--project_id"), type="character", default=NULL, 
@@ -37,27 +36,27 @@ option_list = list(
               help="gdc_platform", metavar="character"),
   make_option(c("-d", "--downloads_dir"), type="character", default=NULL, 
               help="downloads_dir", metavar="character"),
-  make_option(c("-o", "--output"), type="character", default=NULL, 
-              help="output_dir", metavar="character"),
-  make_option(c("-b", "--base"), type="character", default=NULL, 
-              help="base_dir", metavar="character")
+  make_option(c("--manifest_outpath"), type="character", default=NULL, 
+              help="", metavar="character"),  
+  make_option(c("--pathlist_outpath"), type="character", default=NULL, 
+              help="", metavar="character"), 
+  make_option(c("--header_outpath"), type="character", default=NULL, 
+              help="", metavar="character")          
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-gdc_cases.project.project_id = opt$project_id #args[1]
-gdc_type = opt$type #args[2]
-gdc_platform = opt$platform #args[3]
-downloads_dir = opt$downloads_dir #args[4]
-output_dir = opt$output_dir #args[5]
-base_dir = opt$base_dir #args[6]
+print(opt)
 
-# Make output dir if it doesn't exist
-# KS @VF: how do we avoid this?
+gdc_cases.project.project_id = opt$project_id # args[1]
+gdc_type = opt$type # always methylation_beta_value at this point
+gdc_platform = opt$platform # which methylation platform
+downloads_dir = opt$downloads_dir # where to temporarily cache the GDC data
+manifest_outpath = opt$manifest_outpath # where to save the manifest 
+pathlist_outpath = opt$pathlist_outpath # where to save the list of sample files
+header_outpath = opt$header_outpath # where to save the header for the final methylation data
 
-#if(!file.exists(output_dir))
-#   dir.create(output_dir)
 
 gdc_set_cache(directory = paste(c(downloads_dir,"tcga_methylation",gdc_cases.project.project_id),collapse="/"))
 
@@ -70,21 +69,20 @@ ge_manifest = files() %>%
 dim(ge_manifest)
 head(ge_manifest)
 
-# save manifest
-write.table(ge_manifest,file = paste(c(base_dir,output_dir,"TCGA_methylation_manifest.txt"),collapse="/"), sep = "\t", row.names = FALSE, quote = FALSE)
+# save manifest # TCGA_methylation_manifest.txt"
+write.table(ge_manifest,file = manifest_outpath, sep = "\t", row.names = FALSE, quote = FALSE)
 
 # write header column for methylation data
 outstring = paste(c("probeID",ge_manifest$id),collapse=" ") # delimiter is " " to match the bash join results
-# uncomment below for testing
-outstring = paste(c("probeID",ge_manifest$id[1:5]),collapse=" ") # delimiter is " " to match the bash join results
+# uncomment the line below for development
+# outstring = paste(c("probeID",ge_manifest$id[1:5]),collapse=" ") # delimiter is " " to match the bash join results
 
-# change this so not hard-coded
-write.table(outstring, file = "tcga_luad_methylation_header.txt",row.names=F,quote=F,col.names=F)
+write.table(outstring, file = header_outpath,row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 fullpath_list = list()
-#for(i in 1:nrow(ge_manifest)){
+for(i in 1:nrow(ge_manifest)){
 # uncomment the line below for development
-for(i in 1:5){
+# for(i in 1:5){
       options(warn=2)
       print(paste("Processing file:",i))
       
@@ -96,10 +94,5 @@ for(i in 1:5){
 }
 
 # KS: pathdf is written to a convenience file for the bash join
-# We could probably do it directly from the manifest but
-# this seemed more straightforward
-
-pathdf = data.frame("file"=unlist(fullpath_list))
-write.table(pathdf,file = "tcga_luad_methylation_paths.txt", sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
-# change this so not hard coded
-# write.table(pathdf,file = paste(c(base_dir,output_dir,"tcga_luad_methylation_paths.txt"),collapse="/"), sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+pathdf = data.frame("file"=unlist(fullpath_list)) 
+write.table(pathdf,file = pathlist_outpath, sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)

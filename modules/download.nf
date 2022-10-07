@@ -30,17 +30,17 @@ process downloadMutations{
 
 process downloadMethylation{
     publishDir "${params.resultsDir}/${uuid}/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
-    publishDir "${params.resultsDir}/${uuid}/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
     
     input:
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir)
     output:
-        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),file("${uuid}_methylation_paths.txt"),file("${uuid}_methylations.txt")
+        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt")
     script:
         """
-            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' -o '${params.resultsDir}/${uuid}/methylation' -b '${baseDir}'
-            bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt"
+            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt'
+            bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt" "${uuid}_methylation_paths.txt"
 	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
+            mv "${uuid}_methylations_labeled.txt" "${uuid}_methylations.txt"
         """
 }
 
