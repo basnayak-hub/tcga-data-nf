@@ -17,20 +17,46 @@
 # a join, then output the joined file to s3. 
 
 library(GenomicDataCommons)
+library(optparse)
 
-args<-commandArgs(TRUE)
+# args<-commandArgs(TRUE)
 
-gdc_cases.project.project_id = args[1]
-gdc_type = args[2]
-gdc_platform = args[3]
-downloads_dir = args[4]
-output_dir = args[5]
+# gdc_cases.project.project_id = args[1]
+# gdc_type = args[2]
+# gdc_platform = args[3]
+# downloads_dir = args[4]
+# output_dir = args[5]
 
-# Make output dir if it doesn't exist
-# KS @VF: how do we avoid this?
+option_list = list(
+  make_option(c("-p", "--project_id"), type="character", default=NULL, 
+              help="project_id", metavar="character"),
+  make_option(c("-t", "--type"), type="character", default=NULL, 
+              help="gdc_type", metavar="character"),
+  make_option(c("--platform"), type="character", default=NULL, 
+              help="gdc_platform", metavar="character"),
+  make_option(c("-d", "--downloads_dir"), type="character", default=NULL, 
+              help="downloads_dir", metavar="character"),
+  make_option(c("--manifest_outpath"), type="character", default=NULL, 
+              help="", metavar="character"),  
+  make_option(c("--pathlist_outpath"), type="character", default=NULL, 
+              help="", metavar="character"), 
+  make_option(c("--header_outpath"), type="character", default=NULL, 
+              help="", metavar="character")          
+); 
+ 
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
 
-#if(!file.exists(output_dir))
-#   dir.create(output_dir)
+print(opt)
+
+gdc_cases.project.project_id = opt$project_id # args[1]
+gdc_type = opt$type # always methylation_beta_value at this point
+gdc_platform = opt$platform # which methylation platform
+downloads_dir = opt$downloads_dir # where to temporarily cache the GDC data
+manifest_outpath = opt$manifest_outpath # where to save the manifest 
+pathlist_outpath = opt$pathlist_outpath # where to save the list of sample files
+header_outpath = opt$header_outpath # where to save the header for the final methylation data
+
 
 gdc_set_cache(directory = paste(c(downloads_dir,"tcga_methylation",gdc_cases.project.project_id),collapse="/"))
 
@@ -43,10 +69,20 @@ ge_manifest = files() %>%
 dim(ge_manifest)
 head(ge_manifest)
 
-# write.table(apply(ge_manifest,1,paste,sep="/"),file = paste(output_dir,"TCGA_methylation_manifest.txt",sep="/"), sep = "\t", row.names = FALSE, quote = FALSE)
+# save manifest # TCGA_methylation_manifest.txt"
+write.table(ge_manifest,file = manifest_outpath, sep = "\t", row.names = FALSE, quote = FALSE)
+
+# write header column for methylation data
+outstring = paste(c("probeID",ge_manifest$id),collapse=" ") # delimiter is " " to match the bash join results
+# uncomment the line below for development
+# outstring = paste(c("probeID",ge_manifest$id[1:5]),collapse=" ") # delimiter is " " to match the bash join results
+
+write.table(outstring, file = header_outpath,row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 fullpath_list = list()
 for(i in 1:nrow(ge_manifest)){
+# uncomment the line below for development
+# for(i in 1:5){
       options(warn=2)
       print(paste("Processing file:",i))
       
@@ -58,8 +94,5 @@ for(i in 1:nrow(ge_manifest)){
 }
 
 # KS: pathdf is written to a convenience file for the bash join
-# We could probably do it directly from the manifest but
-# this seemed more straightforward
-
-pathdf = data.frame("file"=unlist(fullpath_list))
-write.table(pathdf,file = "TCGA_methylation_paths.txt", sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+pathdf = data.frame("file"=unlist(fullpath_list)) 
+write.table(pathdf,file = pathlist_outpath, sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
