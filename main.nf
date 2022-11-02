@@ -11,7 +11,7 @@ include { prepareTCGARecount} from './modules/prepare.nf'
 // printing message of the day
 motd = """
 --------------------------------------------------------------------------
-recount3-access-nf ($workflow.manifest.version)
+tcga-data-nf ($workflow.manifest.version)
 --------------------------------------------------------------------------
 Session ID   : $workflow.sessionId
 Pipeline: $params.pipeline
@@ -32,6 +32,7 @@ Revision     : $workflow.revision
 """
 
 log.info motd
+
 
 workflow downloadWf{
     main:
@@ -131,7 +132,37 @@ workflow prepareWf{
         prepareTCGARecount(prepareCh)
 }
 
+
+process copyConfigFiles{
+    publishDir "${params.resultsDir}",pattern: "run-info*", mode: 'copy', overwrite: true
+    input:
+        file(config_file)
+        file(out_conf)
+    output:
+        path(out_conf)
+    script:
+        """
+        cat $config_file >> $out_conf
+        """
+}
+
+process copyMotd{
+    output:
+        path('run-info.txt')
+    shell:
+        """
+        echo '${motd}' > run-info.txt
+        """
+}
+
 workflow {
+
+    // First we copy the configuration files and motd into the resultsDir
+    mo = copyMotd()
+    cf = Channel.from(workflow.configFiles)
+    copyConfigFiles(cf,mo)
+    //copyConfigFiles(cf.map($it -> tuple(file($it), $it.getName())))
+    //copyConfigFiles(Channel.of(file(workflow.configFiles))).view()
     // We separate pipelines for downloading data and preparing it.
     // This allows for separate management of raw data and intermediate clean data
     if (params.pipeline == 'download')
