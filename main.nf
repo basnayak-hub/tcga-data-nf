@@ -36,7 +36,6 @@ log.info motd
 
 workflow downloadWf{
     main:
-
         modalities = params.download_metadata.keySet()
 
          if (modalities.contains('expression_recount3')){
@@ -107,7 +106,6 @@ workflow downloadWf{
 
 workflow prepareWf{
     main:
-
     channelTissues = Channel.from(params.tissues.entrySet())
                                         .map{
                                             item -> tuple(
@@ -134,7 +132,7 @@ workflow prepareWf{
 
 
 process copyConfigFiles{
-    publishDir "${params.resultsDir}",pattern: "run-info*", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}",pattern:"${params.logInfoFile}", mode: 'copy', overwrite: true
     input:
         file(config_file)
         file(out_conf)
@@ -148,21 +146,25 @@ process copyConfigFiles{
 
 process copyMotd{
     output:
-        path('run-info.txt')
+        path(params.logInfoFile)
     shell:
         """
-        echo '${motd}' > run-info.txt
+        echo '${motd}' > ${params.logInfoFile}
         """
+}
+
+workflow saveConfig {
+    mo = copyMotd()
+    cf = Channel.from(workflow.configFiles)
+    copyConfigFiles(cf,mo)
 }
 
 workflow {
 
     // First we copy the configuration files and motd into the resultsDir
-    mo = copyMotd()
-    cf = Channel.from(workflow.configFiles)
-    copyConfigFiles(cf,mo)
     //copyConfigFiles(cf.map($it -> tuple(file($it), $it.getName())))
     //copyConfigFiles(Channel.of(file(workflow.configFiles))).view()
+    saveConfig()
     // We separate pipelines for downloading data and preparing it.
     // This allows for separate management of raw data and intermediate clean data
     if (params.pipeline == 'download')
@@ -171,4 +173,5 @@ workflow {
         prepareWf()
     else
         downloadWf()
+        
 }
