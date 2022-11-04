@@ -1,7 +1,6 @@
 library("recount3")
 library('NetSciDataCompanion')
 library("optparse")
-
 #args<-commandArgs(TRUE)
 
 # args[1] = project, tcga_luad
@@ -37,7 +36,7 @@ option_list = list(
 make_option(c("--tissue_type"), type="character", default='all', 
               help="tissue type to be extracted. Default:all", metavar="character"),
 make_option(c("--normalization"), type="character", default='logtpm', 
-              help="normalization strategy, 'logtpm', 'tpm', 'counts'. Default:logtpm", metavar="character")
+              help="normalization strategy, 'logtpm', 'tpm', 'counts', 'logCPM'. Default:logtpm", metavar="character")
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
@@ -54,7 +53,6 @@ frac_samples = as.numeric(opt$frac_samples)
 tissue_type = opt$tissue_type 
 normalization = opt$normalization
 
-
 project_name <- toupper(substring(project, 6))
 print(paste0('Preparing Project:', project_name))
 #patient_data <- "clinical_patient_luad.csv"
@@ -62,7 +60,6 @@ print(paste0('Preparing Project:', project_name))
 #mut_data <- "tcga_luad_mutations.txt"
 #mut_pivot_data <- "tcga_luad_mutations_pivot.csv"
 #meth_data <- "tcga_luad_methylations.txt"
-
 
 # Definitions
 tumor_tissues=c("Primary Solid Tumor",
@@ -92,6 +89,8 @@ print(paste0('Patient data:',patient_data))
 obj <- CreateNetSciDataCompanionObject(clinical_patient_file = patient_data,
                                        project_name = project_name)
 
+
+
 print(paste0('Reading expression:',exp_data))
 # Read RDS expression data
 test_exp_rds <- readRDS(exp_data)
@@ -101,39 +100,61 @@ rds_info <- obj$extractSampleAndGeneInfo(test_exp_rds)
 rds_sample_info <- rds_info$rds_sample_info
 rds_gene_info <- rds_info$rds_gene_info
 
-# Normalize data
-print('Normalize...')
-test_exp_all <- obj$logTPMNormalization(test_exp_rds)
-test_exp_count <- test_exp_all$counts
-test_exp_tpm <- test_exp_all$TPM
-test_exp_logtpm <- test_exp_all$logTPM
-
-
 # Map column names to TCGA barcodes
 print('Map Barcodes...')
-newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logtpm))
-colnames(test_exp_count) <- newcolnames[,2]
-colnames(test_exp_tpm) <- newcolnames[,2]
-colnames(test_exp_logtpm) <- newcolnames[,2]
-
-# Get indices of nonduplicates
-idcs_nonduplicate <- obj$filterDuplicatesSeqDepth(expression_count_matrix = test_exp_count)
-
-# Get indices of genes that have a minimum TPM in the data.
-# Here we are filtering by gene
-test_exp_tpm_df <- data.frame(test_exp_tpm)
-idcs_genes_mintpm <- obj$filterGenesByTPM(test_exp_tpm_df, min_tpm, frac_samples)
-
-# Select the normalization strategy to be saved
-if (normalization=='logtpm'){
-    test_exp_final = test_exp_logtpm
-    } else if (normalization=='tpm') {
-   test_exp_final = test_exp_tpm
-} else if (normalization=='count') {
-   test_exp_final = test_exp_count
+if (normalization %in% c('count','tpm','logtpm') ){
+  # Normalize data
+  print('Normalize with TPM...')
+  # Here we call it xpm, so it's the same for tpm and cpm
+  test_exp_all <- obj$logTPMNormalization(test_exp_rds)
+  test_exp_count <- test_exp_all$counts
+  test_exp_xpm <- test_exp_all$TPM
+  test_exp_logxpm <- test_exp_all$logTPM
+} else if (normalization %in% c('cpm','logcpm')) {
+  # Normalize data
+  print('Normalize with CPM...')
+  # Here we call it xpm, so it's the same for tpm and cpm
+  test_exp_all <- obj$logCPMNormalization(test_exp_rds)
+  test_exp_count <- test_exp_all$counts
+  test_exp_xpm <- test_exp_all$CPM
+  test_exp_logxpm <- test_exp_all$logCPM
 } else {
-  stop("ERROR: normalization unknown")
-} 
+    stop("ERROR: normalization unknown")
+  } 
+  # assign correct names
+
+  newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logxpm), useLegacy = T)
+  colnames(test_exp_count) <- newcolnames[,2]
+  colnames(test_exp_xpm) <- newcolnames[,2]
+  colnames(test_exp_logxpm) <- newcolnames[,2]
+
+  # Get indices of nonduplicates
+  idcs_nonduplicate <- obj$filterDuplicatesSeqDepth(expression_count_matrix = test_exp_count)
+
+  # Get indices of genes that have a minimum TPM in the data.
+  # Here we are filtering by gene
+  test_exp_xpm_df <- data.frame(test_exp_xpm)
+  idcs_genes_minxpm <- obj$filterGenesByNormExpression(test_exp_xpm_df, min_tpm, frac_samples)
+
+  # Select the normalization strategy to be saved
+  if (normalization=='logtpm'){
+      print('Using logtpm...')
+      test_exp_final = test_exp_logxpm
+      } else if (normalization=='tpm') {
+        print('Using tpm...')
+    test_exp_final = test_exp_xpm
+  } else if (normalization=='count') {
+    print('Using counts...')
+    test_exp_final = test_exp_count
+  } else if (normalization=='cpm') {
+    print('Using cpm...')
+    test_exp_final = test_exp_xpm
+  } else if (normalization=='logcpm') {
+    print('Using logcpm...')
+    test_exp_final = test_exp_logxpm
+  } else {
+    stop("ERROR: normalization unknown")
+  } 
 
 # Get indices of samples passing purity filtering
 if (project_name %in% with_purity){
@@ -177,8 +198,8 @@ if (tissue_type=='all'){
 }
 
   # get final datasets
-  final_table = test_exp_final[idcs_genes_mintpm, idcs_final]
-  final_rds = test_exp_rds[idcs_genes_mintpm, idcs_final]
+  final_table = test_exp_final[idcs_genes_minxpm, idcs_final]
+  final_rds = test_exp_rds[idcs_genes_minxpm, idcs_final]
 
 print('Saving RDS...')
 saveRDS(final_rds, file = output_rds)

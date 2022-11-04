@@ -1,6 +1,10 @@
+NetSciDataCompanion/
+
+
 work/
 results/
 logs/
+conf/local/
 *.pyc
 .vscode
 .nextflow*
