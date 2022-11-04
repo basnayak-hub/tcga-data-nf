@@ -122,20 +122,21 @@ if (normalization %in% c('count','tpm','logtpm') ){
     stop("ERROR: normalization unknown")
   } 
   # assign correct names
-
+  print(paste('LOG:',"There are",length(colnames(test_exp_logxpm)),"intial columns", sep = " ", ""))
   newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logxpm), useLegacy = T)
+  print(paste('LOG:',"There are",dim(newcolnames)[1],"mapped columns", sep = " ", " "))
   colnames(test_exp_count) <- newcolnames[,2]
   colnames(test_exp_xpm) <- newcolnames[,2]
   colnames(test_exp_logxpm) <- newcolnames[,2]
 
   # Get indices of nonduplicates
   idcs_nonduplicate <- obj$filterDuplicatesSeqDepth(expression_count_matrix = test_exp_count)
-
+  print(paste('LOG:',"There are",length(idcs_nonduplicate),"non duplicate samples", sep = " ", ""))
   # Get indices of genes that have a minimum TPM in the data.
   # Here we are filtering by gene
   test_exp_xpm_df <- data.frame(test_exp_xpm)
   idcs_genes_minxpm <- obj$filterGenesByNormExpression(test_exp_xpm_df, min_tpm, frac_samples)
-
+  print(paste('LOG:',"There are",length(idcs_genes_minxpm),"genes that pass mintpm filtering", sep = " ", ""))
   # Select the normalization strategy to be saved
   if (normalization=='logtpm'){
       print('Using logtpm...')
@@ -158,13 +159,19 @@ if (normalization %in% c('count','tpm','logtpm') ){
 
 # Get indices of samples passing purity filtering
 if (project_name %in% with_purity){
+  print(paste("Purity threshold: ",th_purity, sep = " ", " "))
 idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity)
 } else {
   print(paste("WARNING: no purity for",project_name))
   idcs_purity = idcs_nonduplicate}
 
-print("Tissue type: ")
-print(tissue_type)
+if (length(idcs_purity)==0){
+print(paste('WARNING:',"There are no samples that pass purity filtering (no pure samples:",length(idcs_purity),")", sep = " ", ""))
+} else {
+   print(paste('LOG:',"There are",length(idcs_purity),"samples that pass purity filtering", sep = " ", ""))
+}
+
+print(paste("Tissue type: ",tissue_type, sep = " ", " "))
 
 print('Get final data...')
 # Get indices of samples, we have to distinguish between tumor, normal, all samples
@@ -205,7 +212,6 @@ print('Saving RDS...')
 saveRDS(final_rds, file = output_rds)
 
 print('Saving table...')
-print('\tTable dimensions:')
-print(dim(final_table))
+print(paste('LOG:',"Table dimensions:",dim(final_table)[1],"x",dim(final_table)[2], sep = " ", ""))
 write.table(final_table, file = output_table, sep = '\t', quote = F, col.names=NA)
 print('DONE!')
