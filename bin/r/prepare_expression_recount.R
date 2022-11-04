@@ -205,5 +205,7 @@ print('Saving RDS...')
 saveRDS(final_rds, file = output_rds)
 
 print('Saving table...')
+print('\tTable dimensions:')
+print(dim(final_table))
 write.table(final_table, file = output_table, sep = '\t', quote = F, col.names=NA)
 print('DONE!')
