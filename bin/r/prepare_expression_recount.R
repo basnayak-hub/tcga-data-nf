@@ -158,17 +158,17 @@ if (normalization %in% c('count','tpm','logtpm') ){
   } 
 
 # we need a case where we get all tumors, regardless of purity (we include the NAs)
-if th_purity==0{
+if (th_purity==0){
+  print('Not filtering by purity. Pass a threshold>0')
   idcs_purity = idcs_nonduplicate
 } else {
    # Get indices of samples passing purity filtering
     if (project_name %in% with_purity){
       print(paste("Purity threshold: ",th_purity, sep = " ", " "))
-    idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity)
+    idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity, method="CPE")
     } else {
       print(paste("WARNING: no purity for",project_name))
       idcs_purity = idcs_nonduplicate}
-
 }
 
 
