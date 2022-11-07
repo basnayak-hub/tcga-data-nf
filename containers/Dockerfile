@@ -60,7 +60,7 @@ RUN R -e "install.packages(c('devtools','optparse'),\
 #RUN R -e "devtools::install_local('/opt/NetSciDataCompanion', force=TRUE)"
 ## Install bioconductior packages                           
 RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
-    "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
+    "edgeR", "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
     "TCGAbiolinks", "GenomicDataCommons",ask = F))'
 
 

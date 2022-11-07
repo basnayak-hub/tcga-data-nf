@@ -157,13 +157,20 @@ if (normalization %in% c('count','tpm','logtpm') ){
     stop("ERROR: normalization unknown")
   } 
 
-# Get indices of samples passing purity filtering
-if (project_name %in% with_purity){
-  print(paste("Purity threshold: ",th_purity, sep = " ", " "))
-idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity)
+# we need a case where we get all tumors, regardless of purity (we include the NAs)
+if th_purity==0{
+  idcs_purity = idcs_nonduplicate
 } else {
-  print(paste("WARNING: no purity for",project_name))
-  idcs_purity = idcs_nonduplicate}
+   # Get indices of samples passing purity filtering
+    if (project_name %in% with_purity){
+      print(paste("Purity threshold: ",th_purity, sep = " ", " "))
+    idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity)
+    } else {
+      print(paste("WARNING: no purity for",project_name))
+      idcs_purity = idcs_nonduplicate}
+
+}
+
 
 if (length(idcs_purity)==0){
 print(paste('WARNING:',"There are no samples that pass purity filtering (no pure samples:",length(idcs_purity),")", sep = " ", ""))
