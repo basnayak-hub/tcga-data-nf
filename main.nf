@@ -106,6 +106,7 @@ workflow downloadWf{
 
 workflow prepareWf{
     main:
+    // Tissue channels
     channelTissues = Channel.from(params.tissues.entrySet())
                                         .map{
                                             item -> tuple(
@@ -113,21 +114,32 @@ workflow prepareWf{
                                                 item.getValue()
                                             )
                                         }.transpose()
-
-        prepareRecountCh = Channel
+    // Batch correction channel
+    channelBatchCorrection = Channel.from(params.batch_correction.entrySet())
+                                        .map{
+                                            item -> tuple(
+                                                item.getKey(),
+                                                item.getValue()
+                                            )
+                                        }.transpose()
+    
+    // Data channel
+    prepareRecountCh = Channel
                 .fromPath( params.recount.metadata_prepare)
                 .splitCsv( header: true)
                 .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }
 
-
-        prepareCh = (prepareRecountCh
+    // Parameter channel
+    prepareCh = (prepareRecountCh
                     .combine(Channel.from(params.recount.norm))
                     .combine(Channel.from(params.recount.min_tpm))
                     .combine(Channel.from(params.recount.frac_samples))
-                   .combine(Channel.from(params.recount.th_purity))).combine(channelTissues, by: 0).view()
+                   .combine(Channel.from(params.recount.th_purity)))
+                   .combine(channelTissues, by: 0)
+                   .combine(channelBatchCorrection, by: 0)
+                   .combine(channelBatchCorrection, by: 0).view()
 
-        
-        prepareTCGARecount(prepareCh)
+    prepareTCGARecount(prepareCh)
 }
 
 

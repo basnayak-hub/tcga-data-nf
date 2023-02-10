@@ -1,6 +1,9 @@
 library("recount3")
 library('NetSciDataCompanion')
 library("optparse")
+library("limma")
+library("ggplot2") 
+library("cowplot")
 #args<-commandArgs(TRUE)
 
 # args[1] = project, tcga_luad
@@ -13,12 +16,14 @@ library("optparse")
 # args[8] = fraction of samples for filtering
 # args[9] = tissue to be retrieved, 'Primary Tumor'/ 'Solid Tissue Normal'
 # args[10] = normalization strategy, 'logTPM', 'TPM', 'counts', 
+# args[11] = batch correction variable, 'logTPM', 'TPM', 'counts', 
+# args[10] = adjustment variable, 'logTPM', 'TPM', 'counts', 
 
 
 
 option_list = list(
   make_option(c("-p", "--project"), type="character", default=NULL, 
-              help="project name (e.g. luad)", metavar="project_name"),
+              help="project name (e.g. tcga_luad)", metavar="project_name"),
   make_option(c("-c", "--clinical"), type="character", default=NULL, 
               help="patient data filename", metavar="patient_data"),
   make_option(c("-e", "--expression"), type="character", default=NULL, 
@@ -27,6 +32,8 @@ option_list = list(
               help="output filename for rds", metavar="output_rds"),
   make_option(c("-t", "--output_table"), type="character", default='filtered_expression.txt', 
               help="output filename for table", metavar="output_txt"),
+  make_option(c("-f", "--output_pca"), type="character", default='output pca ', 
+              help="output filename for the pca figure", metavar="output_txt"),
   make_option(c("--th_purity"), type="double", default=0.7,
               help="purity threshold. Default:0.7", metavar="number"),
   make_option(c("--min_tpm"), type="double", default=1.0, 
@@ -36,7 +43,11 @@ option_list = list(
 make_option(c("--tissue_type"), type="character", default='all', 
               help="tissue type to be extracted. Default:all", metavar="character"),
 make_option(c("--normalization"), type="character", default='logtpm', 
-              help="normalization strategy, 'logtpm', 'tpm', 'counts', 'logCPM'. Default:logtpm", metavar="character")
+              help="normalization strategy, 'logtpm', 'tpm', 'counts', 'logCPM'. Default:logtpm", metavar="character"),
+make_option(c("--batch_correction"), type="character", default='', 
+              help="batch correction variable, By default is none. Default: '' ", metavar="character"),
+make_option(c("--adjustment_variable"), type="character", default='', 
+              help="adjustment variable for batch correction. By default is empty. Default: '' ", metavar="character")
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
@@ -47,11 +58,14 @@ patient_data = opt$clinical#args[2]
 exp_data = opt$expression#args[3]
 output_rds = opt$output_rds#args[4]
 output_table = opt$output_table#args[5]
+output_pca = opt$output_pca#args[5]
 th_purity = as.numeric(opt$th_purity)
 min_tpm = as.numeric(opt$min_tpm)
 frac_samples = as.numeric(opt$frac_samples)
 tissue_type = opt$tissue_type 
 normalization = opt$normalization
+to_batch_correct_nominal_name = opt$batch_correction
+adjustment_variable = opt$adjustment_variable
 
 project_name <- toupper(substring(project, 6))
 print(paste0('Preparing Project:', project_name))
@@ -100,6 +114,7 @@ rds_info <- obj$extractSampleAndGeneInfo(test_exp_rds)
 rds_sample_info <- rds_info$rds_sample_info
 rds_gene_info <- rds_info$rds_gene_info
 
+
 # Map column names to TCGA barcodes
 print('Map Barcodes...')
 if (normalization %in% c('count','tpm','logtpm') ){
@@ -121,6 +136,7 @@ if (normalization %in% c('count','tpm','logtpm') ){
 } else {
     stop("ERROR: normalization unknown")
   } 
+  
   # assign correct names
   print(paste('LOG:',"There are",length(colnames(test_exp_logxpm)),"intial columns", sep = " ", ""))
   newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logxpm), useLegacy = T)
@@ -129,14 +145,85 @@ if (normalization %in% c('count','tpm','logtpm') ){
   colnames(test_exp_xpm) <- newcolnames[,2]
   colnames(test_exp_logxpm) <- newcolnames[,2]
 
+  #### Filters
   # Get indices of nonduplicates
   idcs_nonduplicate <- obj$filterDuplicatesSeqDepth(expression_count_matrix = test_exp_count)
   print(paste('LOG:',"There are",length(idcs_nonduplicate),"non duplicate samples", sep = " ", ""))
+
+  ## We need to remove only duplicates before batch correction
+
+  test_exp_rds = test_exp_rds[, idcs_nonduplicate]
+  #test_exp_all = test_exp_all[, idcs_nonduplicate]
+  test_exp_count = test_exp_count[, idcs_nonduplicate]
+  test_exp_xpm = test_exp_xpm[, idcs_nonduplicate]
+  test_exp_logxpm = test_exp_logxpm[, idcs_nonduplicate]
+
+### Batch correction through LIMMA
+#### most probablyfor these steps we need to have the indices of samples that survived the purity and mintpt filtering
+### also I pretend coad_exp contains the normalized expression
+### Here we check that the variable is passed and is in the colData
+### If to_batch_correct_nominal_variable is empty, this part of code is skipped
+if ((nchar(to_batch_correct_nominal_name)>1)&(to_batch_correct_nominal_name %in% names(colData(test_exp_rds)))){
+    ## get the variable to batch correct
+    to_batch_correct_nominal_variable <- colData(test_exp_rds)[[to_batch_correct_nominal_name]]
+
+    ## count how many values (if 1, there is nothing to correct)
+    num_values <- length(unique(to_batch_correct_nominal_variable))
+    if(num_values > 1)
+      {
+      # First we plot the pca colored by correction variable
+        ## Now we plot the first and second component of the PCA
+        first_pca_res <- prcomp(t(test_exp_logxpm))
+        dtp <- data.frame( first_pca_res$x[,1:2]) # the first two componets are selected (NB: you can also select 3 for 3D plottings or 3+)
+        p1 <- ggplot(data = dtp) + 
+            geom_point(aes(x = PC1, y = PC2, col = to_batch_correct_nominal_variable))+
+            labs(color=to_batch_correct_nominal_name) 
+
+      print(paste('Batch correction for ', to_batch_correct_nominal_name))
+      test_exp_logxpm <- removeBatchEffect(test_exp_logxpm, batch = to_batch_correct_nominal_variable) 
+      
+      # We plot the pca colored by correction variable after the batch correction
+        first_pca_res <- prcomp(t(test_exp_logxpm))
+        dtp <- data.frame( first_pca_res$x[,1:2]) # the first two componets are selected (NB: you can also select 3 for 3D plottings or 3+)
+        p2 <- ggplot(data = dtp) + 
+            geom_point(aes(x = PC1, y = PC2, color = to_batch_correct_nominal_variable)) 
+        pgrid = plot_grid(p1, p2, labels = c('original', 'corrected'))+
+            labs(color=to_batch_correct_nominal_name) 
+    }else{
+      print('Variable to batch correct for has only one value, so proceeding without batch correcting')
+      
+      first_pca_res <- prcomp(t(test_exp_logxpm))
+      dtp <- data.frame( first_pca_res$x[,1:2]) # the first two componets are selected (NB: you can also select 3 for 3D plottings or 3+)
+      p1 <- ggplot(data = dtp) + 
+            geom_point(aes(x = PC1, y = PC2, col = to_batch_correct_nominal_variable)) +
+            labs(color=to_batch_correct_nominal_name) 
+      pgrid = plot_grid(p1, p1, labels = c('original', 'uncorrected'))
+    }
+}else{ if (to_batch_correct_nominal_name==''){
+      # If the correction variable is empty, we just plot the first and second PC
+      first_pca_res <- prcomp(t(test_exp_logxpm))
+      dtp <- data.frame( first_pca_res$x[,1:2]) # the first two componets are selected (NB: you can also select 3 for 3D plottings or 3+)
+      p1 <- ggplot(data = dtp) + 
+            geom_point(aes(x = PC1, y = PC2)) + 
+            theme_minimal() 
+      pgrid = plot_grid(p1, p1, labels = c('original', 'original'))#), label_size = 12)
+      # pgrid = grid.arrange(p1, p1, ncol=2)
+  }else{
+    stop(sprintf("Provided variable name: '%s' to batch correct for is not part of the rds colData", to_batch_correct_nominal_name))
+  }
+}
+  
+  # We save the PCA plots
+  ggsave(file=output_pca, plot=pgrid, width = 12,height = 3)
+
   # Get indices of genes that have a minimum TPM in the data.
   # Here we are filtering by gene
   test_exp_xpm_df <- data.frame(test_exp_xpm)
   idcs_genes_minxpm <- obj$filterGenesByNormExpression(test_exp_xpm_df, min_tpm, frac_samples)
   print(paste('LOG:',"There are",length(idcs_genes_minxpm),"genes that pass mintpm filtering", sep = " ", ""))
+
+
+
   # Select the normalization strategy to be saved
   if (normalization=='logtpm'){
       print('Using logtpm...')
@@ -157,6 +244,8 @@ if (normalization %in% c('count','tpm','logtpm') ){
     stop("ERROR: normalization unknown")
   } 
 
+idcs_nonduplicate = seq(1:ncol(test_exp_final))
+# Filter by purity
 # we need a case where we get all tumors, regardless of purity (we include the NAs)
 if (th_purity==0){
   print('Not filtering by purity. Pass a threshold>0')
@@ -167,11 +256,9 @@ if (th_purity==0){
       print(paste("Purity threshold: ",th_purity, sep = " ", " "))
     idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity, method="CPE")
     } else {
-      print(paste("WARNING: no purity for",project_name))
-      idcs_purity = idcs_nonduplicate}
-}
-
-
+      print(paste("WARNING: no purity for", project_name))
+      idcs_purity = idcs_nonduplicate
+}}
 if (length(idcs_purity)==0){
 print(paste('WARNING:',"There are no samples that pass purity filtering (no pure samples:",length(idcs_purity),")", sep = " ", ""))
 } else {
@@ -213,12 +300,20 @@ if (tissue_type=='all'){
 
   # get final datasets
   final_table = test_exp_final[idcs_genes_minxpm, idcs_final]
+  print('Saving table...')
+  print(paste('LOG:',"Table dimensions:",dim(final_table)[1],"x",dim(final_table)[2], sep = " ", ""))
+  write.table(final_table, file = output_table, sep = '\t', quote = F, col.names=NA)
+  print('DONE!')
+
   final_rds = test_exp_rds[idcs_genes_minxpm, idcs_final]
 
-print('Saving RDS...')
-saveRDS(final_rds, file = output_rds)
+  # we add the normalized data as a new assay named like the normalization strategy
+  # we need to rename the columns with the sample id as they are in the rds
+  renamed_table = final_table
+  colnames(renamed_table) = rownames(colData(final_rds))
+  # we can now add the normalized data
+  assays(final_rds)[[normalization]] = renamed_table
 
-print('Saving table...')
-print(paste('LOG:',"Table dimensions:",dim(final_table)[1],"x",dim(final_table)[2], sep = " ", ""))
-write.table(final_table, file = output_table, sep = '\t', quote = F, col.names=NA)
-print('DONE!')
+  print('Saving RDS...')
+  saveRDS(final_rds, file = output_rds)
+

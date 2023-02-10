@@ -49,7 +49,7 @@ RUN /opt/install_scripts/install_tidyverse.sh
 ###
 RUN apt-get update
 ## Install cran packages
-RUN R -e "install.packages(c('devtools','optparse'),\
+RUN R -e "install.packages(c('devtools','optparse','ggplot2','cowplot'),\
                             dependencies=TRUE, \
                            repos='http://cran.rstudio.com/')"
 
@@ -61,7 +61,7 @@ RUN R -e "install.packages(c('devtools','optparse'),\
 ## Install bioconductior packages                           
 RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
     "edgeR", "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
-    "TCGAbiolinks", "GenomicDataCommons",ask = F))'
+    "TCGAbiolinks", "GenomicDataCommons","limma",ask = F))'
 
 
 ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/

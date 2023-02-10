@@ -1,0 +1,2 @@
+tcga_uuid,tcga_project,tcga_expression_file,tcga_patient_file
+tcga_paad,TCGA_PAAD,testdata/small.rds,testdata/clinical_patient_paad.csv
