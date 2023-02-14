@@ -200,17 +200,17 @@ if ((nchar(to_batch_correct_nominal_name)>1)&(to_batch_correct_nominal_name %in%
       pgrid = plot_grid(p1, p1, labels = c('original', 'uncorrected'))
     }
 }else{ if (to_batch_correct_nominal_name==''){
-      # If the correction variable is empty, we just plot the first and second PC
-      first_pca_res <- prcomp(t(test_exp_logxpm))
-      dtp <- data.frame( first_pca_res$x[,1:2]) # the first two componets are selected (NB: you can also select 3 for 3D plottings or 3+)
-      p1 <- ggplot(data = dtp) + 
+      print("WARNING: no batch correction variable is passed")
+  }else{
+    sprintf("WARNING:Provided variable name: '%s' to batch correct for is not part of the rds colData", to_batch_correct_nominal_name))
+  }
+  first_pca_res <- prcomp(t(test_exp_logxpm))
+    dtp <- data.frame( first_pca_res$x[,1:2]) # the first two componets are selected (NB: you can also select 3 for 3D plottings or 3+)
+    p1 <- ggplot(data = dtp) + 
             geom_point(aes(x = PC1, y = PC2)) + 
             theme_minimal() 
       pgrid = plot_grid(p1, p1, labels = c('original', 'original'))#), label_size = 12)
-      # pgrid = grid.arrange(p1, p1, ncol=2)
-  }else{
-    stop(sprintf("Provided variable name: '%s' to batch correct for is not part of the rds colData", to_batch_correct_nominal_name))
-  }
+  
 }
   
   # We save the PCA plots
