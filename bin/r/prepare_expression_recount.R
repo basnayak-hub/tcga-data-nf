@@ -202,7 +202,7 @@ if ((nchar(to_batch_correct_nominal_name)>1)&(to_batch_correct_nominal_name %in%
 }else{ if (to_batch_correct_nominal_name==''){
       print("WARNING: no batch correction variable is passed")
   }else{
-    sprintf("WARNING:Provided variable name: '%s' to batch correct for is not part of the rds colData", to_batch_correct_nominal_name))
+    sprintf("WARNING:Provided variable name: '%s' to batch correct for is not part of the rds colData", to_batch_correct_nominal_name)
   }
   first_pca_res <- prcomp(t(test_exp_logxpm))
     dtp <- data.frame( first_pca_res$x[,1:2]) # the first two componets are selected (NB: you can also select 3 for 3D plottings or 3+)
