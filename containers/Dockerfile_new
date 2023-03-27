@@ -1,0 +1,20 @@
+## base container
+FROM violafanfani/tcga-data-base-docker:0.0.1 as base_container
+
+FROM base_container
+# adding opencontainer labels to link registry to github repository
+LABEL org.opencontainers.image.title="tcga-data-nf"
+LABEL org.opencontainers.image.description="Workflow to download and prepare TCGA data"
+LABEL org.opencontainers.image.url="https://github.com/QuackenbushLab/tcga-data-nf"
+LABEL org.opencontainers.image.documentation="https://github.com/QuackenbushLab/tcga-data-nf"
+LABEL org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf"
+LABEL org.opencontainers.image.vendor="QuackenbushLab"
+LABEL org.opencontainers.image.authors="Viola Fanfani"
+LABEL org.opencontainers.image.revision="v0.0.10"
+
+ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
+RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
+RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("org.Hs.eg.db",ask = F))'
+RUN R -e "devtools::install_github('immunogenomics/presto')"
+RUN R -e "devtools::install_github('aet21/EpiSCORE')"
+RUN R -e "devtools::install_local('/opt/NetSciDataCompanion/', force=TRUE, dependencies=T)"
