@@ -113,7 +113,7 @@ workflow prepareWf{
                                                 item.getKey(),
                                                 item.getValue()
                                             )
-                                        }.transpose()
+                                        }.transpose().view()
     // Batch correction channel
     channelBatchCorrection = Channel.from(params.batch_correction.entrySet())
                                         .map{
@@ -121,13 +121,16 @@ workflow prepareWf{
                                                 item.getKey(),
                                                 item.getValue()
                                             )
-                                        }.transpose()
+                                        }.transpose().view()
     
     // Data channel
     prepareRecountCh = Channel
                 .fromPath( params.recount.metadata_prepare)
                 .splitCsv( header: true)
-                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }
+                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }.view()
+
+
+
 
     // Parameter channel
     prepareCh = (prepareRecountCh
@@ -141,6 +144,7 @@ workflow prepareWf{
 
     prepareTCGARecount(prepareCh)
 }
+
 
 
 process copyConfigFiles{

@@ -75,6 +75,8 @@ print(paste0('Preparing Project:', project_name))
 #mut_pivot_data <- "tcga_luad_mutations_pivot.csv"
 #meth_data <- "tcga_luad_methylations.txt"
 
+print('Hereeeeee')
+
 # Definitions
 tumor_tissues=c("Primary Solid Tumor",
                   "Recurrent Solid Tumor",
@@ -97,12 +99,25 @@ with_purity = c("ACC","BLCA","BRCA","CESC","COAD","GBM",
               "LUAD","LUSC","OV","PRAD","READ","SKCM",
               "THCA","UCEC","UCS")
 
+
+
+gtex_projects =c('LUNG', 'BRAIN', 'SKIN', 'ESOPHAGUS', 'BLOOD_VESSEL', 'ADIPOSE_TISSUE',
+ 'BLOOD', 'HEART', 'MUSCLE', 'COLON', 'THYROID', 'NERVE', 'LUNG', 'BREAST', 'TESTIS', 
+ 'STOMACH', 'PANCREAS', 'PITUITARY', 'ADRENAL_GLAND', 'PROSTATE', 'SPLEEN', 'LIVER', 
+ 'BONE_MARROW', 'OVARY', 'SMALL_INTESTINE', 'SALIVARY_GLANDS', 'VAGINA', 'UTERUS', 
+ 'KIDNEY', 'BLADDER', 'CERVIX_UTERI', 'FALLOPIAN_TUBE')
+
 # Create Companion Object
 print('Creating Object from...')
 print(paste0('Patient data:',patient_data))
+print(project_name %in% gtex_projects)
+
+if (project_name %in% gtex_projects){
+  obj <- CreateNetSciDataCompanionObject()
+} else {
 obj <- CreateNetSciDataCompanionObject(clinical_patient_file = patient_data,
                                        project_name = project_name)
-
+}
 
 
 print(paste0('Reading expression:',exp_data))
@@ -139,14 +154,21 @@ if (normalization %in% c('count','tpm','logtpm') ){
   
   # assign correct names
   print(paste('LOG:',"There are",length(colnames(test_exp_logxpm)),"intial columns", sep = " ", ""))
-  newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logxpm), useLegacy = T)
-  print(paste('LOG:',"There are",dim(newcolnames)[1],"mapped columns", sep = " ", " "))
-  colnames(test_exp_count) <- newcolnames[,2]
-  colnames(test_exp_xpm) <- newcolnames[,2]
-  colnames(test_exp_logxpm) <- newcolnames[,2]
+
+  if (project_name %in% gtex_projects){
+    print('Processing GTEX, no need to remap sample names')
+  } else {
+    newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logxpm), useLegacy = T)
+    print(paste('LOG:',"There are",dim(newcolnames)[1],"mapped columns", sep = " ", " "))
+    colnames(test_exp_count) <- newcolnames[,2]
+    colnames(test_exp_xpm) <- newcolnames[,2]
+    colnames(test_exp_logxpm) <- newcolnames[,2]
+  }
+
 
   #### Filters
   # Get indices of nonduplicates
+  # This works for gtex too, because the first 15 characters are the sample name
   idcs_nonduplicate <- obj$filterDuplicatesSeqDepth(expression_count_matrix = test_exp_count)
   print(paste('LOG:',"There are",length(idcs_nonduplicate),"non duplicate samples", sep = " ", ""))
 
@@ -223,7 +245,6 @@ if ((nchar(to_batch_correct_nominal_name)>1)&(to_batch_correct_nominal_name %in%
   print(paste('LOG:',"There are",length(idcs_genes_minxpm),"genes that pass mintpm filtering", sep = " ", ""))
 
 
-
   # Select the normalization strategy to be saved
   if (normalization=='logtpm'){
       print('Using logtpm...')
@@ -244,6 +265,29 @@ if ((nchar(to_batch_correct_nominal_name)>1)&(to_batch_correct_nominal_name %in%
     stop("ERROR: normalization unknown")
   } 
 
+if (project_name %in% gtex_projects){
+
+  # get final datasets
+  final_table = test_exp_final[idcs_genes_minxpm, ]
+  print('Saving table...')
+  print(paste('LOG:',"Table dimensions:",dim(final_table)[1],"x",dim(final_table)[2], sep = " ", ""))
+  write.table(final_table, file = output_table, sep = '\t', quote = F, col.names=NA)
+  print('DONE!')
+
+  final_rds = test_exp_rds[idcs_genes_minxpm,]
+
+  # we add the normalized data as a new assay named like the normalization strategy
+  # we need to rename the columns with the sample id as they are in the rds
+  renamed_table = final_table
+  colnames(renamed_table) = rownames(colData(final_rds))
+  # we can now add the normalized data
+  assays(final_rds)[[normalization]] = renamed_table
+
+  print('Saving RDS...')
+  saveRDS(final_rds, file = output_rds)
+
+} else {
+## TCGA samples
 idcs_nonduplicate = seq(1:ncol(test_exp_final))
 # Filter by purity
 # we need a case where we get all tumors, regardless of purity (we include the NAs)
@@ -317,3 +361,4 @@ if (tissue_type=='all'){
   print('Saving RDS...')
   saveRDS(final_rds, file = output_rds)
 
+}
