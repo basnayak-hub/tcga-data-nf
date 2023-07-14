@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 // import from modules
 include { downloadRecount; downloadMutations; downloadMethylation; downloadClinical} from './modules/download.nf'
 include { prepareTCGARecount} from './modules/prepare.nf'
-
+include { LionessPandaTCGAWf; LionessOtterTCGAWf  } from './modules/tcga_wfs.nf'
 
 
 // printing message of the day
@@ -147,6 +147,44 @@ workflow prepareWf{
 
 
 
+workflow analyzeWf{
+
+    // defaults results directory
+    batchName = params.batchName ? params.batchName : "batch-${params.workflow}-null"
+
+    // 
+    if (!params.metadata) exit 1, "requires a CSV metadata file."
+
+
+        // Data channel
+        // format uuid, file(network)
+        data = Channel
+            .fromPath(params.metadata, checkIfExists: true)
+            .splitCsv(header:true)
+            .map { row -> tuple(row.uuid, file("${row.expression}"))}
+
+        zooAnimals = Channel.from(params.zoo.animals)
+
+        data.combine(zooAnimals).branch {
+                panda: it[-1] == 'panda'
+                pandalioness: it[-1] == 'panda_lioness'
+                otter: it[-1] == 'otter'
+                otterlioness: it[-1] == 'otter_lioness'            
+            }
+            .set { zooAnalysisCh }
+
+        zooAnalysisCh.view()
+
+        LionessPandaTCGAWf(zooAnalysisCh.pandalioness)
+
+        LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
+
+}
+
+workflow fullWf{
+    
+}
+
 process copyConfigFiles{
     publishDir "${params.resultsDir}",pattern:"${params.logInfoFile}", mode: 'copy', overwrite: true
     input:
@@ -159,6 +197,8 @@ process copyConfigFiles{
         cat $config_file >> $out_conf
         """
 }
+
+
 
 process copyMotd{
     output:
@@ -186,6 +226,8 @@ workflow {
     if (params.pipeline == 'download')
         downloadWf()
     else if (params.pipeline == 'prepare')
+        prepareWf()
+    else if (params.pipeline == 'analyze')
         prepareWf()
     else
         downloadWf()

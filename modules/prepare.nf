@@ -28,6 +28,7 @@ process prepareTCGARecount{
                 --adjustment_variable ${adjustment_variable} \
                 --tissue_type ${tissue_type} >> "recount3_${tcga_uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.log"
 """
+
 }
 
 

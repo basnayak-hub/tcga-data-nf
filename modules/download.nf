@@ -11,6 +11,11 @@ process downloadRecount{
             Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} "${uuid}.rds"
         """
 
+    stub:
+        """
+        touch "${uuid}.rds"
+        """
+
 }
 
 process downloadMutations{
@@ -25,7 +30,12 @@ process downloadMutations{
         """
             Rscript '${baseDir}/bin/r/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv"
         """
-
+    stub:
+        """
+        touch "${uuid}_mutations.txt"
+        touch "${uuid}_mutations_pivot.csv"
+        """
+        
 } 
 
 process downloadMethylation{
@@ -42,6 +52,14 @@ process downloadMethylation{
 	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
             mv "${uuid}_methylations_labeled.txt" "${uuid}_methylations.txt"
         """
+
+    stub:
+        """
+        touch "${uuid}_methylation_manifest.txt"
+        touch "${uuid}_methylations.txt"
+        """
+
+
 }
 
 process downloadClinical{
@@ -54,5 +72,10 @@ process downloadClinical{
     script:
         """
             Rscript '${baseDir}/bin/r/download_clinical_tcga.R' ${project}  "${data_category}" "${data_type}" "${data_format}" "." 
+        """
+
+    stub:
+        """
+        touch clinical.csv
         """
 }
