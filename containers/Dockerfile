@@ -1,19 +1,11 @@
-## base container
-FROM mambaorg/micromamba:0.15.3 as base_container
-USER root
-RUN apt-get update \
-    && apt-get install --yes rename tini procps curl \
-    && apt-get autoremove \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# This is the image we are going add micromaba to:
+# bring in the micromamba image so we can copy files from it
+FROM mambaorg/micromamba:1.4.9 as micromamba
 
-USER micromamba
-ENTRYPOINT ["tini", "--"]
-CMD ["/bin/bash"]
+# This is the image we are going add micromaba to:
+FROM violafanfani/tcga-data-base-r:0.0.3
 
-## main container
-ARG CONDA_FILE=containers/env.base.python.yml
-FROM base_container
+
 # adding opencontainer labels to link registry to github repository
 LABEL org.opencontainers.image.title="tcga-data-nf"
 LABEL org.opencontainers.image.description="Workflow to download and prepare TCGA data"
@@ -24,46 +16,54 @@ LABEL org.opencontainers.image.vendor="QuackenbushLab"
 LABEL org.opencontainers.image.authors="Viola Fanfani"
 LABEL org.opencontainers.image.revision="v0.0.11"
 
+
+USER root
+
+# if your image defaults to a non-root user, then you may want to make the
+# next 3 ARG commands match the values in your image. You can get the values
+# by running: docker run --rm -it my/image id -a
+ARG MAMBA_USER=mamba
+ARG MAMBA_USER_ID=1001
+ARG MAMBA_USER_GID=1001
+ENV MAMBA_USER=$MAMBA_USER
+ENV MAMBA_ROOT_PREFIX="/opt/conda"
+ENV MAMBA_EXE="/bin/micromamba"
+
+COPY --from=micromamba "$MAMBA_EXE" "$MAMBA_EXE"
+COPY --from=micromamba /usr/local/bin/_activate_current_env.sh /usr/local/bin/_activate_current_env.sh
+COPY --from=micromamba /usr/local/bin/_dockerfile_shell.sh /usr/local/bin/_dockerfile_shell.sh
+COPY --from=micromamba /usr/local/bin/_entrypoint.sh /usr/local/bin/_entrypoint.sh
+COPY --from=micromamba /usr/local/bin/_dockerfile_initialize_user_accounts.sh /usr/local/bin/_dockerfile_initialize_user_accounts.sh
+COPY --from=micromamba /usr/local/bin/_dockerfile_setup_root_prefix.sh /usr/local/bin/_dockerfile_setup_root_prefix.sh
+
+RUN /usr/local/bin/_dockerfile_initialize_user_accounts.sh && \
+    /usr/local/bin/_dockerfile_setup_root_prefix.sh
+
+USER $MAMBA_USER
+
+SHELL ["/usr/local/bin/_dockerfile_shell.sh"]
+
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
+# Optional: if you want to customize the ENTRYPOINT and have a conda
+# environment activated, then do this:
+# ENTRYPOINT ["/usr/local/bin/_entrypoint.sh", "my_entrypoint_program"]
+
+# You can modify the CMD statement as needed....
+CMD ["/bin/bash"]
+
+## main container
+ARG CONDA_FILE=containers/env.base.python.yml
+
 COPY --chown=micromamba:micromamba ${CONDA_FILE} /tmp
 RUN micromamba install -y -n base -f /tmp/`basename ${CONDA_FILE}` && \
     micromamba clean --all --yes
 
-
-#FROM rocker/tidyverse:latest
-# Install R packages
-
-
-# Docker inheritance
-FROM bioconductor/bioconductor_docker:devel
-
-# copy install scripts
-COPY containers/*.sh /opt 
-
-RUN mkdir -p /opt/install_scripts && \ 
-    mv /opt/install*.sh /opt/install_scripts && \
-    chmod +x /opt/install_scripts/install*.sh
-
-# install tidyverse
-RUN /opt/install_scripts/install_tidyverse.sh
-
-###
-RUN apt-get update
-## Install cran packages
-RUN R -e "install.packages(c('devtools','optparse','ggplot2','cowplot'),\
-                            dependencies=TRUE, \
-                           repos='http://cran.rstudio.com/')"
-
-
-## Install our own package
-
-#COPY /Users/violafanfani/Documents/uni-harvard/repos/NetSciDataCompanion /opt/NetSciDataCompanion 
-#RUN R -e "devtools::install_local('/opt/NetSciDataCompanion', force=TRUE)"
-## Install bioconductior packages                           
-RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("recount3", \
-    "edgeR", "GenomicAlignments", "Biostrings", "SummarizedExperiment", "GenomicFiles","recount",\
-    "TCGAbiolinks", "GenomicDataCommons","limma",ask = F))'
-
+USER root
 
 ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
 RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
+RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("org.Hs.eg.db",ask = F))'
+RUN R -e "devtools::install_github('immunogenomics/presto')"
+RUN R -e "devtools::install_github('aet21/EpiSCORE')"
 RUN R -e "devtools::install_local('/opt/NetSciDataCompanion/', force=TRUE, dependencies=T)"
+

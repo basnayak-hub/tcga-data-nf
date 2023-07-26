@@ -11,7 +11,7 @@ USER micromamba
 ENTRYPOINT ["tini", "--"]
 CMD ["/bin/bash"]
 
-## main container
+## main container"/usr/local/bin/_entrypoint.sh"
 ARG CONDA_FILE=containers/env.base.python.yml
 FROM base_container
 # adding opencontainer labels to link registry to github repository

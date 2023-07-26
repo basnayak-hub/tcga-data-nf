@@ -1,0 +1,2 @@
+tcga_uuid,tcga_project,tcga_methylation_file
+tcga_blca,TCGA_BLCA,/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/results/tcga_blca/methylation/tcga_blca_methylations.txt

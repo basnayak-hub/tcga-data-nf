@@ -3,9 +3,9 @@ nextflow.enable.dsl=2
 
 
 // import from modules
-include { downloadRecount; downloadMutations; downloadMethylation; downloadClinical} from './modules/download.nf'
-include { prepareTCGARecount} from './modules/prepare.nf'
-include { LionessPandaTCGAWf; LionessOtterTCGAWf  } from './modules/tcga_wfs.nf'
+include { downloadWf; downloadRecount; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
+include { prepareWf; prepareTCGARecount} from './modules/prepare.nf'
+include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf  } from './modules/tcga_wfs.nf'
 
 
 // printing message of the day
@@ -34,42 +34,11 @@ Revision     : $workflow.revision
 log.info motd
 
 
-workflow downloadWf{
+
+workflow devWf{
     main:
         modalities = params.download_metadata.keySet()
 
-         if (modalities.contains('expression_recount3')){
-            // Channel for recount3 data download
-            channelRecount = Channel.from(params.download_metadata.expression_recount3.entrySet())
-                                        .map{
-                                            item -> tuple(
-                                                item.getKey(),
-                                                item.getValue().project,
-                                                item.getValue().project_home,
-                                                item.getValue().organism,
-                                                item.getValue().annotation,
-                                                item.getValue().type
-                                            )
-                                        }.view()
-            
-            downloadRecount(channelRecount)
-        }
-
-        if (modalities.contains('mutation_tcgabiolinks')){
-        // Add here channels for mutations and methylation
-        channelMutation = Channel.from(params.download_metadata.mutation_tcgabiolinks.entrySet())
-                                    .map{
-                                        item -> tuple(
-                                            item.getKey(),
-                                            item.getValue().project,
-                                            item.getValue().data_category,
-                                            item.getValue().data_type,
-                                            item.getValue().download_dir,
-                                        )
-                                    }.view()
-
-            downloadMutations(channelMutation)
-        } 
         if (modalities.contains('methylation_gdc')){
         channelMethylation = Channel.from(params.download_metadata.methylation_gdc.entrySet())
                                     .map{
@@ -82,108 +51,73 @@ workflow downloadWf{
                                         )
                                     }.view()
 
-            downloadMethylation(channelMethylation)
-        }
+            dme = downloadMethylation(channelMethylation)
+            mergeMethylationMetadata(dme.map{it -> it[-1]}.collect())
+        
+}}
 
-        if (modalities.contains('clinical_tcgabiolinks')){
-        channelClinical = Channel.from(params.download_metadata.clinical_tcgabiolinks.entrySet())
-                                    .map{
-                                        item -> tuple(
-                                            item.getKey(),
-                                            item.getValue().project,
-                                            item.getValue().data_category,
-                                            item.getValue().data_type,
-                                            item.getValue().data_format,
-                                        )
-                                    }.view()
+// worflow analyzeDragonWf {
+//     RunLionessDragon(methylation, expression)
+// }
 
-            downloadClinical(channelClinical)
-        }
+// workflow methylationWf{
 
+//     // Channel for cancer names
+//     channelPancancer = Channel.from(params.pancancer_ids.entrySet())
+//         .map{
+//              item -> tuple(
+//                 item.getKey(),
+//              item.getValue().project,
+// 	     item.getValue().tissueType)
+//              }.view()
+	     
 
-}
-
-
-workflow prepareWf{
-    main:
-    // Tissue channels
-    channelTissues = Channel.from(params.tissues.entrySet())
-                                        .map{
-                                            item -> tuple(
-                                                item.getKey(),
-                                                item.getValue()
-                                            )
-                                        }.transpose().view()
-    // Batch correction channel
-    channelBatchCorrection = Channel.from(params.batch_correction.entrySet())
-                                        .map{
-                                            item -> tuple(
-                                                item.getKey(),
-                                                item.getValue()
-                                            )
-                                        }.transpose().view()
-    
-    // Data channel
-    prepareRecountCh = Channel
-                .fromPath( params.recount.metadata_prepare)
-                .splitCsv( header: true)
-                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }.view()
-
-
-
-
-    // Parameter channel
-    prepareCh = (prepareRecountCh
-                    .combine(Channel.from(params.recount.norm))
-                    .combine(Channel.from(params.recount.min_tpm))
-                    .combine(Channel.from(params.recount.frac_samples))
-                   .combine(Channel.from(params.recount.th_purity)))
-                   .combine(channelTissues, by: 0)
-                   .combine(channelBatchCorrection, by: 0)
-                   .combine(channelBatchCorrection, by: 0).view()
-
-    prepareTCGARecount(prepareCh)
-}
-
-
+//     x = DownloadMethylation(channelPancancer) | FilterTissueType | GetGeneLevelPromoterMethylation | CleanMethylationData
+//     y = DownloadExpression(channelPancancer) | GetGeneExpression
+//     z = x.join(y)
+//     RunLionessDragon(z) | UploadLionessDragons | CleanupLionessDragons
+// }
 
 workflow analyzeWf{
+    main:
 
     // defaults results directory
-    batchName = params.batchName ? params.batchName : "batch-${params.workflow}-null"
+    //batchName = params.batchName ? params.batchName : "batch-${params.workflow}-null"
 
     // 
-    if (!params.metadata) exit 1, "requires a CSV metadata file."
+    //if (!params.metadata) exit 1, "requires a CSV metadata file."
+    // Data channel
+    // format uuid, file(network)
+    data = Channel
+                .fromPath(params.metadata, checkIfExists: true)
+                .splitCsv(header:true)
+                .map { row -> tuple(row.uuid, file("${row.expression}"))}
+
+    dataMethylation = Channel
+                .fromPath(params.metadata, checkIfExists: true)
+                .splitCsv(header:true)
+                .map { row -> tuple(row.uuid, file("${row.methylation}"))}
+
+    zooAnimals = Channel.from(params.zoo.animals)
+
+    data.combine(zooAnimals).branch {
+                    panda: it[-1] == 'panda'
+                    pandalioness: it[-1] == 'panda_lioness'
+                    //otter: it[-1] == 'otter'
+                    otterlioness: it[-1] == 'otter_lioness'    
+                }.set { zooAnalysisCh }
 
 
-        // Data channel
-        // format uuid, file(network)
-        data = Channel
-            .fromPath(params.metadata, checkIfExists: true)
-            .splitCsv(header:true)
-            .map { row -> tuple(row.uuid, file("${row.expression}"))}
+    PandaTCGAWf(zooAnalysisCh.panda)
 
-        zooAnimals = Channel.from(params.zoo.animals)
+    LionessPandaTCGAWf(zooAnalysisCh.pandalioness)
 
-        data.combine(zooAnimals).branch {
-                panda: it[-1] == 'panda'
-                pandalioness: it[-1] == 'panda_lioness'
-                otter: it[-1] == 'otter'
-                otterlioness: it[-1] == 'otter_lioness'            
-            }
-            .set { zooAnalysisCh }
+    LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
 
-        zooAnalysisCh.view()
-
-        LionessPandaTCGAWf(zooAnalysisCh.pandalioness)
-
-        LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
+    //DragonTCGAWf()
 
 }
 
-workflow fullWf{
-    
-}
 
 process copyConfigFiles{
     publishDir "${params.resultsDir}",pattern:"${params.logInfoFile}", mode: 'copy', overwrite: true
@@ -197,8 +131,6 @@ process copyConfigFiles{
         cat $config_file >> $out_conf
         """
 }
-
-
 
 process copyMotd{
     output:
@@ -221,14 +153,19 @@ workflow {
     //copyConfigFiles(cf.map($it -> tuple(file($it), $it.getName())))
     //copyConfigFiles(Channel.of(file(workflow.configFiles))).view()
     saveConfig()
+
     // We separate pipelines for downloading data and preparing it.
     // This allows for separate management of raw data and intermediate clean data
     if (params.pipeline == 'download')
-        downloadWf()
+        downloadWf(
+
+        )
+    else if (params.pipeline == 'analyze')
+        analyzeWf()
     else if (params.pipeline == 'prepare')
         prepareWf()
-    else if (params.pipeline == 'analyze')
-        prepareWf()
+    else if (params.pipeline == 'dev')
+        devWf()
     else
         downloadWf()
         

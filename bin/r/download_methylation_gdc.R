@@ -82,7 +82,7 @@ write.table(outstring, file = header_outpath,row.names=FALSE,quote=FALSE,col.nam
 fullpath_list = list()
 for(i in 1:nrow(ge_manifest)){
 # uncomment the line below for development
-# for(i in 1:5){
+#for(i in 1:5){
       options(warn=2)
       print(paste("Processing file:",i))
       

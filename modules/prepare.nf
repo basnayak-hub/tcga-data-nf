@@ -63,3 +63,110 @@ process prepareGTEXRecount{
                 --tissue_type ${tissue_type} >> "recount3_${tcga_uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.log"
 """
 }
+
+process GetGeneLevelPromoterMethylation {
+
+    publishDir "${params.resultsDir}/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_raw.*",  overwrite: true
+
+    // input: path to file of probes (rows) x samples (columns)
+    // assume local for starters 
+    input:
+       tuple val(uuid), val(project), path(methdata)
+
+    // output: file of samples (rows) x genes (columns)
+    output:
+        tuple val(uuid), val(project), path(methdata), path("${uuid}_tf_promoter_methylation_raw.csv")
+
+    // return gene-level methylation measurements
+    
+    """
+        Rscript ${baseDir}/bin/r/getGeneLevelMethylation.r ${project} ${methdata} "${uuid}_tf_promoter_methylation_raw.csv" ${params.methylation.probe_map} ${params.methylation.tf_list} > "${uuid}_tf_promoter_methylation_raw.log" 
+    """
+
+}
+
+
+process CleanMethylationData {
+
+    publishDir "${params.resultsDir}/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}.*",  overwrite: true
+
+    input:
+	tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType)
+ 
+    // output: file of samples (rows) x genes (columns)
+    
+    output:
+        tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.csv")
+    
+    """
+         Rscript ${baseDir}/bin/r/cleanMethylationData.r ${baseDir} ${project} "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" ${rawMethylation} ${tissueType} ${params.methylation.to_npn} ${params.methylation.to_mval} > ${uuid}_tf_promoter_methylation_clean_${tissueType}.log
+    """
+}
+
+
+
+workflow prepareWf{
+    main:
+
+    if (params.recount.metadata_prepare!='') {
+    // Tissue channels
+    channelTissues = Channel.from(params.tissues.entrySet())
+                                        .map{
+                                            item -> tuple(
+                                                item.getKey(),
+                                                item.getValue()
+                                            )
+                                        }.transpose().view()
+    // Batch correction channel
+    channelBatchCorrection = Channel.from(params.batch_correction.entrySet())
+                                        .map{
+                                            item -> tuple(
+                                                item.getKey(),
+                                                item.getValue()
+                                            )
+                                        }.transpose().view()
+    
+    // Data channel
+    prepareRecountCh = Channel
+                .fromPath( params.recount.metadata_prepare)
+                .splitCsv( header: true)
+                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file),file(row.tcga_patient_file) ) }.view()
+
+    // Parameter channel
+    prepareCh = (prepareRecountCh
+                    .combine(Channel.from(params.recount.norm))
+                    .combine(Channel.from(params.recount.min_tpm))
+                    .combine(Channel.from(params.recount.frac_samples))
+                   .combine(Channel.from(params.recount.th_purity)))
+                   .combine(channelTissues, by: 0)
+                   .combine(channelBatchCorrection, by: 0)
+                   .combine(channelBatchCorrection, by: 0).view()
+
+    prepareTCGARecount(prepareCh)
+    }
+
+    if (params.methylation.metadata_prepare!=''){    
+    // Data channel
+    println(params.methylation.metadata_prepare)
+    println('Methylation Channel')
+    prepareMethylationCh = Channel
+                .fromPath( params.methylation.metadata_prepare)
+                .splitCsv( header: true)
+                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_methylation_file) ) }.view()
+
+
+    channelTissues = Channel.from(params.tissues.entrySet())
+                                        .map{
+                                            item -> tuple(
+                                                item.getKey(),
+                                                item.getValue()
+                                            )
+                                        }.transpose().view()
+    println('Empty')
+    promoterMethCh =  GetGeneLevelPromoterMethylation(prepareMethylationCh)
+    promoterMethCh.view()
+    readyMethCh = CleanMethylationData(promoterMethCh.combine(channelTissues, by: 0))
+
+    }
+
+}

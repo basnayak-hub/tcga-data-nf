@@ -1,5 +1,34 @@
 
+process runTCGAPanda {
+
+conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: 'panda*', mode: 'copy'
+
+    input:
+        tuple val(uuid), path(expression)
+
+    output:
+        tuple val(uuid), path(expression), path("panda_${uuid}.txt"), path("panda_${uuid}.log")
+    
+    shell:
+        '''
+            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' >> !{uuid}.nodot.txt;
+            which netzoopy;
+            netzoopy panda -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -o panda_!{uuid}.txt !{params.zoo.panda} >> panda_!{uuid}.log
+        '''
+
+    stub:
+        """
+        touch "${uuid}.nodot.txt"
+        touch panda_${uuid}.txt
+        """
+}
+
 process runTCGALioness {
+
+conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+
 
 publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: '{panda,lioness}*', mode: 'copy'
 
@@ -25,6 +54,8 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: '{pand
 
 
 process runTCGAOtterLioness {
+
+conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
 publishDir "${params.resultsDir}/${params.batchName}/${uuid}/", mode: 'copy'
 
@@ -96,14 +127,25 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/figures/",  pattern
 
 // I am adding a network generation workflow specific for our TCGA data. 
 
+workflow PandaTCGAWf {
+
+    take:data
+    main:
+    lio = runTCGAPanda(data)
+    //lio.take(3).view()
+    //runTCGAPandaExplore(lio.take(3))
+
+}
+
+
 workflow LionessPandaTCGAWf {
 
     take:data
     main:
     lio = runTCGALioness(data)
-    lio.take(3).view()
-    runTCGAPandaExplore(lio.take(3))
-    runTCGALionessExplore(lio)
+    //lio.take(3).view()
+    //runTCGAPandaExplore(lio.take(3))
+    //runTCGALionessExplore(lio)
 
 }
 
