@@ -27,7 +27,6 @@ print(paste("Methylation file:",methpath))
 #print(paste("filepath",filepath))
 
 meth_df = fread(methpath,data.table=F)
-print(head(meth_df)[1:10])
 probe_list = meth_df$probeID
 
 my_friend = NetSciDataCompanion::CreateNetSciDataCompanionObject(project_name=project)

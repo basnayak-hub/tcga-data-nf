@@ -112,6 +112,46 @@ Preprocessing:
     tumor only samples, normal only samples, ignoring the details of the tumor/normal type/.
 
 
+### Full
+
+The full pipeline downloads, prepare, and analyze samples from TCGA in a single workflow. **We actually recommend to
+keep the three steps separate, such that runs are shorter and less prone to errors**.
+Since the full pipeline is a combination of the download-prepare-analyze steps, it requires a similar configuration.
+
+```json
+params{
+  download_metadata{
+    expression_recount3{
+        tcga_luad{
+            project= "LUAD"
+            project_home = "data_sources/tcga"
+            organism = "human"
+            annotation = "gencode_v26"
+            type = "gene"
+          } 
+        gtex_lung{
+            ...
+          } 
+        tcga_brca{
+            ...
+        }
+    }
+    mutation_tcgabiolinks{
+        tcga_luad{
+            project= "TCGA-LUAD"
+            data_category = "Simple Nucleotide Variation"
+            data_type = "Masked Somatic Mutation"
+            download_dir = "gdc_tcga_mutation"
+          }
+        tcga_brca{
+            ...
+        }
+    }
+  }
+}
+
+
+
 ## Results
 
 - `results/analysis.txt`: file with the analysis results.

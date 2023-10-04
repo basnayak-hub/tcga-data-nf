@@ -1,4 +1,5 @@
 library("recount3")
+library("NetSciDataCompanion")
 
 args<-commandArgs(TRUE)
 print(paste("Downloading data from recount3 for:",args[2],'project:',args[1]))
@@ -15,7 +16,8 @@ project_home = args[2]
 organism = args[3]
 gencodev = args[4]
 recount_type = args[5]
-output_fn = args[6]
+sample_list = args[6]
+output_fn = args[7]
 
 print(args)
 print('Downloading...')
@@ -27,6 +29,16 @@ recount_data = recount3::create_rse_manual(
   annotation = gencodev,
   type = recount_type
 )
+
+# Adding support to filter the sample list
+if (sample_list != " "){
+  ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
+  submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
+  print(submitters$V1)
+  recount_data = recount_data[,ong$extractVialOnly(recount_data$tcga.tcga_barcode) %in% submitters$V1]
+  print(recount_data)
+}
+
 print('Saving...')
 saveRDS(recount_data, output_fn)
 print('DONE!')

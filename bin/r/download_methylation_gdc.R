@@ -18,6 +18,7 @@
 
 library(GenomicDataCommons)
 library(optparse)
+library(NetSciDataCompanion)
 
 # args<-commandArgs(TRUE)
 
@@ -41,7 +42,9 @@ option_list = list(
   make_option(c("--pathlist_outpath"), type="character", default=NULL, 
               help="", metavar="character"), 
   make_option(c("--header_outpath"), type="character", default=NULL, 
-              help="", metavar="character")          
+              help="", metavar="character"),
+  make_option(c("--sample_list"), type="character", default=' ', 
+              help="test file with sample names", metavar="character")    
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
@@ -69,6 +72,15 @@ ge_manifest = files() %>%
 dim(ge_manifest)
 head(ge_manifest)
 
+# Adding support to filter the sample list
+if (opt$sample_list != " "){
+  ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
+  submitters = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
+  print(submitters$V1)
+  ge_manifest = ge_manifest[ong$mapUUIDtoTCGA(ge_manifest$id)$submitter %in% submitters$V1,]
+  print(ge_manifest)
+}
+
 # save manifest # TCGA_methylation_manifest.txt"
 write.table(ge_manifest,file = manifest_outpath, sep = "\t", row.names = FALSE, quote = FALSE)
 
@@ -80,9 +92,9 @@ outstring = paste(c("probeID",ge_manifest$id),collapse=" ") # delimiter is " " t
 write.table(outstring, file = header_outpath,row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 fullpath_list = list()
-for(i in 1:nrow(ge_manifest)){
+#for(i in 1:nrow(ge_manifest)){
 # uncomment the line below for development
-#for(i in 1:5){
+for(i in 1:3){
       options(warn=2)
       print(paste("Processing file:",i))
       

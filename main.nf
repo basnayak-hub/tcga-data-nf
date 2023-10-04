@@ -3,9 +3,10 @@ nextflow.enable.dsl=2
 
 
 // import from modules
-include { downloadWf; downloadRecount; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
-include { prepareWf; prepareTCGARecount} from './modules/prepare.nf'
-include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf  } from './modules/tcga_wfs.nf'
+//include { downloadWf; downloadRecount; downloadRecount3Wf; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
+include {fullDownloadWf; downloadRecount; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf; downloadRecount3Wf; downloadWf} from './modules/download.nf'
+include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf} from './modules/prepare.nf'
+include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeWf} from './modules/tcga_wfs.nf'
 
 
 // printing message of the day
@@ -51,10 +52,15 @@ workflow devWf{
                                         )
                                     }.view()
 
-            dme = downloadMethylation(channelMethylation)
+            dme = downloadMethylationWf(channelMethylation)
             mergeMethylationMetadata(dme.map{it -> it[-1]}.collect())
-        
-}}
+        }   
+
+         if (modalities.contains('expression_recount3')){
+            // Channel for recount3 data download
+            downloadRecount3Wf(params.download_metadata.expression_recount3)
+    }
+}
 
 // worflow analyzeDragonWf {
 //     RunLionessDragon(methylation, expression)
@@ -78,45 +84,6 @@ workflow devWf{
 //     RunLionessDragon(z) | UploadLionessDragons | CleanupLionessDragons
 // }
 
-workflow analyzeWf{
-    main:
-
-    // defaults results directory
-    //batchName = params.batchName ? params.batchName : "batch-${params.workflow}-null"
-
-    // 
-    //if (!params.metadata) exit 1, "requires a CSV metadata file."
-    // Data channel
-    // format uuid, file(network)
-    data = Channel
-                .fromPath(params.metadata, checkIfExists: true)
-                .splitCsv(header:true)
-                .map { row -> tuple(row.uuid, file("${row.expression}"))}
-
-    dataMethylation = Channel
-                .fromPath(params.metadata, checkIfExists: true)
-                .splitCsv(header:true)
-                .map { row -> tuple(row.uuid, file("${row.methylation}"))}
-
-    zooAnimals = Channel.from(params.zoo.animals)
-
-    data.combine(zooAnimals).branch {
-                    panda: it[-1] == 'panda'
-                    pandalioness: it[-1] == 'panda_lioness'
-                    //otter: it[-1] == 'otter'
-                    otterlioness: it[-1] == 'otter_lioness'    
-                }.set { zooAnalysisCh }
-
-
-    PandaTCGAWf(zooAnalysisCh.panda)
-
-    LionessPandaTCGAWf(zooAnalysisCh.pandalioness)
-
-    LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
-
-    //DragonTCGAWf()
-
-}
 
 
 process copyConfigFiles{
@@ -147,6 +114,36 @@ workflow saveConfig {
     copyConfigFiles(cf,mo)
 }
 
+workflow fullWf{
+    dCh = Channel.from(params.full_metadata.entrySet())
+    //Channel.from(params.full_metadata.each{entry.map($entry.key, $entry.value )}).view()
+    //println(dCh)
+    //println(dCh.keySet())
+    fullDownCh = fullDownloadWf(params.full_metadata.entrySet().each{it -> it})
+    fullDownCh.dr.view()
+
+    // Data channel
+    
+    // Recount prepare (from fullDownCh.dr)
+    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}.view()
+    readyRecount = prepareRecountWf(fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7])})
+
+    // Recount prepare (from fullDownCh.dr)
+    fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}.view()
+    readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
+
+    //fullDownloadWf(params.full_metadata.entrySet().each{it -> it.getKey()},dCh.map{it -> it.getValue()})
+    //Channel.from(params.full_metadata.keySet()).view()
+    //uuids = params.full_metadata.keySet()
+
+    readyRecount.map{it -> tuple(it[0],it[11])}.view()
+    readyMethylation.map{it -> tuple(it[0],it[5])}.view()
+
+    //analyzeWf(readyRecount.map{it -> tuple(it[0],it[11])}, readyMethylation.map{it -> tuple(it[0],it[5])})
+
+}
+
+
 workflow {
 
     // First we copy the configuration files and motd into the resultsDir
@@ -158,14 +155,25 @@ workflow {
     // This allows for separate management of raw data and intermediate clean data
     if (params.pipeline == 'download')
         downloadWf(
-
         )
-    else if (params.pipeline == 'analyze')
-        analyzeWf()
-    else if (params.pipeline == 'prepare')
+    else if (params.pipeline == 'analyze'){
+        data = Channel
+                    .fromPath(params.metadata, checkIfExists: true)
+                    .splitCsv(header:true)
+                    .map { row -> tuple(row.uuid, file("${row.expression}"))}
+
+        dataMethylation = Channel
+                    .fromPath(params.metadata, checkIfExists: true)
+                    .splitCsv(header:true)
+                    .map { row -> tuple(row.uuid, file("${row.methylation}"))}
+
+        analyzeWf(data, dataMethylation)
+    } else if (params.pipeline == 'prepare')
         prepareWf()
     else if (params.pipeline == 'dev')
-        devWf()
+        downloadWf()
+    else if (params.pipeline == 'full')
+        fullWf()
     else
         downloadWf()
         

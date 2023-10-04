@@ -13,17 +13,32 @@ project = args[1]
 data_category = args[2]
 data_type = args[3]
 directory = args[4]
-out_table = args[5]
-out_pivot = args[6]
+sample_list = args[5]
+out_table = args[6]
+out_pivot = args[7]
+
 
 print('Arguments:')
 print(args)
 print('Downloading...')
-## Download data and create the RSE object
+
 query1 <- GDCquery( project = project, data.category = data_category, data.type = data_type, legacy=F)
+
+## Download data and create the RSE object
 GDCdownload(query1, directory = directory)
 print('Preparing the mutation data table...')
 muts <- GDCprepare(query1, directory = directory)
+
+
+# Adding support to filter the sample list
+# This needs to be done after the GDC prepare because it reads the barcodes
+if (sample_list != " "){
+  submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
+  print('Submitters')
+  print(submitters$V1)
+  muts = muts[substr(muts$Tumor_Sample_Barcode, 1, 16) %in% submitters$V1,]
+} 
+
 print(paste0('Saving the mutation data table to: ',out_table))
 write.table(muts, out_table)
 
@@ -41,4 +56,5 @@ all_muts= muts %>%
             pivot_wider(names_from = Tumor_Sample_Barcode, values_from = abundance, values_fill = 0)
 
 print(paste0('Saving the mutation pivot table to: ',out_pivot))
+print(all_muts)
 write_csv(all_muts, out_pivot)

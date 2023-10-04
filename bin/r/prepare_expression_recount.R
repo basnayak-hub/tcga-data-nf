@@ -115,8 +115,7 @@ print(project_name %in% gtex_projects)
 if (project_name %in% gtex_projects){
   obj <- CreateNetSciDataCompanionObject()
 } else {
-obj <- CreateNetSciDataCompanionObject(clinical_patient_file = patient_data,
-                                       project_name = project_name)
+obj <- CreateNetSciDataCompanionObject( project_name = project_name)
 }
 
 
@@ -128,7 +127,6 @@ test_exp_rds <- readRDS(exp_data)
 rds_info <- obj$extractSampleAndGeneInfo(test_exp_rds)
 rds_sample_info <- rds_info$rds_sample_info
 rds_gene_info <- rds_info$rds_gene_info
-
 
 # Map column names to TCGA barcodes
 print('Map Barcodes...')
@@ -158,13 +156,16 @@ if (normalization %in% c('count','tpm','logtpm') ){
   if (project_name %in% gtex_projects){
     print('Processing GTEX, no need to remap sample names')
   } else {
-    newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logxpm), useLegacy = T)
-    print(paste('LOG:',"There are",dim(newcolnames)[1],"mapped columns", sep = " ", " "))
-    colnames(test_exp_count) <- newcolnames[,2]
-    colnames(test_exp_xpm) <- newcolnames[,2]
-    colnames(test_exp_logxpm) <- newcolnames[,2]
-  }
+    print(colnames(test_exp_logxpm)[1:5])
+    newcolnames <- test_exp_rds@colData$tcga.tcga_barcode
+    #newcolnames <- obj$mapUUIDtoTCGA(colnames(test_exp_logxpm))
+    print(newcolnames)
 
+    print(paste('LOG:',"There are",dim(newcolnames),"mapped columns", sep = " ", " "))
+    colnames(test_exp_count) <- newcolnames#[,2]
+    colnames(test_exp_xpm) <- newcolnames#[,2]
+    colnames(test_exp_logxpm) <- newcolnames#[,2]
+  }
 
   #### Filters
   # Get indices of nonduplicates

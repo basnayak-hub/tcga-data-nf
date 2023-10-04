@@ -1,7 +1,7 @@
 
 process runTCGAPanda {
 
-conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+//conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
 publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: 'panda*', mode: 'copy'
 
@@ -13,9 +13,9 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: 'panda
     
     shell:
         '''
-            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' >> !{uuid}.nodot.txt;
+            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' > !{uuid}.nodot.txt;
             which netzoopy;
-            netzoopy panda -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -o panda_!{uuid}.txt !{params.zoo.panda} >> panda_!{uuid}.log
+            netzoopy panda -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -o panda_!{uuid}.txt !{params.zoo.panda} > panda_!{uuid}.log
         '''
 
     stub:
@@ -27,7 +27,7 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: 'panda
 
 process runTCGALioness {
 
-conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+//conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
 
 publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: '{panda,lioness}*', mode: 'copy'
@@ -40,8 +40,8 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: '{pand
     
     shell:
         '''
-            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' >> !{uuid}.nodot.txt;
-            netzoopy lioness -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -op panda.txt -ol lioness/ !{params.zoo.panda_lioness} >> panda_lioness_!{uuid}.log
+            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' > !{uuid}.nodot.txt;
+            netzoopy lioness -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -op panda.txt -ol lioness/ !{params.zoo.panda_lioness} > panda_lioness_!{uuid}.log
         '''
     stub:
         """
@@ -55,7 +55,7 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: '{pand
 
 process runTCGAOtterLioness {
 
-conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+//conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
 publishDir "${params.resultsDir}/${params.batchName}/${uuid}/", mode: 'copy'
 
@@ -156,5 +156,42 @@ workflow LionessOtterTCGAWf {
     take:data
     main:
     lio = runTCGAOtterLioness(data)
+
+}
+
+
+workflow analyzeWf{
+    take:
+        data
+        dataMethylation
+
+    main:
+
+    // defaults results directory
+    //batchName = params.batchName ? params.batchName : "batch-${params.workflow}-null"
+
+    // 
+    //if (!params.metadata) exit 1, "requires a CSV metadata file."
+    // Data channel
+    // format uuid, file(network)
+
+    
+
+    zooAnimals = Channel.from(params.zoo.animals)
+
+    data.combine(zooAnimals).branch {
+                    panda: it[-1] == 'panda'
+                    pandalioness: it[-1] == 'panda_lioness'
+                    //otter: it[-1] == 'otter'
+                    otterlioness: it[-1] == 'otter_lioness'    
+                }.set { zooAnalysisCh }
+
+    PandaTCGAWf(zooAnalysisCh.panda)
+
+    LionessPandaTCGAWf(zooAnalysisCh.pandalioness)
+
+    LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
+
+    //DragonTCGAWf()
 
 }
