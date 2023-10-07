@@ -80,7 +80,8 @@ process GetGeneLevelPromoterMethylation {
     // return gene-level methylation measurements
     
     """
-        Rscript ${baseDir}/bin/r/getGeneLevelMethylation.r ${project} ${methdata} "${uuid}_tf_promoter_methylation_raw.csv" ${params.methylation.probe_map} ${params.methylation.tf_list} > "${uuid}_tf_promoter_methylation_raw.log" 
+        Rscript ${baseDir}/bin/r/get_gene_level_methylation.r -p ${project} -m ${methdata} -o "${uuid}_tf_promoter_methylation_raw.csv" --probemap ${params.methylation.probe_map} --tf_list ${params.methylation.tf_list} > "${uuid}_tf_promoter_methylation_raw.log" 
+
     """
 
 }
@@ -96,10 +97,10 @@ process CleanMethylationData {
     // output: file of samples (rows) x genes (columns)
     
     output:
-        tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.csv")
+        tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.csv"), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.log")
     
     """
-         Rscript ${baseDir}/bin/r/cleanMethylationData.r ${baseDir} ${project} "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" ${rawMethylation} ${tissueType} ${params.methylation.to_npn} ${params.methylation.to_mval} > ${uuid}_tf_promoter_methylation_clean_${tissueType}.log
+         Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
     """
 }
 

@@ -6,7 +6,7 @@ nextflow.enable.dsl=2
 //include { downloadWf; downloadRecount; downloadRecount3Wf; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
 include {fullDownloadWf; downloadRecount; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf; downloadRecount3Wf; downloadWf} from './modules/download.nf'
 include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf} from './modules/prepare.nf'
-include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeWf} from './modules/tcga_wfs.nf'
+include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeExpressionWf; analyzeDragonWf} from './modules/tcga_wfs.nf'
 
 
 // printing message of the day
@@ -162,12 +162,14 @@ workflow {
                     .splitCsv(header:true)
                     .map { row -> tuple(row.uuid, file("${row.expression}"))}
 
-        dataMethylation = Channel
-                    .fromPath(params.metadata, checkIfExists: true)
+        analyzeExpressionWf(data)
+        dataDragon = Channel
+                    .fromPath(params.metadata_dragon, checkIfExists: true)
                     .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.methylation}"))}
+                    .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
 
-        analyzeWf(data, dataMethylation)
+        analyzeDragonWf(dataDragon)
+
     } else if (params.pipeline == 'prepare')
         prepareWf()
     else if (params.pipeline == 'dev')

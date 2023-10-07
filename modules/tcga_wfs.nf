@@ -123,6 +123,24 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/figures/",  pattern
     """
 }
 
+
+process runTCGADragon {
+
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
+
+    input:
+        tuple val(uuid),path(methylationData),path(expressionData)
+    	// output: file of samples (rows) x genes (columns)
+    output:
+        tuple val(uuid),path(methylationData),path(expressionData),path("${uuid}_dragon_filtered_expression.csv"), path("${uuid}_dragon_mat.tsv"), path("${uuid}_dragon_input.tsv")
+    
+    """
+    Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
+    python -u ${baseDir}/bin/run_dragon.py ${methylationData} "${uuid}_dragon_filtered_expression.csv" "." ${uuid} > dragon_log.txt
+    """
+}
+
+
 /// The workflows
 
 // I am adding a network generation workflow specific for our TCGA data. 
@@ -159,11 +177,36 @@ workflow LionessOtterTCGAWf {
 
 }
 
+workflow DragonTCGAWf {
 
-workflow analyzeWf{
+    take:data
+    main:
+    dragon = runTCGADragon(data)
+
+}
+
+
+
+
+process RunLionessDragon{
+
+    publishDir "${params.resultsDir}", mode: 'move',  overwrite: true
+
+    input:
+        tuple val(uuid),path(methylationData),path(expressionData)
+
+    output:
+        tuple val(uuid),path(uuid), path("results_ld.txt")
+
+    """
+    python -u ${baseDir}/bin/py/run_lioness_dragon.py ${methylationData} ${expressionData} ${uuid}/lioness ${uuid} > results_ld.txt
+    """
+}
+
+
+workflow analyzeExpressionWf{
     take:
         data
-        dataMethylation
 
     main:
 
@@ -193,5 +236,23 @@ workflow analyzeWf{
     LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
 
     //DragonTCGAWf()
+
+}
+
+workflow analyzeDragonWf{
+    take:
+        data
+
+    main:
+    zooAnimals = Channel.from(params.zoo.animals)
+
+    data.combine(zooAnimals).branch {
+                    dragon: it[-1] == 'dragon'
+                    dragonlioness: it[-1] == 'dragon_lioness'
+                }.set { zooAnalysisCh }
+
+    DragonTCGAWf(zooAnalysisCh.dragon)
+    //DragonLionessTCGAWf(zooAnalysisCh.dragonlioness)
+
 
 }

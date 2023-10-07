@@ -1,0 +1,2 @@
+uuid,methylation,expression
+tcga_luad,/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/results/full_test/methylation/tcga_luad_tf_promoter_methylation_clean_all.csv,/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/results/full_test/recount3/tcga_luad/recount3_tcga_luad_purity03_normtpm_mintpm1_fracsamples01_tissueall_batchnull_adjnull.rds
