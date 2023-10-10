@@ -3,7 +3,7 @@ process runTCGAPanda {
 
 //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: 'panda*', mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/panda/",  pattern: 'panda*', mode: 'copy'
 
     input:
         tuple val(uuid), path(expression)
@@ -30,7 +30,7 @@ process runTCGALioness {
 //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/",  pattern: '{panda,lioness}*', mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/panda_lioness/",  pattern: '{panda,lioness}*', mode: 'copy'
 
     input:
         tuple val(uuid), path(expression)
@@ -57,7 +57,7 @@ process runTCGAOtterLioness {
 
 //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/", mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/otter_lioness/", mode: 'copy'
 
     input:
         tuple val(uuid), path(expression)
@@ -80,8 +80,55 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/", mode: 'copy'
         """
 }
 
+process runTCGADragon {
+
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
+
+    input:
+        tuple val(uuid),path(methylationData),path(expressionData)
+    	// output: file of samples (rows) x genes (columns)
+    output:
+        tuple val(uuid),path(methylationData),path(expressionData),path("${uuid}_dragon_filtered_expression.csv"), path("${uuid}_dragon_mat.tsv"), path("${uuid}_dragon_input.tsv"), path("${uuid}_dragon.log")
+    
+    script:
+    """
+    Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
+    run_dragon.py dragon -m ${methylationData} -e "${uuid}_dragon_filtered_expression.csv" -i "${uuid}_dragon_input.tsv" -o "${uuid}_dragon_mat.tsv" > "${uuid}_dragon.log"
+    """
+    stub:
+        """
+        touch "${uuid}_dragon_filtered_expression.csv"
+        touch "${uuid}_dragon_input.tsv"
+        touch "${uuid}_dragon_mat.tsv" 
+        touch "${uuid}_dragon.log"
+        """
+}
 
 
+
+process runTCGALionessDragon{
+
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/lioness_dragon/", mode: 'copy', pattern:"*",  overwrite: true
+
+    input:
+        tuple val(uuid),path(methylationData),path(expressionData)
+
+    output:
+        tuple val(uuid),path(uuid), path("lioness_dragon/", type:'dir'), path("${uuid}_lioness_dragon.log")
+
+    script:
+    """
+    Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
+    run_dragon.py lioness-dragon -m ${methylationData} -e "${uuid}_dragon_filtered_expression.csv" -o lioness_dragon > "${uuid}_lioness_dragon.log"
+    """
+
+    stub:
+        """
+        touch "${uuid}_dragon_filtered_expression.csv"
+        mkdir lioness_dragon
+        touch "${uuid}_lioness_dragon.log"
+        """
+}
 
 // add this back once there is panda output again
 //output:
@@ -124,21 +171,6 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/figures/",  pattern
 }
 
 
-process runTCGADragon {
-
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
-
-    input:
-        tuple val(uuid),path(methylationData),path(expressionData)
-    	// output: file of samples (rows) x genes (columns)
-    output:
-        tuple val(uuid),path(methylationData),path(expressionData),path("${uuid}_dragon_filtered_expression.csv"), path("${uuid}_dragon_mat.tsv"), path("${uuid}_dragon_input.tsv")
-    
-    """
-    Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
-    python -u ${baseDir}/bin/run_dragon.py ${methylationData} "${uuid}_dragon_filtered_expression.csv" "." ${uuid} > dragon_log.txt
-    """
-}
 
 
 /// The workflows
@@ -185,24 +217,13 @@ workflow DragonTCGAWf {
 
 }
 
+workflow DragonLionessTCGAWf {
 
+    take:data
+    main:
+    dragon = runTCGALionessDragon(data)
 
-
-process RunLionessDragon{
-
-    publishDir "${params.resultsDir}", mode: 'move',  overwrite: true
-
-    input:
-        tuple val(uuid),path(methylationData),path(expressionData)
-
-    output:
-        tuple val(uuid),path(uuid), path("results_ld.txt")
-
-    """
-    python -u ${baseDir}/bin/py/run_lioness_dragon.py ${methylationData} ${expressionData} ${uuid}/lioness ${uuid} > results_ld.txt
-    """
 }
-
 
 workflow analyzeExpressionWf{
     take:

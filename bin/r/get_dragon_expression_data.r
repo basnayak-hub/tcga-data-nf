@@ -44,6 +44,6 @@ df <- read.csv(file=dragon_tf,nrows=2)
 tfs = colnames(df)[2:length(colnames(df))-1]
 expr_std_labeled <- expr_std_labeled %>% dplyr::select(any_of(tfs))
 
-expr_std_labeled$TCGAbarcode = expr_rds@colData$tcga.tcga_barcode
+expr_std_labeled$TCGAbarcode = substr(expr_rds@colData$tcga.tcga_barcode, 1, 16)
 
 write.csv(expr_std_labeled,file=output_fn,row.names=T,quote=F)
