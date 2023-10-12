@@ -114,7 +114,7 @@ process runTCGALionessDragon{
         tuple val(uuid),path(methylationData),path(expressionData)
 
     output:
-        tuple val(uuid),path(uuid), path("lioness_dragon/", type:'dir'), path("${uuid}_lioness_dragon.log")
+        tuple val(uuid),path(methylationData),path(expressionData), path("lioness_dragon/", type:'dir'), path("${uuid}_lioness_dragon.log")
 
     script:
     """
@@ -273,7 +273,7 @@ workflow analyzeDragonWf{
                 }.set { zooAnalysisCh }
 
     DragonTCGAWf(zooAnalysisCh.dragon)
-    //DragonLionessTCGAWf(zooAnalysisCh.dragonlioness)
+    DragonLionessTCGAWf(zooAnalysisCh.dragonlioness)
 
 
 }

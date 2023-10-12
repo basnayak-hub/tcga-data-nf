@@ -138,7 +138,7 @@ def lioness_dragon(meth_file, expr_file, output_dir, barcode='TCGAbarcode'):
     #out_dir = sys.argv[3]
     #uuid = sys.argv[4]
 
-    aaa = pd.read_csv(meth_file,sep=',', header=0,index_col=0,nrows = 10)
+    aaa = pd.read_csv(meth_file,sep=',', header=0,index_col=0)
     
     bbb = pd.read_csv(expr_file,sep=',',header=0,index_col=0)
     
@@ -148,20 +148,25 @@ def lioness_dragon(meth_file, expr_file, output_dir, barcode='TCGAbarcode'):
     print(aaa.columns.tolist())
     print(bbb.columns.tolist())
     
-    aaa.add_suffix('meth')
-    aaa = aaa.rename(index=str, columns={'TCGAbarcode'+'meth':'TCGAbarcode'})
-    print(aaa)
+    aaa = aaa.add_suffix('_meth')
+    print(aaa.head())
+    aaa = aaa.rename(index=str, columns={'TCGAbarcode_meth':'TCGAbarcode'})
 
-    aaa.add_suffix('meth')
-    aaa = aaa.rename(index=str, columns={'TCGAbarcode'+'meth':'TCGAbarcode'})
-    print(aaa)
+
+    bbb = bbb.add_suffix('_expr')
+    bbb = bbb.rename(index=str, columns={'TCGAbarcode_expr':'TCGAbarcode'})
     
+    all_data = aaa.merge(bbb, on = 'TCGAbarcode', how = 'inner').set_index('TCGAbarcode')
+
     print("Running LIONESS-DRAGON for\n - methylation: %s\n - expression: %s" %(meth_file,expr_file))
 
-    s = LionessDragon(layer1 = meth_file, layer2 = expr_file, output_dir = output_dir, merge_col =  "TCGAbarcode",ext1 = "_meth",ext2="_expr")
-    # s.set_cutoff(3)
-    s.lioness_loop()
-
+    try: 
+        s = LionessDragon(all_data = all_data, output_dir = output_dir, merge_col =  "TCGAbarcode",ext1 = "_meth",ext2="_expr")
+        s.lioness_loop()
+    except np.linalg.LinAlgError:
+        print('ERROR: Matrix is singular, skipping this one')
+        os.mkdir(output_dir)
+    
 cli.add_command(dragon)
 cli.add_command(lioness_dragon)
 
