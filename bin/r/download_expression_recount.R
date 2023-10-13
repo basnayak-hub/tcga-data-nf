@@ -30,13 +30,27 @@ recount_data = recount3::create_rse_manual(
   type = recount_type
 )
 
+print('Data have been downloaded...')
+print('Clinical Data has shape (samples X clinical variables):')
+print(dim(recount_data@colData))
+print('Expression Data has shape (genes X samples):')
+print(dim(recount_data))
+
+
 # Adding support to filter the sample list
 if (sample_list != " "){
   ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
   print(submitters$V1)
-  recount_data = recount_data[,ong$extractVialOnly(recount_data$tcga.tcga_barcode) %in% submitters$V1]
-  print(recount_data)
+  print(ong$extractVialOnly(recount_data$tcga.tcga_barcode))
+  recount_data = recount_data[,ong$extractSampleAndTypeAndVial(recount_data$tcga.tcga_barcode) %in% submitters$V1]
+
+  print('Data have been filtered by sample list...')
+  print('Clinical Data has shape (samples X clinical variables):')
+  print(dim(recount_data@colData))
+  print('Expression Data has shape (genes X samples):')
+  print(dim(recount_data))
+
 }
 
 print('Saving...')

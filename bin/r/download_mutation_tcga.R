@@ -22,7 +22,7 @@ print('Arguments:')
 print(args)
 print('Downloading...')
 
-query1 <- GDCquery( project = project, data.category = data_category, data.type = data_type, legacy=F)
+query1 <- GDCquery( project = project, data.category = data_category, data.type = data_type) #, legacy=F
 
 ## Download data and create the RSE object
 GDCdownload(query1, directory = directory)

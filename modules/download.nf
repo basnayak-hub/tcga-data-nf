@@ -8,14 +8,14 @@ process downloadRecount{
         tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), val(samples) ,file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
     script:
         """
-            Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds";
+            Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_download.log";
             echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
             echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${uuid}/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
         """
     stub:
         """
-        touch "${uuid}.rds"
         touch "${uuid}_recount3_metatada.csv"
+        touch "${uuid}.rds"
         """
 }
 
