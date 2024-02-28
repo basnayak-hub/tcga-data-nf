@@ -73,7 +73,7 @@ dim(ge_manifest)
 head(ge_manifest)
 
 # Adding support to filter the sample list
-if (opt$sample_list != " "){
+if (length(opt$sample_list)>3){
   ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
   submitters = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
   print(submitters$V1)

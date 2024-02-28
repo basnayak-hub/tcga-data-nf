@@ -150,12 +150,12 @@ workflow downloadRecount3Wf{
         //                                 .map{
         //                                     item -> tuple(
         //                                         item.getKey(),
-        //                                         item.getValue().project,
-        //                                         item.getValue().project_home,
-        //                                         item.getValue().organism,
-        //                                         item.getValue().annotation,
-        //                                         item.getValue().type,
-        //                                         item.getValue().samples,
+        //                                         item.value.project,
+        //                                         item.value.project_home,
+        //                                         item.value.organism,
+        //                                         item.value.annotation,
+        //                                         item.value.type,
+        //                                         item.value.samples,
         //                                     )
         //                                 }.view()
             dr = downloadRecount(channelRecount)
@@ -170,11 +170,11 @@ workflow downloadMethylationWf{
         //                             .map{
         //                                 item -> tuple(
         //                                     item.getKey(),
-        //                                     item.getValue().project,
-        //                                     item.getValue().gdc_type,
-        //                                     item.getValue().gdc_platform,
-        //                                     item.getValue().download_dir,
-        //                                     item.getValue().samples,
+        //                                     item.value.project,
+        //                                     item.value.gdc_type,
+        //                                     item.value.gdc_platform,
+        //                                     item.value.download_dir,
+        //                                     item.value.samples,
         //                                 )
         //                             }.view()
 
@@ -190,11 +190,11 @@ workflow downloadMutationsWf{
         //                             .map{
         //                                 item -> tuple(
         //                                     item.getKey(),
-        //                                     item.getValue().project,
-        //                                     item.getValue().data_category,
-        //                                     item.getValue().data_type,
-        //                                     item.getValue().download_dir,
-        //                                     item.getValue().samples,
+        //                                     item.value.project,
+        //                                     item.value.data_category,
+        //                                     item.value.data_type,
+        //                                     item.value.download_dir,
+        //                                     item.value.samples,
         //                                 )
         //                             }.view()
 
@@ -210,80 +210,98 @@ workflow downloadClinicalWf{
         //                             .map{
         //                                 item -> tuple(
         //                                     item.getKey(),
-        //                                     item.getValue().project,
-        //                                     item.getValue().data_category,
-        //                                     item.getValue().data_type,
-        //                                     item.getValue().data_format,
+        //                                     item.value.project,
+        //                                     item.value.data_category,
+        //                                     item.value.data_type,
+        //                                     item.value.data_format,
         //                                 )
         //                             }.view()
-            dcli = downloadClinical(channelClinical)
+        dcli = downloadClinical(channelClinical)
     emit: dcli
 }
 
 
 
-
 workflow downloadWf{
-    main:
-        modalities = params.download_metadata.keySet()
+    main:        
+    
+        // Read the metadata file
+        expression_recount3 = Channel.fromPath(params.download_metadata).splitJson(path: "expression_recount3")
+        mutation_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "mutation_tcgabiolinks")
+        clinical_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "clinical_tcgabiolinks")
+        methylation_gdc = Channel.fromPath(params.download_metadata).splitJson(path: "methylation_gdc")
 
-         if (modalities.contains('expression_recount3')){
-            // Channel for recount3 data download
-                    channelRecount = Channel.from(params.download_metadata.expression_recount3.entrySet())
-                                        .map{
+        // dataCh.branch {
+        // expression_recount3: (it.key == 'expression_recount3')
+        //     return it.value.entrySet()
+        // mutation_tcgabiolinks: (it.key=='mutation_tcgabiolinks')
+        //     return it.value.entrySet()
+        // clinical_tcgabiolinks: (it.key=='clinical_tcgabiolinks')
+        //     return it.value.entrySet()
+        // methylation_gdc: (it.key=='methylation_gdc')
+        //     return it.value.entrySet()
+        // other: true
+        //     return it.value.entrySet()
+        // }.set{branchCh}
+
+
+
+
+        // Process recount3 data
+        if (expression_recount3!=[null]){
+            channelRecount = expression_recount3.map{
                                             item -> tuple(
-                                                item.getKey(),
-                                                item.getValue().project,
-                                                item.getValue().project_home,
-                                                item.getValue().organism,
-                                                item.getValue().annotation,
-                                                item.getValue().type,
-                                                item.getValue().samples,
+                                                item.key,
+                                                item.value.project,
+                                                item.value.project_home,
+                                                item.value.organism,
+                                                item.value.annotation,
+                                                item.value.type,
+                                                item.value.samples,
                                             )
                                         }.view()
+        
             downloadRecount3Wf(channelRecount)
         }
 
-        if (modalities.contains('mutation_tcgabiolinks')){
-        // Add here channels for mutations
-            channelMutation = Channel.from(params.download_metadata.mutation_tcgabiolinks.entrySet())
-                                        .map{
+        //process mutations
+        if (mutation_tcgabiolinks!=[null]){
+            channelMutation = mutation_tcgabiolinks.map{
                                             item -> tuple(
-                                                item.getKey(),
-                                                item.getValue().project,
-                                                item.getValue().data_category,
-                                                item.getValue().data_type,
-                                                item.getValue().download_dir,
-                                                item.getValue().samples
+                                                item.key,
+                                                item.value.project,
+                                                item.value.data_category,
+                                                item.value.data_type,
+                                                item.value.download_dir,
+                                                item.value.samples
                                             )
                                         }.view()
+        
             downloadMutationsWf(channelMutation)
         } 
-
-        if (modalities.contains('methylation_gdc')){
-            channelMethylation = Channel.from(params.download_metadata.methylation_gdc.entrySet())
-                                        .map{
+        // Process methylation
+        if (methylation_gdc!=[null]){
+            channelMethylation = methylation_gdc.map{
                                             item -> tuple(
-                                                item.getKey(),
-                                                item.getValue().project,
-                                                item.getValue().gdc_type,
-                                                item.getValue().gdc_platform,
-                                                item.getValue().download_dir,
-                                                item.getValue().samples,
+                                                item.key,
+                                                item.value.project,
+                                                item.value.gdc_type,
+                                                item.value.gdc_platform,
+                                                item.value.download_dir,
+                                                item.value.samples,
                                             )
                                         }.view()
             downloadMethylationWf(channelMethylation)
         }
-
-        if (modalities.contains('clinical_tcgabiolinks')){
-            channelClinical = Channel.from(params.download_metadata.clinical_tcgabiolinks.entrySet())
-                                        .map{
+        // Process clinical
+        if (clinical_tcgabiolinks!=[null]){
+            channelClinical = clinical_tcgabiolinks.map{
                                             item -> tuple(
-                                                item.getKey(),
-                                                item.getValue().project,
-                                                item.getValue().data_category,
-                                                item.getValue().data_type,
-                                                item.getValue().data_format,
+                                                item.key,
+                                                item.value.project,
+                                                item.value.data_category,
+                                                item.value.data_type,
+                                                item.value.data_format,
                                             )
                                         }.view()
             downloadClinicalWf(channelClinical)
@@ -302,51 +320,85 @@ workflow fullDownloadWf{
         dme = Channel.empty()
         dc = Channel.empty()
         // DOWNLOAD RECOUNT3
-        if (dataCh.value.expression_recount3!=[null]){
-            dChRe = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.expression_recount3.project))
-                                    .combine(Channel.from(dataCh.value.expression_recount3.project_home))
-                                    .combine(Channel.from(dataCh.value.expression_recount3.organism))
-                                    .combine(Channel.from(dataCh.value.expression_recount3.annotation))
-                                    .combine(Channel.from(dataCh.value.expression_recount3.type))
-                                    .combine(Channel.from(dataCh.value.expression_recount3.samples)).view()
+
+        modalities = dataCh.map{it -> it.value.keySet()}.collect().view()
+        //if (dataCh.containsKey('expression_recount3')){
+            dChRe = dataCh.map{it -> tuple(
+                                                it.key,
+                                                it.value.get('expression_recount3').project,
+                                                it.value.get('expression_recount3').project_home,
+                                                it.value.get('expression_recount3').organism,
+                                                it.value.get('expression_recount3').annotation,
+                                                it.value.get('expression_recount3').type,
+                                                it.value.get('expression_recount3').samples)
+                                                }.view()
+            //dChRe = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.expression_recount3.project))
+            //                        .combine(Channel.from(dataCh.value.expression_recount3.project_home))
+            //                        .combine(Channel.from(dataCh.value.expression_recount3.organism))
+            //                        .combine(Channel.from(dataCh.value.expression_recount3.annotation))
+            //                        .combine(Channel.from(dataCh.value.expression_recount3.type))
+            //                        .combine(Channel.from(dataCh.value.expression_recount3.samples)).view()
             // dr is the download recount channel
             // output: tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type),val(samples),file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
             dr = downloadRecount3Wf(dChRe)
-        }
+        //}
         // DOWNLOAD MUTATIONS
-        if (dataCh.value.mutation_tcgabiolinks!=[null]){
-            dChMu = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.mutation_tcgabiolinks.project))
-                                    .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.data_category))
-                                    .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.data_type))
-                                    .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.download_dir))
-                                    .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.samples)).view()
+        //if (dataCh.map{it -> it.value.keySet()}.contains('mutation_tcgabiolinks')){
+            dChMu = dataCh.map{it -> tuple(
+                                                it.key,
+                                                it.value.get('mutation_tcgabiolinks').project,
+                                                it.value.get('mutation_tcgabiolinks').data_category,
+                                                it.value.get('mutation_tcgabiolinks').data_type,
+                                                it.value.get('mutation_tcgabiolinks').download_dir,
+                                                it.value.get('mutation_tcgabiolinks').samples)
+                                                }.view()
+            //dChMu = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.mutation_tcgabiolinks.project))
+            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.data_category))
+            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.data_type))
+            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.download_dir))
+            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.samples)).view()
             // dr is the download recount channel
             // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
             dmu = downloadMutationsWf(dChMu)
-        }
+        //}
 
-        // DOWNLOAD METHYLATION
-        if (dataCh.value.methylation_gdc!=[null]){
-            dChMe = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.methylation_gdc.project))
-                                    .combine(Channel.from(dataCh.value.methylation_gdc.gdc_type))
-                                    .combine(Channel.from(dataCh.value.methylation_gdc.gdc_platform))
-                                    .combine(Channel.from(dataCh.value.methylation_gdc.download_dir))
-                                    .combine(Channel.from(dataCh.value.methylation_gdc.samples)).view()
-            // dr is the download recount channel
-            // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
-            dme = downloadMethylationWf(dChMe)
-        }
+        // // DOWNLOAD METHYLATION
+        // if (dataCh.map{it -> it.value.keySet()}.contains('methylation_gdc')){
+        //     dChMe = dataCh.map{it -> tuple(
+        //                                         it.key,
+        //                                         it.value.get('methylation_gdc').project,
+        //                                         it.value.get('methylation_gdc').gdc_type,
+        //                                         it.value.get('methylation_gdc').gdc_platform,
+        //                                         it.value.get('methylation_gdc').download_dir,
+        //                                         it.value.get('methylation_gdc').samples)
+        //                                         }.view()
+        //     //dChMe = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.methylation_gdc.project))
+        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.gdc_type))
+        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.gdc_platform))
+        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.download_dir))
+        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.samples)).view()
+        //     // dr is the download recount channel
+        //     // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
+        //     dme = downloadMethylationWf(dChMe)
+        // }
 
-        // DOWNLOAD METHYLATION
-        if (dataCh.value.clinical_tcgabiolinks!=[null]){
-            dChCl = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.clinical_tcgabiolinks.project))
-                                    .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_category))
-                                    .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_type))
-                                    .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_format)).view()
-            // dr is the download recount channel
-            // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),val(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
-            dc = downloadClinicalWf(dChCl)
-        }
+        // // DOWNLOAD CLINICAL
+        // if (dataCh.map{it -> it.value.keySet()}.contains('clinical_tcgabiolinks')){
+        //     dChCl = dataCh.map{it -> tuple(
+        //                                         it.key,
+        //                                         it.value.get('clinical_tcgabiolinks').project,
+        //                                         it.value.get('clinical_tcgabiolinks').data_category,
+        //                                         it.value.get('clinical_tcgabiolinks').data_type,
+        //                                         it.value.get('clinical_tcgabiolinks').data_format)
+        //                                         }.view()
+        //     //dChCl = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.clinical_tcgabiolinks.project))
+        //     //                        .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_category))
+        //     //                        .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_type))
+        //     //                        .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_format)).view()
+        //     // dr is the download recount channel
+        //     // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),val(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
+        //     dc = downloadClinicalWf(dChCl)
+        //}
     emit:
         dr
         dmu

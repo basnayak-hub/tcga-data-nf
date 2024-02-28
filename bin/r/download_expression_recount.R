@@ -38,7 +38,7 @@ print(dim(recount_data))
 
 
 # Adding support to filter the sample list
-if (sample_list != " "){
+if (length(sample_list)>3){
   ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
   print(submitters$V1)

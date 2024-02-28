@@ -5,6 +5,8 @@ work/
 results/
 logs/
 conf/local/
+dags/
+dags/**
 *.pyc
 .vscode
 .nextflow*

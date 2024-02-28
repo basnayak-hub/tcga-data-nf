@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 
 // import from modules
 //include { downloadWf; downloadRecount; downloadRecount3Wf; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
-include {fullDownloadWf; downloadRecount; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf; downloadRecount3Wf; downloadWf} from './modules/download.nf'
+include {fullDownloadWf; downloadRecount;downloadRecount3Wf; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf;  downloadWf} from './modules/download.nf'
 include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf} from './modules/prepare.nf'
 include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeExpressionWf; analyzeDragonWf} from './modules/tcga_wfs.nf'
 
@@ -16,6 +16,8 @@ tcga-data-nf ($workflow.manifest.version)
 --------------------------------------------------------------------------
 Session ID   : $workflow.sessionId
 Pipeline: $params.pipeline
+Results dir  : $params.resultsDir
+Batch name   : $params.batchName
 
 --------------------------------------------------------------------------
 Environment information
@@ -33,7 +35,6 @@ Revision     : $workflow.revision
 """
 
 log.info motd
-
 
 
 workflow devWf{
@@ -114,34 +115,38 @@ workflow saveConfig {
     copyConfigFiles(cf,mo)
 }
 
+
+
 workflow fullWf{
-    dCh = Channel.from(params.full_metadata.entrySet())
-    //Channel.from(params.full_metadata.each{entry.map($entry.key, $entry.value )}).view()
-    //println(dCh)
-    //println(dCh.keySet())
-    fullDownCh = fullDownloadWf(params.full_metadata.entrySet().each{it -> it})
-    fullDownCh.dr.view()
+    // DOWNLOAD
+    // Data channel, metadata for Download
+    dCh = Channel.fromPath(params.full_metadata).splitJson().view()
 
-    // Data channel
-    
-    // Recount prepare (from fullDownCh.dr)
-    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}.view()
-    readyRecount = prepareRecountWf(fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7])})
+    //dCh.map{it -> it.value.keySet()}.toString()
+    fullDownloadWf(dCh)
+    // // Full download
+    //fullDownCh = fullDownloadWf(dCh)
 
-    // Recount prepare (from fullDownCh.dr)
-    fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}.view()
-    readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
+    // // PREPARE  (prepare expression and methylation)
+    // // Recount prepare (from fullDownCh.dr)
+    // fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}
+    // readyRecount = prepareRecountWf(fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7])})
+    // // Methylation prepare (from fullDownCh.dme)
+    // fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}
+    // readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
 
-    //fullDownloadWf(params.full_metadata.entrySet().each{it -> it.getKey()},dCh.map{it -> it.getValue()})
-    //Channel.from(params.full_metadata.keySet()).view()
-    //uuids = params.full_metadata.keySet()
+    // //fullDownloadWf(params.full_metadata.entrySet().each{it -> it.getKey()},dCh.map{it -> it.getValue()})
+    // //Channel.from(params.full_metadata.keySet()).view() uuids = params.full_metadata.keySet()
 
-    readyRecount.map{it -> tuple(it[0],it[11])}.view()
-    readyMethylation.map{it -> tuple(it[0],it[5])}.view()
+    // // ANALYZE
+    // readyRecount.map{it -> tuple(it[0],it[11])}
+    // readyMethylation.map{it -> tuple(it[0],it[5])}
 
-    //analyzeWf(readyRecount.map{it -> tuple(it[0],it[11])}, readyMethylation.map{it -> tuple(it[0],it[5])})
+    // //analyzeWf(readyRecount.map{it -> tuple(it[0],it[11])}, readyMethylation.map{it -> tuple(it[0],it[5])})
 
 }
+
+
 
 
 workflow {
@@ -149,14 +154,15 @@ workflow {
     // First we copy the configuration files and motd into the resultsDir
     //copyConfigFiles(cf.map($it -> tuple(file($it), $it.getName())))
     //copyConfigFiles(Channel.of(file(workflow.configFiles))).view()
-    saveConfig()
+    //remove comment!!
+    //saveConfig()
 
     // We separate pipelines for downloading data and preparing it.
     // This allows for separate management of raw data and intermediate clean data
-    if (params.pipeline == 'download')
-        downloadWf(
-        )
-    else if (params.pipeline == 'analyze'){
+    if (params.pipeline == 'download'){
+
+    downloadWf()
+    } else if (params.pipeline == 'analyze'){
         data = Channel
                     .fromPath(params.metadata, checkIfExists: true)
                     .splitCsv(header:true)
@@ -169,7 +175,6 @@ workflow {
                     .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
 
         analyzeDragonWf(dataDragon)
-
     } else if (params.pipeline == 'prepare')
         prepareWf()
     else if (params.pipeline == 'dev')

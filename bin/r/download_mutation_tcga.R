@@ -32,7 +32,7 @@ muts <- GDCprepare(query1, directory = directory)
 
 # Adding support to filter the sample list
 # This needs to be done after the GDC prepare because it reads the barcodes
-if (sample_list != " "){
+if (length(sample_list)>3){
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
   print('Submitters')
   print(submitters$V1)
