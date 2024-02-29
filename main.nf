@@ -86,7 +86,7 @@ workflow devWf{
 // }
 
 
-
+// COPY CONFIG FILES
 process copyConfigFiles{
     publishDir "${params.resultsDir}",pattern:"${params.logInfoFile}", mode: 'copy', overwrite: true
     input:
@@ -109,6 +109,7 @@ process copyMotd{
         """
 }
 
+// SAVE CONFIG, copy the motd and the config files into the results directory
 workflow saveConfig {
     mo = copyMotd()
     cf = Channel.from(workflow.configFiles)
@@ -116,7 +117,7 @@ workflow saveConfig {
 }
 
 
-
+// FULL WORKFLOW
 workflow fullWf{
     // DOWNLOAD
     // Data channel, metadata for Download
@@ -152,17 +153,16 @@ workflow fullWf{
 workflow {
 
     // First we copy the configuration files and motd into the resultsDir
-    //copyConfigFiles(cf.map($it -> tuple(file($it), $it.getName())))
-    //copyConfigFiles(Channel.of(file(workflow.configFiles))).view()
-    //remove comment!!
-    //saveConfig()
+    saveConfig()
 
-    // We separate pipelines for downloading data and preparing it.
+    // We separate pipelines for downloading, preparing, analyzing  the data
     // This allows for separate management of raw data and intermediate clean data
+    // Alongside, we have a full pipeline that does all the steps in one go
     if (params.pipeline == 'download'){
-
-    downloadWf()
+        // DOWNLOAD
+        downloadWf()
     } else if (params.pipeline == 'analyze'){
+        // ANALYZE
         data = Channel
                     .fromPath(params.metadata, checkIfExists: true)
                     .splitCsv(header:true)
@@ -176,12 +176,16 @@ workflow {
 
         analyzeDragonWf(dataDragon)
     } else if (params.pipeline == 'prepare')
+        // PREPARE
         prepareWf()
     else if (params.pipeline == 'dev')
+        // This is only for development purposes
         downloadWf()
     else if (params.pipeline == 'full')
+        // FULL PIPELINE
         fullWf()
     else
-        downloadWf()
+        // 
+        error "Error: choose one between download/prepare/analyze/full as pipeline parameter"
         
 }

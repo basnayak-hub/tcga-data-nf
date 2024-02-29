@@ -2,9 +2,19 @@
 FROM mambaorg/micromamba:1.5.1 as micromamba
 
 # This is the image we are going add micromaba to:
-FROM violafanfani/tcga-data-base-r:0.0.3
+FROM violafanfani/tcga-data-base-r:0.0.4
 
 USER root
+
+# adding opencontainer labels to link registry to github repository
+LABEL org.opencontainers.image.title="tcga-data-nf"
+LABEL org.opencontainers.image.description="Workflow to download and prepare TCGA data"
+LABEL org.opencontainers.image.url="https://hub.docker.com/r/violafanfani/tcga-data-nf"
+LABEL org.opencontainers.image.documentation="https://github.com/QuackenbushLab/tcga-data-nf"
+LABEL org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf"
+LABEL org.opencontainers.image.vendor="https://github.com/QuackenbushLab"
+LABEL org.opencontainers.image.authors="Viola Fanfani"
+LABEL org.opencontainers.image.revision="v0.0.11"
 
 # if your image defaults to a non-root user, then you may want to make the
 # next 3 ARG commands match the values in your image. You can get the values
@@ -47,9 +57,9 @@ RUN micromamba install -y -n base -f /tmp/`basename ${CONDA_FILE}` && \
 
 USER root
 
-ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
 RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
-RUN R -e 'BiocManager::install(ask = F)' && R -e 'BiocManager::install(c("org.Hs.eg.db",ask = F))'
 RUN R -e "devtools::install_github('immunogenomics/presto')"
 RUN R -e "devtools::install_github('aet21/EpiSCORE')"
+
+ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
 RUN R -e "devtools::install_local('/opt/NetSciDataCompanion/', force=TRUE, dependencies=T)"
