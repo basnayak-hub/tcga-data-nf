@@ -7,6 +7,7 @@ Workflow to download and prepare TCGA data.
 The workflow divides the process of downloading the data in two steps:
 1. Downloading the raw data from GDC and saving the rds/tables needed later
 2. Preparing the data. This step includes filtering the data, normalizing it... 
+3. Analysis of gene regulatory networks
 
 The idea is that data should be downloaded once, and then prepared for the task at hand.
 
@@ -16,9 +17,18 @@ will be migrated to a public repo and installed from github.
 :warning: GitHub is still not allowing the QuackenbushLab to run actions. The docker image is built and pushed 
 manually.
 
+
+
 ## Running the workflow
 
-### Temporarily (until github actions are working)
+### Docker
+
+The docker container is hosted on docker.io. 
+
+
+```docker pull violafanfani/tcga-data-nf:0.0.12```
+
+### Temporarily (until this is published)
 
 1. Clone the nextflow repo 
    ```bash
@@ -89,6 +99,46 @@ params{
 }
 ```
 
+#### Testing: testDownload
+
+Download testing can be done by specifying the `--profile testDownload`
+parameter. 
+
+The data to be downloaded is specified in the `testdata/download_json.json` file. 
+
+All data will be saved in the `results/test_download` folder. Here is the structure and content one should expect.
+
+```
+.
+├── downloaded_methylation_metadata.csv
+├── downloaded_mutation_metadata.csv
+├── downloaded_recount_metadata.csv
+├── gtex_pancreas
+│   └── recount3
+│       └── gtex_pancreas.rds
+├── tcga_paad
+│   ├── clinical
+│   │   ├── clinical_drug_paad.csv
+│   │   ├── clinical_follow_up_v4.4_nte_paad.csv
+│   │   ├── clinical_follow_up_v4.4_paad.csv
+│   │   ├── clinical_nte_paad.csv
+│   │   ├── clinical_omf_v4.0_paad.csv
+│   │   ├── clinical_patient_paad.csv
+│   │   └── clinical_radiation_paad.csv
+│   ├── methylation
+│   │   ├── tcga_paad_methylation_manifest.txt
+│   │   ├── tcga_paad_methylation_metadata.csv
+│   │   └── tcga_paad_methylations.txt
+│   ├── mutations
+│   │   ├── tcga_paad_mutations.txt
+│   │   ├── tcga_paad_mutations_metadata.csv
+│   │   └── tcga_paad_mutations_pivot.csv
+│   └── recount3
+│       └── tcga_paad.rds
+└── test-log-info.txt
+```
+
+
 ### Prepare
 
 For now, only gene expression data needs to be prepared (harmonized with gtex and normalised).
@@ -104,12 +154,14 @@ and txt files. Counts are normalised, non-expressed genes are removed, samples a
 impure samples.
 
 Preprocessing:
- - Normalization: raw counts can be returned as counts/TPM/logTPM
+ - Normalization: raw counts can be returned as counts/TPM/logTPM/CPM/logCPM
  - Min TPM and frac samples: only genes that have at least a min tpm value in a fraction of the samples are kept. This allows to remove genes that are never expressed
   - purity threshold: cancer samples are filtered based on the purity score
   - Tissue types: separate files can be returned of specific samples. One can pass a specific tissue type, as specified
     by the TCGA GDC conventions (like "Primary Solid Tumor") or one of all/tumor/normal that return either all samples,
     tumor only samples, normal only samples, ignoring the details of the tumor/normal type/.
+
+
 
 
 ### Full

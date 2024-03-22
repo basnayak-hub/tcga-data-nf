@@ -101,7 +101,7 @@ process downloadMethylation{
         """
         touch "${uuid}_methylation_manifest.txt"
         touch "${uuid}_methylations.txt"
-        touch "${uuid}_methylation_metadata"
+        touch "${uuid}_methylation_metadata.csv"
         """
 
 

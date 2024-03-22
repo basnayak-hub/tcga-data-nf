@@ -27,9 +27,10 @@ def merge_tables(output_table, tables):
     df = pd.read_csv(tables.split(',')[0])
     for ts in tables.split(',')[1:]:
         temp = pd.read_csv(ts)
-        df = pd.concat([df,temp])
+        df = pd.concat([df,temp], axis = 0)
     
-    df.to_csv(output_table)
+    # Saving without index
+    df.to_csv(output_table, index=False)
 
 
 

@@ -1,7 +1,7 @@
 { 
 "expression_recount3": {
-      "tcga_luad": {
-              "project": "LUAD",
+      "tcga_paad": {
+              "project": "PAAD",
               "project_home" : "data_sources/tcga",
               "organism" : "human",
               "annotation" : "gencode_v26",
@@ -18,23 +18,23 @@
                 }
       },
       "mutation_tcgabiolinks":{
-        "tcga_luad":{
-              "project" : "TCGA-LUAD",
+        "tcga_paad":{
+              "project" : "TCGA-PAAD",
               "data_category" : "Simple Nucleotide Variation",
               "data_type" : "Masked Somatic Mutation",
               "download_dir" : "gdc_tcga_mutation",
               "samples" : "NA"
             }},
       "clinical_tcgabiolinks": {
-        "tcga_luad":{
-              "project" : "TCGA-LUAD",
+        "tcga_paad":{
+              "project" : "TCGA-PAAD",
               "data_category" : "Clinical",
               "data_type" : "Clinical Supplement",
               "data_format" : "BCR Biotab"
               }},
       "methylation_gdc":{
-        "tcga_luad":{
-              "project" : "TCGA-LUAD",
+        "tcga_paad":{
+              "project" : "TCGA-PAAD",
               "gdc_type" : "methylation_beta_value",
               "gdc_platform" : "illumina human methylation 450",
               "download_dir" : "gdc_tcga_methylation",

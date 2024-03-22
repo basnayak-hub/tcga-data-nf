@@ -65,8 +65,8 @@ process prepareGTEXRecount{
 }
 
 process GetGeneLevelPromoterMethylation {
-
-    publishDir "${params.resultsDir}/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_raw.*",  overwrite: true
+    
+    publishDir "${params.resultsDir}/methylation/${uuid}/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_raw.*",  overwrite: true
 
     // input: path to file of probes (rows) x samples (columns)
     // assume local for starters 
@@ -89,7 +89,7 @@ process GetGeneLevelPromoterMethylation {
 
 process CleanMethylationData {
 
-    publishDir "${params.resultsDir}/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}.*",  overwrite: true
+    publishDir "${params.resultsDir}/methylation/${uuid}/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}.*",  overwrite: true
 
     input:
 	tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType)
@@ -109,7 +109,7 @@ workflow prepareRecountWf{
     take:
         prepareRecountCh
     main:
-
+    
     // Tissues channel
     channelTissues = Channel.from(params.tissues.entrySet())
                                         .map{
@@ -117,8 +117,9 @@ workflow prepareRecountWf{
                                                 item.getKey(),
                                                 item.getValue()
                                             )
-                                        }.transpose()
+                                        }.transpose().view()
     // Batch correction channel
+
     channelBatchCorrection = Channel.from(params.batch_correction.entrySet())
                                         .map{
                                             item -> tuple(
@@ -172,28 +173,30 @@ workflow prepareMethylationWf{
 workflow prepareWf{
     main:
 
+    // Prepare Recount
     if (params.recount.metadata_prepare!='') {
+        println('Recount Channel')
+        println(params.recount.metadata_prepare)
+        // Data channel
+        prepareRecountCh = Channel
+                    .fromPath( params.recount.metadata_prepare)
+                    .splitCsv( header: true)
+                    .map { row -> tuple( row.uuid,row.project, file(row.output_rds)) }.view()
 
-    // Data channel
-    prepareRecountCh = Channel
-                .fromPath( params.recount.metadata_prepare)
-                .splitCsv( header: true)
-                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_expression_file)) }.view()
+        prepareRecountWf(prepareRecountCh)
 
-    prepareRecountWf(prepareRecountCh)
-
-    //prepareTCGARecount(prepareCh)
+        //prepareTCGARecount(prepareCh)
     }
-
+    // Prepare Methylation
     if (params.methylation.metadata_prepare!=''){    
     // Data channel
+    println('Methylation Channel')
     println(params.methylation.metadata_prepare)
     
-    println('Methylation Channel')
     prepareMethylationCh = Channel
                 .fromPath( params.methylation.metadata_prepare)
                 .splitCsv( header: true)
-                .map { row -> tuple( row.tcga_uuid,row.tcga_project, file(row.tcga_methylation_file) ) }.view()
+                .map { row -> tuple( row.uuid,row.project, file(row.methylation_table) ) }.view()
 
 
     // channelTissues = Channel.from(params.tissues.entrySet())

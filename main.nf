@@ -186,6 +186,6 @@ workflow {
         fullWf()
     else
         // 
-        error "Error: choose one between download/prepare/analyze/full as pipeline parameter"
+        error "Error: this pipeline name doesn't exist. \nChoose one between download/prepare/analyze/full as pipeline parameter"
         
 }
