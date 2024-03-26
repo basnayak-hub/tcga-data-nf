@@ -162,6 +162,8 @@ Preprocessing:
     tumor only samples, normal only samples, ignoring the details of the tumor/normal type/.
 
 
+### Analyze
+
 
 
 ### Full
@@ -203,7 +205,6 @@ params{
 }
 
 
-
 ## Results
 
 - `results/analysis.txt`: file with the analysis results.
@@ -216,3 +217,4 @@ params{
 - Viola Fanfani
 - Panagiotis Mandros
 - Enakshi Saha
+- Jonas Fischer

@@ -11,12 +11,12 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/panda/",  pattern: 
     output:
         tuple val(uuid), path(expression), path("panda_${uuid}.txt"), path("panda_${uuid}.log")
     
-    shell:
-        '''
-            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' > !{uuid}.nodot.txt;
+    script:
+        """
+            ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
             which netzoopy;
-            netzoopy panda -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -o panda_!{uuid}.txt !{params.zoo.panda} > panda_!{uuid}.log
-        '''
+            netzoopy panda -e ${uuid}.nodot.txt -m "${params.zoo.motif}" -p ${params.zoo.ppi} -o panda_${uuid}.txt ${params.zoo.panda} > panda_${uuid}.log
+        """
 
     stub:
         """
@@ -38,11 +38,11 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/panda_lioness/",  p
     output:
         tuple val(uuid), path(expression), path("panda.txt"), path("lioness/", type:'dir')
     
-    shell:
-        '''
-            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' > !{uuid}.nodot.txt;
-            netzoopy lioness -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -op panda.txt -ol lioness/ !{params.zoo.panda_lioness} > panda_lioness_!{uuid}.log
-        '''
+    script:
+        """
+            ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
+            netzoopy lioness -e ${uuid}.nodot.txt -m ${params.zoo.motif} -p ${params.zoo.ppi} -op panda.txt -ol lioness/ ${params.zoo.panda_lioness} > panda_lioness_${uuid}.log
+        """
     stub:
         """
         touch "${uuid}.nodot.txt"
@@ -192,14 +192,14 @@ workflow LionessPandaTCGAWf {
 
     take:data
     main:
+    //motif = channel.fromPath("${params.zoo.motif}")
+    //ppi = channel.fromPath("${params.zoo.ppi}")
     lio = runTCGALioness(data)
     //lio.take(3).view()
     //runTCGAPandaExplore(lio.take(3))
     //runTCGALionessExplore(lio)
 
 }
-
-
 
 workflow LionessOtterTCGAWf {
 
@@ -239,7 +239,6 @@ workflow analyzeExpressionWf{
     // Data channel
     // format uuid, file(network)
 
-    
 
     zooAnimals = Channel.from(params.zoo.animals)
 
@@ -247,16 +246,14 @@ workflow analyzeExpressionWf{
                     panda: it[-1] == 'panda'
                     pandalioness: it[-1] == 'panda_lioness'
                     //otter: it[-1] == 'otter'
-                    otterlioness: it[-1] == 'otter_lioness'    
+                    //otterlioness: it[-1] == 'otter_lioness'    
                 }.set { zooAnalysisCh }
 
     PandaTCGAWf(zooAnalysisCh.panda)
 
     LionessPandaTCGAWf(zooAnalysisCh.pandalioness)
 
-    LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
-
-    //DragonTCGAWf()
+    //LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
 
 }
 
@@ -274,6 +271,5 @@ workflow analyzeDragonWf{
 
     DragonTCGAWf(zooAnalysisCh.dragon)
     DragonLionessTCGAWf(zooAnalysisCh.dragonlioness)
-
 
 }

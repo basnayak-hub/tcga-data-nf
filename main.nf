@@ -155,6 +155,8 @@ workflow {
     // First we copy the configuration files and motd into the resultsDir
     saveConfig()
 
+    println "Pipeline: ${params.pipeline}"
+
     // We separate pipelines for downloading, preparing, analyzing  the data
     // This allows for separate management of raw data and intermediate clean data
     // Alongside, we have a full pipeline that does all the steps in one go
@@ -164,15 +166,15 @@ workflow {
     } else if (params.pipeline == 'analyze'){
         // ANALYZE
         data = Channel
-                    .fromPath(params.metadata, checkIfExists: true)
+                    .fromPath(params.metadata_expression, checkIfExists: true)
                     .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.expression}"))}
+                    .map { row -> tuple(row.uuid, file("${row.expression}"))}.view()
 
         analyzeExpressionWf(data)
         dataDragon = Channel
                     .fromPath(params.metadata_dragon, checkIfExists: true)
                     .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
+                    .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}.view()
 
         analyzeDragonWf(dataDragon)
     } else if (params.pipeline == 'prepare')

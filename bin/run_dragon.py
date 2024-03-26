@@ -8,6 +8,7 @@ import click
 import pandas as pd
 import yaml
 from netZooPy.lioness.lioness_for_dragon import LionessDragon
+from netZooPy.dragon.dragon import remove_zero_variance_preds
 
 @click.group()
 def cli():
@@ -63,11 +64,26 @@ def dragon(meth_file, expr_file, input_dragon, output_dragon, methylation_barcod
     expr = expr.add_suffix('_expression')
     expr = expr.rename(index=str, columns={'TCGAbarcode_expression':'TCGAbarcode'})
 
+
     # which ids are in both?                                                                   
-    all_data = pd.merge(meth,expr,on="TCGAbarcode",how="inner")
-    all_data.set_index(all_data["TCGAbarcode"])
+    #all_data = pd.merge(meth,expr,on="TCGAbarcode",how="inner")
+    #all_data.set_index(all_data["TCGAbarcode"], inplace = True, drop=True)
+    
+    all_data = meth.merge(expr, on = 'TCGAbarcode', how = 'inner').set_index('TCGAbarcode')
+    
+
+    # Need to check variance
+    layer_vars = all_data.var( axis = 0)
+    if np.any(layer_vars.values == 0):
+        print('Removing zero variance predictors')
+        layer_mask = layer_vars[layer_vars == 0].index.tolist()
+        print('There are %d zero variance columns out of %d columns' %(len(layer_mask), len(all_data.columns)))
+        print('These are the zero variance columns: %s' %layer_mask)
+        all_data = all_data.loc[:,~all_data.columns.isin(layer_mask)]
+
 
     print('Writing all data to disk')
+    print('Data Shape:')
     print(all_data.shape)
     all_data.to_csv(input_dragon,sep="\t")
 
@@ -87,10 +103,6 @@ def dragon(meth_file, expr_file, input_dragon, output_dragon, methylation_barcod
     except np.linalg.LinAlgError:
         print('Matrix is singular, skipping this one')
         r = np.zeros((len(newnames), len(newnames)))
-
-    #out_dir_long = out_dir
-    #if not os.path.exists(out_dir_long):
-    #    os.mkdir(out_dir_long)
 
     df = pd.DataFrame(r,columns=newnames,index=newnames)
 
@@ -133,32 +145,34 @@ def dragon(meth_file, expr_file, input_dragon, output_dragon, methylation_barcod
 def lioness_dragon(meth_file, expr_file, output_dir, barcode='TCGAbarcode'):
     """Run dragon"""
 
-    #meth_file = sys.argv[1]
-    #expr_file = sys.argv[2]
-    #out_dir = sys.argv[3]
-    #uuid = sys.argv[4]
-
+    # Read methylation data
     aaa = pd.read_csv(meth_file,sep=',', header=0,index_col=0)
-    
+    # Read expression data
     bbb = pd.read_csv(expr_file,sep=',',header=0,index_col=0)
     
-    print(aaa.loc[:,'TCGAbarcode'])
-    print(bbb.loc[:,'TCGAbarcode'])
-
-    print(aaa.columns.tolist())
-    print(bbb.columns.tolist())
-    
+    # Add suffixes to the column names and merge tables
     aaa = aaa.add_suffix('_meth')
-    print(aaa.head())
     aaa = aaa.rename(index=str, columns={'TCGAbarcode_meth':'TCGAbarcode'})
-
 
     bbb = bbb.add_suffix('_expr')
     bbb = bbb.rename(index=str, columns={'TCGAbarcode_expr':'TCGAbarcode'})
-    
+    # merge data
     all_data = aaa.merge(bbb, on = 'TCGAbarcode', how = 'inner').set_index('TCGAbarcode')
+    
+    # Need to check variance
+    layer_vars = all_data.var( axis = 0)
+    if np.any(layer_vars.values == 0):
+        print('Removing zero variance predictors')
+        layer_mask = layer_vars[layer_vars == 0].index.tolist()
+        print('There are %d zero variance columns out of %d columns' %(len(layer_mask), len(all_data.columns)))
+        print('These are the zero variance columns: %s' %layer_mask)
+        all_data = all_data.loc[:,~all_data.columns.isin(layer_mask)]
+
 
     print("Running LIONESS-DRAGON for\n - methylation: %s\n - expression: %s" %(meth_file,expr_file))
+
+    print('Data head')
+    print(all_data.head())
 
     try: 
         s = LionessDragon(all_data = all_data, output_dir = output_dir, merge_col =  "TCGAbarcode",ext1 = "_meth",ext2="_expr")
