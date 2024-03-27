@@ -51,7 +51,7 @@ workflow devWf{
                                             item.getValue().gdc_platform,
                                             item.getValue().download_dir,
                                         )
-                                    }.view()
+                                    }
 
             dme = downloadMethylationWf(channelMethylation)
             mergeMethylationMetadata(dme.map{it -> it[-1]}.collect())
@@ -62,28 +62,6 @@ workflow devWf{
             downloadRecount3Wf(params.download_metadata.expression_recount3)
     }
 }
-
-// worflow analyzeDragonWf {
-//     RunLionessDragon(methylation, expression)
-// }
-
-// workflow methylationWf{
-
-//     // Channel for cancer names
-//     channelPancancer = Channel.from(params.pancancer_ids.entrySet())
-//         .map{
-//              item -> tuple(
-//                 item.getKey(),
-//              item.getValue().project,
-// 	     item.getValue().tissueType)
-//              }.view()
-	     
-
-//     x = DownloadMethylation(channelPancancer) | FilterTissueType | GetGeneLevelPromoterMethylation | CleanMethylationData
-//     y = DownloadExpression(channelPancancer) | GetGeneExpression
-//     z = x.join(y)
-//     RunLionessDragon(z) | UploadLionessDragons | CleanupLionessDragons
-// }
 
 
 // COPY CONFIG FILES
@@ -121,29 +99,35 @@ workflow saveConfig {
 workflow fullWf{
     // DOWNLOAD
     // Data channel, metadata for Download
-    dCh = Channel.fromPath(params.full_metadata).splitJson().view()
+    dCh = Channel.fromPath(params.full_metadata).splitJson()
 
     //dCh.map{it -> it.value.keySet()}.toString()
-    fullDownloadWf(dCh)
-    // // Full download
-    //fullDownCh = fullDownloadWf(dCh)
+    //fullDownloadWf(dCh)
+    
+    // Full download
+    fullDownCh = fullDownloadWf(dCh)
 
-    // // PREPARE  (prepare expression and methylation)
-    // // Recount prepare (from fullDownCh.dr)
-    // fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}
-    // readyRecount = prepareRecountWf(fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7])})
-    // // Methylation prepare (from fullDownCh.dme)
-    // fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}
-    // readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
+    // PREPARE  (prepare expression and methylation)
+    // Recount prepare (from fullDownCh.dr)
+    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}
+    readyRecount = prepareRecountWf(fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7])})
+    
+    // Methylation prepare (from fullDownCh.dme)
+    fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}
+    readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
 
     // //fullDownloadWf(params.full_metadata.entrySet().each{it -> it.getKey()},dCh.map{it -> it.getValue()})
-    // //Channel.from(params.full_metadata.keySet()).view() uuids = params.full_metadata.keySet()
+    // //Channel.from(params.full_metadata.keySet()) uuids = params.full_metadata.keySet()
 
-    // // ANALYZE
-    // readyRecount.map{it -> tuple(it[0],it[11])}
-    // readyMethylation.map{it -> tuple(it[0],it[5])}
+    // ANALYZE
+    
+    readyRecount.map{it -> tuple(it[0],it[11])}
+    readyMethylation.map{it -> tuple(it[0],it[5])}
 
-    // //analyzeWf(readyRecount.map{it -> tuple(it[0],it[11])}, readyMethylation.map{it -> tuple(it[0],it[5])})
+    analyzeExpressionWf(readyRecount.map{it -> tuple(it[0],it[11])})
+
+    methCh = readyMethylation.map{it -> tuple(it[0],it[5])}.combine(readyRecount.map{it -> tuple(it[0],it[10])}, by:0)
+    analyzeDragonWf(methCh) 
 
 }
 
@@ -168,13 +152,13 @@ workflow {
         data = Channel
                     .fromPath(params.metadata_expression, checkIfExists: true)
                     .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.expression}"))}.view()
+                    .map { row -> tuple(row.uuid, file("${row.expression}"))}
 
         analyzeExpressionWf(data)
         dataDragon = Channel
                     .fromPath(params.metadata_dragon, checkIfExists: true)
                     .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}.view()
+                    .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
 
         analyzeDragonWf(dataDragon)
     } else if (params.pipeline == 'prepare')

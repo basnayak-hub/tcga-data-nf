@@ -8,14 +8,14 @@ process downloadRecount{
         tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), val(samples) ,file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
     script:
         """
-            Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_download.log";
+            Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
             echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
             echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${uuid}/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
         """
     stub:
         """
-        touch "${uuid}_recount3_metatada.csv"
         touch "${uuid}.rds"
+        touch "${uuid}_recount3_metatada.csv"
         """
 }
 
@@ -362,16 +362,16 @@ workflow fullDownloadWf{
             dmu = downloadMutationsWf(dChMu)
         //}
 
-        // // DOWNLOAD METHYLATION
-        // if (dataCh.map{it -> it.value.keySet()}.contains('methylation_gdc')){
-        //     dChMe = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('methylation_gdc').project,
-        //                                         it.value.get('methylation_gdc').gdc_type,
-        //                                         it.value.get('methylation_gdc').gdc_platform,
-        //                                         it.value.get('methylation_gdc').download_dir,
-        //                                         it.value.get('methylation_gdc').samples)
-        //                                         }.view()
+        // DOWNLOAD METHYLATION
+        //if (dataCh.map{it -> it.value.keySet()}.contains('methylation_gdc')){
+            dChMe = dataCh.map{it -> tuple(
+                                                it.key,
+                                                it.value.get('methylation_gdc').project,
+                                                it.value.get('methylation_gdc').gdc_type,
+                                                it.value.get('methylation_gdc').gdc_platform,
+                                                it.value.get('methylation_gdc').download_dir,
+                                                it.value.get('methylation_gdc').samples)
+                                                }.view()
         //     //dChMe = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.methylation_gdc.project))
         //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.gdc_type))
         //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.gdc_platform))
@@ -379,8 +379,8 @@ workflow fullDownloadWf{
         //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.samples)).view()
         //     // dr is the download recount channel
         //     // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
-        //     dme = downloadMethylationWf(dChMe)
-        // }
+        dme = downloadMethylationWf(dChMe)
+        //}
 
         // // DOWNLOAD CLINICAL
         // if (dataCh.map{it -> it.value.keySet()}.contains('clinical_tcgabiolinks')){

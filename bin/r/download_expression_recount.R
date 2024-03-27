@@ -36,13 +36,14 @@ print(dim(recount_data@colData))
 print('Expression Data has shape (genes X samples):')
 print(dim(recount_data))
 
+print(nchar(sample_list))
+print(sample_list)
 
 # Adding support to filter the sample list
-if (length(sample_list)>3){
+if (nchar(sample_list)>3){
+  print('Filtering only samples in the sample list...')
   ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
-  print(submitters$V1)
-  print(ong$extractVialOnly(recount_data$tcga.tcga_barcode))
   recount_data = recount_data[,ong$extractSampleAndTypeAndVial(recount_data$tcga.tcga_barcode) %in% submitters$V1]
 
   print('Data have been filtered by sample list...')
