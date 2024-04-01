@@ -215,71 +215,13 @@ params{
 
 ## Results
 
-### Full 
+Below is the structure you can expect in the output folder when you run each pipeline. 
 
-
-Here is an example of the output of the full test.
-`tcga_luad` is the uuid of the run , hence inside the `tcga_luad` folder you'll find all relevant files
-divided in `data_download`, `data_prepare`, `analysis` folders, that correspond to the steps of the pipeline
-
-
-```bash
-results/test_full
-├── downloaded_methylation_metadata.csv
-├── downloaded_mutation_metadata.csv
-├── downloaded_recount_metadata.csv
-└── tcga_luad
-    ├── analysis
-    │   ├── dragon
-    │   │   ├── tcga_luad_dragon.log
-    │   │   ├── tcga_luad_dragon_filtered_expression.csv
-    │   │   ├── tcga_luad_dragon_input.tsv
-    │   │   └── tcga_luad_dragon_mat.tsv
-    │   ├── lioness_dragon
-    │   │   ├── lioness_dragon
-    │   │   ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
-    │   │   ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
-    │   │   ├── tcga_luad_lioness_dragon.log
-    │   │   └── tcga_luad_tf_promoter_methylation_clean_all.csv
-    │   └── panda
-    │       ├── panda_tcga_luad.log
-    │       └── panda_tcga_luad.txt
-    ├── data_download
-    │   ├── clinical
-    │   │   ├── clinical_drug_luad.csv
-    │   │   ├── clinical_follow_up_v1.0_luad.csv
-    │   │   ├── clinical_nte_luad.csv
-    │   │   ├── clinical_omf_v4.0_luad.csv
-    │   │   ├── clinical_patient_luad.csv
-    │   │   └── clinical_radiation_luad.csv
-    │   ├── methylation
-    │   │   ├── tcga_luad_methylation_manifest.txt
-    │   │   ├── tcga_luad_methylation_metadata.csv
-    │   │   └── tcga_luad_methylations.txt
-    │   ├── mutations
-    │   │   ├── tcga_luad_mutations.txt
-    │   │   ├── tcga_luad_mutations_metadata.csv
-    │   │   └── tcga_luad_mutations_pivot.csv
-    │   └── recount3
-    │       └── tcga_luad.rds
-    └── data_prepared
-        ├── methylation
-        │   ├── tcga_luad_tf_promoter_methylation_clean_all.csv
-        │   ├── tcga_luad_tf_promoter_methylation_clean_all.log
-        │   └── tcga_luad_tf_promoter_methylation_raw.csv
-        └── recount3
-            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.log
-            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
-            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.txt
-            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.log
-            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
-            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.txt
-            ├── recount3_pca_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.png
-            └── recount3_pca_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.png
-
-20 directories, 47 files
-```
-
+For each case we report the output of the testing profile:
+- download pipeline: `-profile testDownload`
+- prepare pipeline: `-profile testPrepare`
+- analyze pipeline: `-profile testAnalyze`
+- full pipeline: `-profile test`
 
 ### Download
 
@@ -320,7 +262,187 @@ results/test_download
 
 ### Prepare
 
+
+This would be the output when you run the `-profile testPrepare` test case
+
+```bash
+results/test_prepare
+└── tcga_paad
+    └── data_prepared
+        ├── methylation
+        │   ├── tcga_paad_tf_promoter_methylation_clean_all.log
+        │   └── tcga_paad_tf_promoter_methylation_raw.csv
+        └── recount3
+            ├── recount3_pca_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.png
+            ├── recount3_pca_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.png
+            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.log
+            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.rds
+            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.txt
+            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.log
+            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.rds
+            └── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.txt
+
+```
+
 ### Analyze
+
+This would be the output when you run the `-profile testAnalyze` test case
+
+```bash
+results/test_analyze
+└── tcga_paad
+    └── analysis
+        ├── dragon
+        │   ├── tcga_paad_dragon.log
+        │   ├── tcga_paad_dragon_filtered_expression.csv
+        │   ├── tcga_paad_dragon_input.tsv
+        │   └── tcga_paad_dragon_mat.tsv
+        ├── lioness_dragon
+        │   ├── lioness_dragon
+        │   │   ├── lioness-dragon-TCGA-2L-AAQL-01A.csv
+        │   │   ├── lioness-dragon-TCGA-HV-A5A3-11A.csv
+        │   │   ├── lioness-dragon-TCGA-HV-A7OP-01A.csv
+        │   │   ├── lioness-dragon-TCGA-IB-A5ST-01A.csv
+        │   │   ├── lioness-dragon-TCGA-US-A779-01A.csv
+        │   │   └── lioness-dragon-TCGA-YB-A89D-11A.csv
+        │   ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull_shuffle.rds
+        │   ├── tcga_paad_lioness_dragon.log
+        │   ├── tcga_paad_tf_promoter_methylation_clean.csv
+        │   └── tcga_paad_tf_promoter_methylation_clean_shuffle.csv
+        ├── panda
+        │   ├── panda_tcga_paad.log
+        │   └── panda_tcga_paad.txt
+        └── panda_lioness
+            ├── lioness
+            │   ├── lioness.TCGA-2L-AAQL-01A-11R-A38C-07.4.h5
+            ...
+            └── panda.txt
+```
+
+### Full 
+
+
+Here is an example of the output of the full test.
+`tcga_luad` is the uuid of the run , hence inside the `tcga_luad` folder you'll find all relevant files
+divided in `data_download`, `data_prepare`, `analysis` folders, that correspond to the steps of the pipeline
+
+Here the general out structure. Below we have the full expected output
+
+```bash
+results/test_full
+├── analysis
+│   ├── dragon
+│   ├── lioness_dragon
+│   │   └── lioness_dragon
+│   └── panda
+└── tcga_luad
+    ├── analysis
+    │   ├── dragon
+    │   ├── lioness_dragon
+    │   │   └── lioness_dragon
+    │   ├── panda
+    │   └── panda_lioness
+    │       └── lioness
+    ├── data_download
+    │   ├── clinical
+    │   ├── methylation
+    │   ├── mutations
+    │   └── recount3
+    └── data_prepared
+        ├── methylation
+        └── recount3
+```
+
+Complete output folder:
+
+```bash
+results/test_full
+├── analysis
+│   ├── dragon
+│   │   ├── tcga_luad_dragon.log
+│   │   ├── tcga_luad_dragon_filtered_expression.csv
+│   │   ├── tcga_luad_dragon_input.tsv
+│   │   └── tcga_luad_dragon_mat.tsv
+│   ├── lioness_dragon
+│   │   ├── lioness_dragon
+│   │   ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+│   │   ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+│   │   ├── tcga_luad_lioness_dragon.log
+│   │   └── tcga_luad_tf_promoter_methylation_clean_all.csv
+│   └── panda
+│       ├── panda_tcga_luad.log
+│       └── panda_tcga_luad.txt
+├── downloaded_methylation_metadata.csv
+├── downloaded_mutation_metadata.csv
+├── downloaded_recount_metadata.csv
+└── tcga_luad
+    ├── analysis
+    │   ├── dragon
+    │   │   ├── tcga_luad_dragon.log
+    │   │   ├── tcga_luad_dragon_filtered_expression.csv
+    │   │   ├── tcga_luad_dragon_input.tsv
+    │   │   └── tcga_luad_dragon_mat.tsv
+    │   ├── lioness_dragon
+    │   │   ├── lioness_dragon
+    │   │   │   ├── lioness-dragon-TCGA-38-4632-01A.csv
+    │   │   │   └── lioness-dragon-TCGA-78-7155-01A.csv
+    │   │   ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+    │   │   ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+    │   │   ├── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+    │   │   ├── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+    │   │   ├── tcga_luad_lioness_dragon.log
+    │   │   └── tcga_luad_tf_promoter_methylation_clean_all.csv
+    │   ├── panda
+    │   │   ├── panda_tcga_luad.log
+    │   │   └── panda_tcga_luad.txt
+    │   └── panda_lioness
+    │       ├── lioness
+    │       │   ├── lioness.TCGA-38-4632-01A-01R-1755-07.3.h5
+    │       │   ├── lioness.TCGA-64-5779-01A-01R-1628-07.1.h5
+    │       │   ├── lioness.TCGA-69-A59K-01A-11R-A262-07.0.h5
+    │       │   └── lioness.TCGA-78-7155-01A-11R-2039-07.2.h5
+    │       └── panda.txt
+    ├── data_download
+    │   ├── clinical
+    │   │   ├── clinical_drug_luad.csv
+    │   │   ├── clinical_follow_up_v1.0_luad.csv
+    │   │   ├── clinical_nte_luad.csv
+    │   │   ├── clinical_omf_v4.0_luad.csv
+    │   │   ├── clinical_patient_luad.csv
+    │   │   └── clinical_radiation_luad.csv
+    │   ├── methylation
+    │   │   ├── tcga_luad_methylation_manifest.txt
+    │   │   ├── tcga_luad_methylation_metadata.csv
+    │   │   └── tcga_luad_methylations.txt
+    │   ├── mutations
+    │   │   ├── tcga_luad_mutations.txt
+    │   │   ├── tcga_luad_mutations_metadata.csv
+    │   │   └── tcga_luad_mutations_pivot.csv
+    │   └── recount3
+    │       └── tcga_luad.rds
+    └── data_prepared
+        ├── methylation
+        │   ├── tcga_luad_tf_promoter_methylation_clean_all.csv
+        │   ├── tcga_luad_tf_promoter_methylation_clean_all.log
+        │   └── tcga_luad_tf_promoter_methylation_raw.csv
+        └── recount3
+            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.log
+            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.txt
+            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.log
+            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+            ├── recount3_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.txt
+            ├── recount3_pca_LUAD_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.png
+            ├── recount3_pca_LUAD_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.png
+            ├── recount3_pca_tcga_luad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.png
+            ├── recount3_pca_tcga_luad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.png
+            ├── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.log
+            ├── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+            ├── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.txt
+            ├── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.log
+            ├── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.rds
+            └── recount3_tcga_luad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchtcgagdcplatform_adjtcgagdcplatform.txt
+```
 
 
 ## Authors
