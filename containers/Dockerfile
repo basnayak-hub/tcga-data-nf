@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.documentation="https://github.com/QuackenbushLab/
 LABEL org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf"
 LABEL org.opencontainers.image.vendor="https://github.com/QuackenbushLab"
 LABEL org.opencontainers.image.authors="Viola Fanfani"
-LABEL org.opencontainers.image.revision="v0.0.12"
+LABEL org.opencontainers.image.revision="v0.0.13"
 
 # if your image defaults to a non-root user, then you may want to make the
 # next 3 ARG commands match the values in your image. You can get the values
