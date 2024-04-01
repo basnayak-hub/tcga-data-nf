@@ -8,7 +8,7 @@ import click
 import pandas as pd
 import yaml
 from netZooPy.lioness.lioness_for_dragon import LionessDragon
-from netZooPy.dragon.dragon import remove_zero_variance_preds
+from netZooPy.dragon.dragon import remove_zero_variance_preds, get_shrunken_covariance_dragon
 
 @click.group()
 def cli():
@@ -159,6 +159,7 @@ def lioness_dragon(meth_file, expr_file, output_dir, barcode='TCGAbarcode'):
     # merge data
     all_data = aaa.merge(bbb, on = 'TCGAbarcode', how = 'inner').set_index('TCGAbarcode')
     
+    
     # Need to check variance
     layer_vars = all_data.var( axis = 0)
     if np.any(layer_vars.values == 0):
@@ -168,11 +169,12 @@ def lioness_dragon(meth_file, expr_file, output_dir, barcode='TCGAbarcode'):
         print('These are the zero variance columns: %s' %layer_mask)
         all_data = all_data.loc[:,~all_data.columns.isin(layer_mask)]
 
-
+    
     print("Running LIONESS-DRAGON for\n - methylation: %s\n - expression: %s" %(meth_file,expr_file))
 
     print('Data head')
     print(all_data.head())
+    
 
     try: 
         s = LionessDragon(all_data = all_data, output_dir = output_dir, merge_col =  "TCGAbarcode",ext1 = "_meth",ext2="_expr")
@@ -180,7 +182,12 @@ def lioness_dragon(meth_file, expr_file, output_dir, barcode='TCGAbarcode'):
     except np.linalg.LinAlgError:
         print('ERROR: Matrix is singular, skipping this one')
         os.mkdir(output_dir)
-    
+    except Exception as err:
+        print(err)
+        print('ERROR: one column has variance zero, skipping this one')
+        #os.mkdir(output_dir)
+            
+
 cli.add_command(dragon)
 cli.add_command(lioness_dragon)
 
