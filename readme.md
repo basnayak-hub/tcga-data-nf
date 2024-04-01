@@ -330,11 +330,6 @@ Here the general out structure. Below we have the full expected output
 
 ```bash
 results/test_full
-├── analysis
-│   ├── dragon
-│   ├── lioness_dragon
-│   │   └── lioness_dragon
-│   └── panda
 └── tcga_luad
     ├── analysis
     │   ├── dragon
