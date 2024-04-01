@@ -73,7 +73,7 @@ dim(ge_manifest)
 head(ge_manifest)
 
 # Adding support to filter the sample list
-if (length(opt$sample_list)>3){
+if (nchar(opt$sample_list)>3){
   ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
   submitters = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
   print(submitters$V1)
@@ -92,9 +92,9 @@ outstring = paste(c("probeID",ge_manifest$id),collapse=" ") # delimiter is " " t
 write.table(outstring, file = header_outpath,row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 fullpath_list = list()
-#for(i in 1:nrow(ge_manifest)){
+for(i in 1:nrow(ge_manifest)){
 # uncomment the line below for development
-for(i in 1:3){
+#for(i in 1:3){
       options(warn=2)
       print(paste("Processing file:",i))
       

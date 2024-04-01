@@ -36,9 +36,7 @@ betaToM = function(beta)
 cleanMethylationData = function(meth_df, npn=T, mval=F) # meth_df is a data frame of beta means, 
 # rows=samples, first column=sample ids,  cols=genes
 {
-  meth_dfWhole = meth_df#removeMissing(meth_df,thres = 0.000000000000000000001)
-  print(head(meth_df))
-  print(head(meth_dfWhole))
+  meth_dfWhole = removeMissing(meth_df,thres = 0.2)
   # skip anything w/more than 0.2 missing
   
   meth_dfComplete = meth_dfWhole

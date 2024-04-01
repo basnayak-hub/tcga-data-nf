@@ -1,3 +1,0 @@
-uuid,project,project_home,organism,annotation,type,samples,output_rds
-tcga_paad,PAAD,data_sources/tcga,human,gencode_v26,gene,,results/download_test/tcga_paad/recount3/tcga_paad.rds
-gtex_pancreas,PANCREAS,data_sources/gtex,human,gencode_v26,gene,,results/download_test/gtex_pancreas/recount3/gtex_pancreas.rds

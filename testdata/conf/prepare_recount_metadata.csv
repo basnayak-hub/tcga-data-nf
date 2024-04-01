@@ -1,0 +1,2 @@
+uuid,project,project_home,organism,annotation,type,samples,output_rds
+tcga_paad,PAAD,data_sources/tcga,human,gencode_v26,gene,tcga_paad_samples.txt,testdata/tcga_test/tcga_paad_shuffled.rds

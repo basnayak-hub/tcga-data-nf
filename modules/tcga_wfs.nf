@@ -3,7 +3,7 @@ process runTCGAPanda {
 
 //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/panda/",  pattern: 'panda*', mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda/",  pattern: 'panda*', mode: 'copy'
 
     input:
         tuple val(uuid), path(expression)
@@ -14,7 +14,6 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/panda/",  pattern: 
     script:
         """
             ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
-            which netzoopy;
             netzoopy panda -e ${uuid}.nodot.txt -m "${params.zoo.motif}" -p ${params.zoo.ppi} -o panda_${uuid}.txt ${params.zoo.panda} > panda_${uuid}.log
         """
 
@@ -30,7 +29,7 @@ process runTCGALioness {
 //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/panda_lioness/",  pattern: '{panda,lioness}*', mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda_lioness/",  pattern: '{panda,lioness}*', mode: 'copy'
 
     input:
         tuple val(uuid), path(expression)
@@ -57,7 +56,7 @@ process runTCGAOtterLioness {
 
 //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/otter_lioness/", mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/otter_lioness/", mode: 'copy'
 
     input:
         tuple val(uuid), path(expression)
@@ -82,7 +81,7 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/otter_lioness/", mo
 
 process runTCGADragon {
 
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
 
     input:
         tuple val(uuid),path(methylationData),path(expressionData)
@@ -108,7 +107,7 @@ process runTCGADragon {
 
 process runTCGALionessDragon{
 
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/lioness_dragon/", mode: 'copy', pattern:"*",  overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/lioness_dragon/", mode: 'copy', pattern:"*",  overwrite: true
 
     input:
         tuple val(uuid),path(methylationData),path(expressionData)
@@ -137,7 +136,7 @@ process runTCGALionessDragon{
 // 
 process runTCGAPandaExplore {
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/figures/",  pattern: '*.png', mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",  pattern: '*.png', mode: 'copy'
 
     input:
         tuple val(uuid), path(expression), path(panda)
@@ -158,7 +157,7 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/figures/",  pattern
 // Fix this after 0.9.3 netzoopy
 process runTCGALionessExplore {
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/figures/",  pattern: '*.png', mode: 'copy'
+publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",  pattern: '*.png', mode: 'copy'
 
     input:
         tuple val(uuid), path(expression), path(panda), path(lioness)

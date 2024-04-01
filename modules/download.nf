@@ -1,16 +1,19 @@
 process downloadRecount{
 
-    publishDir "${params.resultsDir}/${uuid}/recount3/", pattern: "${uuid}.rds", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/", pattern: "${uuid}.rds", mode: 'copy', overwrite: true
     
     input:
-        tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), val(samples)
+        tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), path(samples)
     output:
-        tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), val(samples) ,file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
+        tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), path(samples) ,file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
     script:
         """
+            if ! test -f ${samples}; then
+            touch ${samples}
+            fi
             Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
             echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
-            echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${uuid}/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
+            echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
         """
     stub:
         """
@@ -22,7 +25,7 @@ process downloadRecount{
 
 process mergeRecountMetadata{
 
-    publishDir "${params.resultsDir}/", pattern: "downloaded_recount_metadata.csv", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_recount_metadata.csv", mode: 'copy', overwrite: true
     
     input:
         val(results)
@@ -40,17 +43,17 @@ process mergeRecountMetadata{
 
 process downloadMutations{
 
-    publishDir "${params.resultsDir}/${uuid}/mutations/", pattern: "${uuid}_mutations*", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/mutations/", pattern: "${uuid}_mutations*", mode: 'copy', overwrite: true
     
     input:
-        tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), val(samples)
+        tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), path(samples)
     output:
-        tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), val(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
+        tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), path(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
     script:
         """
             Rscript '${baseDir}/bin/r/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${samples}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv";
             echo "uuid,project,data_category,data_type,download_dir,samples,mutation_table,pivot_table" > "${uuid}_mutations_metadata.csv";
-            echo "${uuid},${project},${data_category},${data_type},${download_dir},${samples},${params.resultsDir}/${uuid}/mutations/${uuid}_mutations.txt,${params.resultsDir}/${uuid}/mutations/${uuid}_mutations_pivot.csv" >> "${uuid}_mutations_metadata.csv"
+            echo "${uuid},${project},${data_category},${data_type},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/mutations/${uuid}_mutations.txt,${params.resultsDir}/${params.batchName}/${uuid}/mutations/${uuid}_mutations_pivot.csv" >> "${uuid}_mutations_metadata.csv"
         """
     stub:
         """
@@ -63,7 +66,7 @@ process downloadMutations{
 
 process mergeMutationsMetadata{
 
-    publishDir "${params.resultsDir}/", pattern: "downloaded_mutation_metadata.csv", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_mutation_metadata.csv", mode: 'copy', overwrite: true
     
     input:
         val(results)
@@ -80,12 +83,12 @@ process mergeMutationsMetadata{
 
 
 process downloadMethylation{
-    publishDir "${params.resultsDir}/${uuid}/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
     
     input:
-        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),val(samples)
+        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples)
     output:
-        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),val(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
+        tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
     script:
         """
             Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list ${samples}
@@ -93,7 +96,7 @@ process downloadMethylation{
 	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
             mv "${uuid}_methylations_labeled.txt" "${uuid}_methylations.txt";
             echo "uuid,project,gdc_type,gdc_platform,download_dir,samples,methylation_manifest,methylation_table" > "${uuid}_methylation_metadata.csv";
-            echo "${uuid},${project},${gdc_type},${gdc_platform},${download_dir},${samples},${params.resultsDir}/${uuid}/methylation/${uuid}_methylation_manifest.txt,${params.resultsDir}/${uuid}/methylation/${uuid}_methylations.txt" >> "${uuid}_methylation_metadata.csv"
+            echo "${uuid},${project},${gdc_type},${gdc_platform},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/methylation/${uuid}_methylation_manifest.txt,${params.resultsDir}/${params.batchName}/${uuid}/methylation/${uuid}_methylations.txt" >> "${uuid}_methylation_metadata.csv"
         
         """
 
@@ -109,7 +112,7 @@ process downloadMethylation{
 
 process mergeMethylationMetadata{
 
-    publishDir "${params.resultsDir}/", pattern: "downloaded_methylation_metadata.csv", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_methylation_metadata.csv", mode: 'copy', overwrite: true
     
     input:
         val(results)
@@ -126,7 +129,7 @@ process mergeMethylationMetadata{
 
 
 process downloadClinical{
-    publishDir "${params.resultsDir}/${uuid}/clinical", pattern: "*.csv", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/clinical", pattern: "*.csv", mode: 'copy', overwrite: true
     
     input:
         tuple val(uuid),val(project),val(data_category),val(data_type),val(data_format)
@@ -157,7 +160,7 @@ workflow downloadRecount3Wf{
         //                                         item.value.type,
         //                                         item.value.samples,
         //                                     )
-        //                                 }.view()
+        //                                 }
             dr = downloadRecount(channelRecount)
             mergeRecountMetadata(dr.map{it -> it[-1]}.collect())
     emit: dr
@@ -176,7 +179,7 @@ workflow downloadMethylationWf{
         //                                     item.value.download_dir,
         //                                     item.value.samples,
         //                                 )
-        //                             }.view()
+        //                             }
 
         dme = downloadMethylation(channelMethylation)
         mergeMethylationMetadata(dme.map{it -> it[-1]}.collect())
@@ -194,9 +197,9 @@ workflow downloadMutationsWf{
         //                                     item.value.data_category,
         //                                     item.value.data_type,
         //                                     item.value.download_dir,
-        //                                     item.value.samples,
+        //        cond                             item.value.samples,
         //                                 )
-        //                             }.view()
+        //                             }
 
             dmu = downloadMutations(channelMutation)
             mergeMutationsMetadata(dmu.map{it -> it[-1]}.collect())
@@ -215,7 +218,7 @@ workflow downloadClinicalWf{
         //                                     item.value.data_type,
         //                                     item.value.data_format,
         //                                 )
-        //                             }.view()
+        //                             }
         dcli = downloadClinical(channelClinical)
     emit: dcli
 }
@@ -257,7 +260,7 @@ workflow downloadWf{
                                                 item.value.organism,
                                                 item.value.annotation,
                                                 item.value.type,
-                                                item.value.samples,
+                                                file(item.value.samples),
                                             )
                                         }.view()
         
@@ -273,9 +276,9 @@ workflow downloadWf{
                                                 item.value.data_category,
                                                 item.value.data_type,
                                                 item.value.download_dir,
-                                                item.value.samples
+                                                file(item.value.samples)
                                             )
-                                        }.view()
+                                        }
         
             downloadMutationsWf(channelMutation)
         } 
@@ -288,9 +291,9 @@ workflow downloadWf{
                                                 item.value.gdc_type,
                                                 item.value.gdc_platform,
                                                 item.value.download_dir,
-                                                item.value.samples,
+                                                file(item.value.samples),
                                             )
-                                        }.view()
+                                        }
             downloadMethylationWf(channelMethylation)
         }
         // Process clinical
@@ -303,7 +306,7 @@ workflow downloadWf{
                                                 item.value.data_type,
                                                 item.value.data_format,
                                             )
-                                        }.view()
+                                        }
             downloadClinicalWf(channelClinical)
     }
 }
@@ -321,7 +324,7 @@ workflow fullDownloadWf{
         dc = Channel.empty()
         // DOWNLOAD RECOUNT3
 
-        modalities = dataCh.map{it -> it.value.keySet()}.collect().view()
+        modalities = dataCh.map{it -> it.value.keySet()}.collect()
         //if (dataCh.containsKey('expression_recount3')){
             dChRe = dataCh.map{it -> tuple(
                                                 it.key,
@@ -330,16 +333,8 @@ workflow fullDownloadWf{
                                                 it.value.get('expression_recount3').organism,
                                                 it.value.get('expression_recount3').annotation,
                                                 it.value.get('expression_recount3').type,
-                                                it.value.get('expression_recount3').samples)
-                                                }.view()
-            //dChRe = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.expression_recount3.project))
-            //                        .combine(Channel.from(dataCh.value.expression_recount3.project_home))
-            //                        .combine(Channel.from(dataCh.value.expression_recount3.organism))
-            //                        .combine(Channel.from(dataCh.value.expression_recount3.annotation))
-            //                        .combine(Channel.from(dataCh.value.expression_recount3.type))
-            //                        .combine(Channel.from(dataCh.value.expression_recount3.samples)).view()
-            // dr is the download recount channel
-            // output: tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type),val(samples),file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
+                                                file(it.value.get('expression_recount3').samples))
+                                                }
             dr = downloadRecount3Wf(dChRe)
         //}
         // DOWNLOAD MUTATIONS
@@ -350,15 +345,8 @@ workflow fullDownloadWf{
                                                 it.value.get('mutation_tcgabiolinks').data_category,
                                                 it.value.get('mutation_tcgabiolinks').data_type,
                                                 it.value.get('mutation_tcgabiolinks').download_dir,
-                                                it.value.get('mutation_tcgabiolinks').samples)
-                                                }.view()
-            //dChMu = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.mutation_tcgabiolinks.project))
-            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.data_category))
-            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.data_type))
-            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.download_dir))
-            //                        .combine(Channel.from(dataCh.value.mutation_tcgabiolinks.samples)).view()
-            // dr is the download recount channel
-            // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
+                                                file(it.value.get('mutation_tcgabiolinks').samples))
+                                                }
             dmu = downloadMutationsWf(dChMu)
         //}
 
@@ -370,34 +358,21 @@ workflow fullDownloadWf{
                                                 it.value.get('methylation_gdc').gdc_type,
                                                 it.value.get('methylation_gdc').gdc_platform,
                                                 it.value.get('methylation_gdc').download_dir,
-                                                it.value.get('methylation_gdc').samples)
-                                                }.view()
-        //     //dChMe = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.methylation_gdc.project))
-        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.gdc_type))
-        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.gdc_platform))
-        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.download_dir))
-        //     //                        .combine(Channel.from(dataCh.value.methylation_gdc.samples)).view()
-        //     // dr is the download recount channel
-        //     // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
+                                                file(it.value.get('methylation_gdc').samples))
+                                                }
         dme = downloadMethylationWf(dChMe)
         //}
 
         // // DOWNLOAD CLINICAL
         // if (dataCh.map{it -> it.value.keySet()}.contains('clinical_tcgabiolinks')){
-        //     dChCl = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('clinical_tcgabiolinks').project,
-        //                                         it.value.get('clinical_tcgabiolinks').data_category,
-        //                                         it.value.get('clinical_tcgabiolinks').data_type,
-        //                                         it.value.get('clinical_tcgabiolinks').data_format)
-        //                                         }.view()
-        //     //dChCl = Channel.from(dataCh.key).combine(Channel.from(dataCh.value.clinical_tcgabiolinks.project))
-        //     //                        .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_category))
-        //     //                        .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_type))
-        //     //                        .combine(Channel.from(dataCh.value.clinical_tcgabiolinks.data_format)).view()
-        //     // dr is the download recount channel
-        //     // output: tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir),val(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
-        //     dc = downloadClinicalWf(dChCl)
+            dChCl = dataCh.map{it -> tuple(
+                                                it.key,
+                                                it.value.get('clinical_tcgabiolinks').project,
+                                                it.value.get('clinical_tcgabiolinks').data_category,
+                                                it.value.get('clinical_tcgabiolinks').data_type,
+                                                it.value.get('clinical_tcgabiolinks').data_format)
+                                                }
+            dc = downloadClinicalWf(dChCl)
         //}
     emit:
         dr

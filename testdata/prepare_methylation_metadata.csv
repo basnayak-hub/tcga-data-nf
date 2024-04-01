@@ -1,2 +1,0 @@
-uuid,project,gdc_type,gdc_platform,download_dir,samples,methylation_manifest,methylation_table
-tcga_paad,TCGA-PAAD,methylation_beta_value,illumina human methylation 450,gdc_tcga_methylation,,results/download_test/tcga_paad/methylation/tcga_paad_methylation_manifest.txt,results/download_test/tcga_paad/methylation/tcga_paad_methylations.txt
