@@ -29,14 +29,22 @@ GDCdownload(query1, directory = directory)
 print('Preparing the mutation data table...')
 muts <- GDCprepare(query1, directory = directory)
 
+print(head(muts))
+
+print('Data have been downloaded...')
+print('Mutation Data has shape (mutations x annotations):')
+print(dim(muts))
+print(length(unique(muts$Tumor_Sample_Barcode)))
 
 # Adding support to filter the sample list
 # This needs to be done after the GDC prepare because it reads the barcodes
-if (length(sample_list)>3){
+if (nchar(sample_list)>3){
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
-  print('Submitters')
-  print(submitters$V1)
+  print('Subselecting the samples...')
   muts = muts[substr(muts$Tumor_Sample_Barcode, 1, 16) %in% submitters$V1,]
+  print('Mutation Data has now shape (mutations x annotations):')
+  print(dim(muts))
+  print(length(unique(muts$Tumor_Sample_Barcode)))
 } 
 
 print(paste0('Saving the mutation data table to: ',out_table))
@@ -56,5 +64,6 @@ all_muts= muts %>%
             pivot_wider(names_from = Tumor_Sample_Barcode, values_from = abundance, values_fill = 0)
 
 print(paste0('Saving the mutation pivot table to: ',out_pivot))
-print(all_muts)
+print('Shape of pivot table:')
+print(dim(all_muts))
 write_csv(all_muts, out_pivot)
