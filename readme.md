@@ -114,38 +114,9 @@ parameter.
 
 The data to be downloaded is specified in the `testdata/download_json.json` file. 
 
-All data will be saved in the `results/test_download` folder. Here is the structure and content one should expect.
+All data will be saved in the `results/test_download` folder.
 
-```
-.
-├── downloaded_methylation_metadata.csv
-├── downloaded_mutation_metadata.csv
-├── downloaded_recount_metadata.csv
-├── gtex_pancreas
-│   └── recount3
-│       └── gtex_pancreas.rds
-├── tcga_paad
-│   ├── clinical
-│   │   ├── clinical_drug_paad.csv
-│   │   ├── clinical_follow_up_v4.4_nte_paad.csv
-│   │   ├── clinical_follow_up_v4.4_paad.csv
-│   │   ├── clinical_nte_paad.csv
-│   │   ├── clinical_omf_v4.0_paad.csv
-│   │   ├── clinical_patient_paad.csv
-│   │   └── clinical_radiation_paad.csv
-│   ├── methylation
-│   │   ├── tcga_paad_methylation_manifest.txt
-│   │   ├── tcga_paad_methylation_metadata.csv
-│   │   └── tcga_paad_methylations.txt
-│   ├── mutations
-│   │   ├── tcga_paad_mutations.txt
-│   │   ├── tcga_paad_mutations_metadata.csv
-│   │   └── tcga_paad_mutations_pivot.csv
-│   └── recount3
-│       └── tcga_paad.rds
-└── test-log-info.txt
-```
-
+Check the [download](#Results:-Download) results section
 
 ### Prepare
 
@@ -223,7 +194,7 @@ For each case we report the output of the testing profile:
 - analyze pipeline: `-profile testAnalyze`
 - full pipeline: `-profile test`
 
-### Download
+### Results: Download
 
 
 ```bash
