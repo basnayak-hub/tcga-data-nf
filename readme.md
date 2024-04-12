@@ -217,7 +217,7 @@ For each case we report the output of the testing profile:
 - analyze pipeline: `-profile testAnalyze`
 - full pipeline: `-profile test`
 
-Detailed output folder structure can be found at the [docs](docs.md#result-folders)
+Detailed output folder structure can be found at the [docs](docs.md##result-folders)
 
 
 ## Authors
