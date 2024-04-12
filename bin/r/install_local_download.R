@@ -1,2 +1,5 @@
 library(devtools)
-devtools::install_local('NetSciDataCompanion/', force=TRUE, dependencies=T)
+devtools::install_github('pmandros/TCGAPurityFiltering')
+devtools::install_github('immunogenomics/presto')
+devtools::install_github('aet21/EpiSCORE')
+devtools::install_local('/home/ubuntu/viola/tcga-data-nf/NetSciDataCompanion/', force=TRUE, dependencies=T)

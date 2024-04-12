@@ -9,6 +9,7 @@ dependencies:
   - r-base
   - r-tidyverse
   - r-optparse
+  - bioconductor-org.Hs.eg.db
   - bioconductor-edger
   - bioconductor-recount3
   - bioconductor-tcgabiolinks
