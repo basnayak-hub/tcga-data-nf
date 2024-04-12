@@ -1,4 +1,4 @@
-name: r_download
+name: r_all
 channels:
   - defaults
   - conda-forge

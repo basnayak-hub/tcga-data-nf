@@ -1,6 +1,7 @@
 
 process runTCGAPanda {
 
+    label: "netzoopy_panda"
     //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda/",  pattern: 'panda*', mode: 'copy'
@@ -27,7 +28,7 @@ process runTCGAPanda {
 process runTCGALioness {
 
     //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
-
+    label: "netzoopy_pandalioness"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda_lioness/",  pattern: '{panda,lioness}*', mode: 'copy'
 
@@ -81,6 +82,7 @@ process runTCGAOtterLioness {
 
 process runTCGADragon {
 
+    label: "netzoopy_dragon"
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
 
     input:
@@ -107,6 +109,7 @@ process runTCGADragon {
 
 process runTCGALionessDragon{
 
+    label: "netzoopy_dragonlioness"
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/lioness_dragon/", mode: 'copy', pattern:"*",  overwrite: true
 
     input:

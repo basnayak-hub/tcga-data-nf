@@ -28,22 +28,28 @@ The docker container is hosted on docker.io.
 
 ```docker pull violafanfani/tcga-data-nf:0.0.12```
 
+More details on the container can be found in the [docs](docs.md)
+
 ### Conda
 
 Alternatively, one can run the workflow with conda environments. 
+In order to create and use conda one can pass it as a profile `-profile conda`
+as:
 
-We use the process selectors labels to specify the different environments,
-allowing the user to specify their own environments too. 
+```nextflow run QuackebushLab/tcga-data-nf -profile conda,test ...```
 
-Labels: 
-- `merge_tables`: merge metadata, only requires python and pandas
-- `r_download`: all r packages useful for download
-- `prepare_expression`:
-- `prepare_methylation`:
-- `analyze_pandas`:
-- `analyze_dragon`:
+For the moment we are using one single environment to be used with all the r
+scripts. This allows the pipeline to generate the environment only once (which can 
+be time consuming) and then to reuse it.
 
-More details in the [docs](docs.md).
+The three environment are inside the `containers/conda_envs` folder: 
+1. merge_tables
+2. r_all
+3. analysis
+
+However, to improve portability, we use the process selectors labels to specify the different environments, allowing the user to specify their own environments too. 
+
+More details in the [docs](docs.md#conda).
 
 ### Temporarily (until this is published)
 
@@ -53,7 +59,7 @@ More details in the [docs](docs.md).
 2. Build docker locally 
     ```bash
     docker build . -f containers/Dockerfile --build-arg CONDA_FILE=containers/env.base.python.yml --no-cache -t tcga-data-nf:latest```
-3. In alternative, check the R packages needed and install them manually.
+3. In alternative, check the R packages needed and install them manually. 
 4. **TO DOWNLOAD**: update the `download_metadata.config` file or pass a new one with the correct parameters (keep track
    of all config files you use)
 5. **To PREPARE**: use a correct `expression_prepare_table.csv`
@@ -211,130 +217,7 @@ For each case we report the output of the testing profile:
 - analyze pipeline: `-profile testAnalyze`
 - full pipeline: `-profile test`
 
-### Results: Download
-
-
-```bash
-⚡ tree results/test_download 
-results/test_download
-├── downloaded_methylation_metadata.csv
-├── downloaded_mutation_metadata.csv
-├── downloaded_recount_metadata.csv
-├── gtex_pancreas
-│   └── data_download
-│       └── recount3
-│           └── gtex_pancreas.rds
-└── tcga_paad
-    └── data_download
-        ├── clinical
-        │   ├── clinical_drug_paad.csv
-        │   ├── clinical_follow_up_v4.4_nte_paad.csv
-        │   ├── clinical_follow_up_v4.4_paad.csv
-        │   ├── clinical_nte_paad.csv
-        │   ├── clinical_omf_v4.0_paad.csv
-        │   ├── clinical_patient_paad.csv
-        │   └── clinical_radiation_paad.csv
-        ├── methylation
-        │   ├── tcga_paad_methylation_manifest.txt
-        │   ├── tcga_paad_methylation_metadata.csv
-        │   └── tcga_paad_methylations.txt
-        ├── mutations
-        │   ├── tcga_paad_mutations.txt
-        │   ├── tcga_paad_mutations_metadata.csv
-        │   └── tcga_paad_mutations_pivot.csv
-        └── recount3
-            └── tcga_paad.rds
-
-
-```
-
-### Prepare
-
-
-This would be the output when you run the `-profile testPrepare` test case
-
-```bash
-results/test_prepare
-└── tcga_paad
-    └── data_prepared
-        ├── methylation
-        │   ├── tcga_paad_tf_promoter_methylation_clean_all.log
-        │   └── tcga_paad_tf_promoter_methylation_raw.csv
-        └── recount3
-            ├── recount3_pca_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.png
-            ├── recount3_pca_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.png
-            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.log
-            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.rds
-            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples00001_tissueall_batchnull_adjnull.txt
-            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.log
-            ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.rds
-            └── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull.txt
-
-```
-
-### Analyze
-
-This would be the output when you run the `-profile testAnalyze` test case
-
-```bash
-results/test_analyze
-└── tcga_paad
-    └── analysis
-        ├── dragon
-        │   ├── tcga_paad_dragon.log
-        │   ├── tcga_paad_dragon_filtered_expression.csv
-        │   ├── tcga_paad_dragon_input.tsv
-        │   └── tcga_paad_dragon_mat.tsv
-        ├── lioness_dragon
-        │   ├── lioness_dragon
-        │   │   ├── lioness-dragon-TCGA-2L-AAQL-01A.csv
-        │   │   ├── lioness-dragon-TCGA-HV-A5A3-11A.csv
-        │   │   ├── lioness-dragon-TCGA-HV-A7OP-01A.csv
-        │   │   ├── lioness-dragon-TCGA-IB-A5ST-01A.csv
-        │   │   ├── lioness-dragon-TCGA-US-A779-01A.csv
-        │   │   └── lioness-dragon-TCGA-YB-A89D-11A.csv
-        │   ├── recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull_shuffle.rds
-        │   ├── tcga_paad_lioness_dragon.log
-        │   ├── tcga_paad_tf_promoter_methylation_clean.csv
-        │   └── tcga_paad_tf_promoter_methylation_clean_shuffle.csv
-        ├── panda
-        │   ├── panda_tcga_paad.log
-        │   └── panda_tcga_paad.txt
-        └── panda_lioness
-            ├── lioness
-            │   ├── lioness.TCGA-2L-AAQL-01A-11R-A38C-07.4.h5
-            ...
-            └── panda.txt
-```
-
-### Full 
-
-
-Here is an example of the output of the full test.
-`tcga_luad` is the uuid of the run , hence inside the `tcga_luad` folder you'll find all relevant files
-divided in `data_download`, `data_prepare`, `analysis` folders, that correspond to the steps of the pipeline
-
-Here the general out structure. Below we have the full expected output
-
-```bash
-results/test_full
-└── tcga_luad
-    ├── analysis
-    │   ├── dragon
-    │   ├── lioness_dragon
-    │   │   └── lioness_dragon
-    │   ├── panda
-    │   └── panda_lioness
-    │       └── lioness
-    ├── data_download
-    │   ├── clinical
-    │   ├── methylation
-    │   ├── mutations
-    │   └── recount3
-    └── data_prepared
-        ├── methylation
-        └── recount3
-```
+Detailed output folder structure can be found at the [docs](docs.md#result-folders)
 
 
 ## Authors
