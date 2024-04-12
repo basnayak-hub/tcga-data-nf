@@ -14,6 +14,11 @@
               "download_dir" : "gdc_tcga_mutation",
               "samples" : "testdata/tcga_luad_mutation_samples.txt"
             },
+       "cnv_tcgabiolinks":{
+                      "project" : "TCGA-LUAD",
+                      "workflow_type" : "ASCAT3",
+                      "samples" : "testdata/tcga_luad_mutation_samples.txt"
+                    },
       "clinical_tcgabiolinks": {
               "project" : "TCGA-LUAD",
               "data_category" : "Clinical",

@@ -1,82 +1,82 @@
 
 process runTCGAPanda {
 
-//conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+    //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda/",  pattern: 'panda*', mode: 'copy'
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda/",  pattern: 'panda*', mode: 'copy'
 
-    input:
-        tuple val(uuid), path(expression)
+        input:
+            tuple val(uuid), path(expression)
 
-    output:
-        tuple val(uuid), path(expression), path("panda_${uuid}.txt"), path("panda_${uuid}.log")
-    
-    script:
-        """
-            ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
-            netzoopy panda -e ${uuid}.nodot.txt -m "${params.zoo.motif}" -p ${params.zoo.ppi} -o panda_${uuid}.txt ${params.zoo.panda} > panda_${uuid}.log
-        """
+        output:
+            tuple val(uuid), path(expression), path("panda_${uuid}.txt"), path("panda_${uuid}.log")
+        
+        script:
+            """
+                ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
+                netzoopy panda -e ${uuid}.nodot.txt -m "${params.zoo.motif}" -p ${params.zoo.ppi} -o panda_${uuid}.txt ${params.zoo.panda} > panda_${uuid}.log
+            """
 
-    stub:
-        """
-        touch "${uuid}.nodot.txt"
-        touch panda_${uuid}.txt
-        """
+        stub:
+            """
+            touch "${uuid}.nodot.txt"
+            touch panda_${uuid}.txt
+            """
 }
 
 process runTCGALioness {
 
-//conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+    //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda_lioness/",  pattern: '{panda,lioness}*', mode: 'copy'
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda_lioness/",  pattern: '{panda,lioness}*', mode: 'copy'
 
-    input:
-        tuple val(uuid), path(expression)
+        input:
+            tuple val(uuid), path(expression)
 
-    output:
-        tuple val(uuid), path(expression), path("panda.txt"), path("lioness/", type:'dir')
-    
-    script:
-        """
-            ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
-            netzoopy lioness -e ${uuid}.nodot.txt -m ${params.zoo.motif} -p ${params.zoo.ppi} -op panda.txt -ol lioness/ ${params.zoo.panda_lioness} > panda_lioness_${uuid}.log
-        """
-    stub:
-        """
-        touch "${uuid}.nodot.txt"
-        touch "panda_lioness_${uuid}.log"
-        mkdir lioness
-        touch panda.txt
-        """
+        output:
+            tuple val(uuid), path(expression), path("panda.txt"), path("lioness/", type:'dir')
+        
+        script:
+            """
+                ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
+                netzoopy lioness -e ${uuid}.nodot.txt -m ${params.zoo.motif} -p ${params.zoo.ppi} -op panda.txt -ol lioness/ ${params.zoo.panda_lioness} > panda_lioness_${uuid}.log
+            """
+        stub:
+            """
+            touch "${uuid}.nodot.txt"
+            touch "panda_lioness_${uuid}.log"
+            mkdir lioness
+            touch panda.txt
+            """
 }
 
 
 process runTCGAOtterLioness {
 
-//conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
+    //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
-publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/otter_lioness/", mode: 'copy'
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/otter_lioness/", mode: 'copy'
 
-    input:
-        tuple val(uuid), path(expression)
+        input:
+            tuple val(uuid), path(expression)
 
-    output:
-        tuple val(uuid), path(expression), path("./otter/otter.h5"), path("./otter/lioness_otter/", type:'dir')
-    
-    shell:
-        '''
-            cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' >> !{uuid}.nodot.txt;
-            netzoopy otterlioness -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -of otter/ !{params.zoo.otter_lioness} >> otter_lioness_!{uuid}.log
-        '''
+        output:
+            tuple val(uuid), path(expression), path("./otter/otter.h5"), path("./otter/lioness_otter/", type:'dir')
+        
+        shell:
+            '''
+                cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' >> !{uuid}.nodot.txt;
+                netzoopy otterlioness -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -of otter/ !{params.zoo.otter_lioness} >> otter_lioness_!{uuid}.log
+            '''
 
-    stub:
-        """
-        mkdir otter
-        mkdir otter/lioness_otter
-        touch "${uuid}.nodot.txt"
-        touch otter_lioness_${uuid}.log
-        """
+        stub:
+            """
+            mkdir otter
+            mkdir otter/lioness_otter
+            touch "${uuid}.nodot.txt"
+            touch otter_lioness_${uuid}.log
+            """
 }
 
 process runTCGADragon {
@@ -129,11 +129,6 @@ process runTCGALionessDragon{
         """
 }
 
-// add this back once there is panda output again
-//output:
-//        tuple val(uuid), path(expression), path(motif), path(ppi), val(start), val(end),path("panda.txt"), path("lioness/", type:'dir')
-    
-// 
 process runTCGAPandaExplore {
 
 publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",  pattern: '*.png', mode: 'copy'
@@ -147,11 +142,6 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",
     explore.py plot-panda-scores ${panda} panda_scores.png --is_adj
     """
 }
-
-
-// add this back
-// input:
-//     tuple val(uuid), path(expression), path(motif), path(ppi), val(start), val(end), path(lioness)
 
 
 // Fix this after 0.9.3 netzoopy

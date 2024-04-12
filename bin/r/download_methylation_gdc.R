@@ -1,21 +1,3 @@
-# 20220620
-# Pulls methylation data from GDC and writes to S3
-# Format of the GDC data is one file per participant, two columsn: probe\tbeta
-# To get the participant ID, you have to look at the file name which has a UUID
-# You can then map the UUID back to the TCGA id
-
-# 20220811 Placeholder file for new repo.
-
-# With VF: you will find suggestions from viola. 
-# Follow as you see fit
-# KS: notes re VF
-
-# VF: you won't need to explicitly save things on s3. Remove 'put'
-# KS: restructuring: this iterates through all of the files and saves them one at a time
-# on s3 rather than outputting a single file. I think we need to save them
-# locally within the nextflow filesystem somewhere, then use bash for
-# a join, then output the joined file to s3. 
-
 library(GenomicDataCommons)
 library(optparse)
 library(NetSciDataCompanion)

@@ -1,5 +1,6 @@
 process downloadRecount{
 
+    label "r_download"
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/", pattern: "${uuid}.rds", mode: 'copy', overwrite: true
     
     input:
@@ -13,7 +14,7 @@ process downloadRecount{
             fi
             Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
             echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
-            echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
+            echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
         """
     stub:
         """
@@ -21,9 +22,20 @@ process downloadRecount{
         touch "${uuid}_recount3_metatada.csv"
         """
 }
+///
+            // echo ${params.conda}
+            // if [[${params.conda}]]
+            // then
+            //     Rscript '${baseDir}/bin/r/install_local_download.R'
+            // fi
+///
 
 
+// Concatenate all the metadata recount table in one file
 process mergeRecountMetadata{
+
+    //conda 'containers/conda_envs/merge_tables.yml'
+    label 'merge_tables'
 
     publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_recount_metadata.csv", mode: 'copy', overwrite: true
     
@@ -42,6 +54,8 @@ process mergeRecountMetadata{
 
 
 process downloadMutations{
+    // Conda environment is managed by label
+    label "r_download"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/mutations/", pattern: "${uuid}_mutations*", mode: 'copy', overwrite: true
     
@@ -53,7 +67,7 @@ process downloadMutations{
         """
             Rscript '${baseDir}/bin/r/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${samples}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv";
             echo "uuid,project,data_category,data_type,download_dir,samples,mutation_table,pivot_table" > "${uuid}_mutations_metadata.csv";
-            echo "${uuid},${project},${data_category},${data_type},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/mutations/${uuid}_mutations.txt,${params.resultsDir}/${params.batchName}/${uuid}/mutations/${uuid}_mutations_pivot.csv" >> "${uuid}_mutations_metadata.csv"
+            echo "${uuid},${project},${data_category},${data_type},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/mutations/${uuid}_mutations.txt,${params.resultsDir}/${params.batchName}/${uuid}/data_download/mutations/${uuid}_mutations_pivot.csv" >> "${uuid}_mutations_metadata.csv"
         """
     stub:
         """
@@ -64,7 +78,11 @@ process downloadMutations{
 
 } 
 
+// Concatenate all the metadata mutation table in one file
 process mergeMutationsMetadata{
+
+    //conda 'containers/conda_envs/merge_tables.yml' is managed by label
+    label 'merge_tables'
 
     publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_mutation_metadata.csv", mode: 'copy', overwrite: true
     
@@ -83,6 +101,9 @@ process mergeMutationsMetadata{
 
 
 process downloadMethylation{
+
+    label "r_download"
+
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
     
     input:
@@ -96,8 +117,7 @@ process downloadMethylation{
 	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
             mv "${uuid}_methylations_labeled.txt" "${uuid}_methylations.txt";
             echo "uuid,project,gdc_type,gdc_platform,download_dir,samples,methylation_manifest,methylation_table" > "${uuid}_methylation_metadata.csv";
-            echo "${uuid},${project},${gdc_type},${gdc_platform},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/methylation/${uuid}_methylation_manifest.txt,${params.resultsDir}/${params.batchName}/${uuid}/methylation/${uuid}_methylations.txt" >> "${uuid}_methylation_metadata.csv"
-        
+            echo "${uuid},${project},${gdc_type},${gdc_platform},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/${uuid}_methylation_manifest.txt,${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/${uuid}_methylations.txt" >> "${uuid}_methylation_metadata.csv"
         """
 
     stub:
@@ -111,6 +131,8 @@ process downloadMethylation{
 }
 
 process mergeMethylationMetadata{
+    // label uses conda environment
+    label 'merge_tables'
 
     publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_methylation_metadata.csv", mode: 'copy', overwrite: true
     
@@ -129,6 +151,9 @@ process mergeMethylationMetadata{
 
 
 process downloadClinical{
+
+    label "r_download"
+
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/clinical", pattern: "*.csv", mode: 'copy', overwrite: true
     
     input:
@@ -144,6 +169,60 @@ process downloadClinical{
         """
         touch clinical.csv
         """
+}
+
+
+
+process downloadCNV{
+
+    label "r_download"
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/", pattern: "${uuid}.*", mode: 'copy', overwrite: true
+    
+    input:
+        tuple val(uuid),val(project),val(workflow_type),path(samples)
+    output:
+        tuple val(uuid),val(project),val(workflow_type), path(samples) ,file("${uuid}.rds"),file("${uuid}.csv"),file("${uuid}_cnv_metatada.csv")
+    script:
+        """
+            Rscript '${baseDir}/bin/r/download_cnv_tcga.R' -p ${project} --analysis_workflow_type ${workflow_type} --sample_list ${samples} --output_rds "${uuid}.rds" --output_table ${uuid}.csv > "${uuid}_cnv_downloads.log";
+            echo "uuid,project,workflow_type,samples,output_rds,output_table" > "${uuid}_cnv_metatada.csv";
+            echo "${uuid},${project},${workflow_type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/${uuid}.rds,${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/${uuid}.csv"  >> "${uuid}_cnv_metatada.csv"
+        """
+    stub:
+        """
+        touch "${uuid}.rds"
+        touch "${uuid}.csv"
+        touch "${uuid}_cnv_metatada.csv"
+        """
+}
+
+process mergeCNVMetadata{
+    // label uses conda environment
+    label 'merge_tables'
+
+    publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_cnv_metadata.csv", mode: 'copy', overwrite: true
+    
+    input:
+        val(results)
+    output:
+        tuple val(results), path("downloaded_cnv_metadata.csv")
+
+    script:
+	values = results.flatten().collect{"$it"}.join(',')
+    """
+    fit.py merge-tables -o downloaded_cnv_metadata.csv -t ${values}
+    """
+
+}
+
+
+
+workflow downloadCNVWf{
+    take: channelCNV
+    main:
+            dcnv = downloadCNV(channelCNV)
+            mergeCNVMetadata(dcnv.map{it -> it[-1]}.collect())
+    emit: dcnv
 }
 
 workflow downloadRecount3Wf{
@@ -233,6 +312,7 @@ workflow downloadWf{
         mutation_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "mutation_tcgabiolinks")
         clinical_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "clinical_tcgabiolinks")
         methylation_gdc = Channel.fromPath(params.download_metadata).splitJson(path: "methylation_gdc")
+        cnv_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "cnv_tcgabiolinks")
 
         // dataCh.branch {
         // expression_recount3: (it.key == 'expression_recount3')
@@ -281,6 +361,19 @@ workflow downloadWf{
                                         }
         
             downloadMutationsWf(channelMutation)
+        }
+        
+        if (cnv_tcgabiolinks!=[null]){
+            channelCNV = cnv_tcgabiolinks.map{
+                                            item -> tuple(
+                                                item.key,
+                                                item.value.project,
+                                                item.value.workflow_type,
+                                                file(item.value.samples)
+                                            )
+                                        }
+        
+            downloadCNVWf(channelCNV)
         } 
         // Process methylation
         if (methylation_gdc!=[null]){
@@ -349,6 +442,14 @@ workflow fullDownloadWf{
                                                 }
             dmu = downloadMutationsWf(dChMu)
         //}
+        //DOWNLOAD CNV
+            dChCNV = dataCh.map{it -> tuple(
+                                                it.key,
+                                                it.value.get('cnv_tcgabiolinks').project,
+                                                it.value.get('cnv_tcgabiolinks').workflow_type,
+                                                file(it.value.get('cnv_tcgabiolinks').samples))
+                                                }
+            dcnv = downloadCNVWf(dChCNV)
 
         // DOWNLOAD METHYLATION
         //if (dataCh.map{it -> it.value.keySet()}.contains('methylation_gdc')){
@@ -379,6 +480,7 @@ workflow fullDownloadWf{
         dmu
         dme
         dc
+        dcnv
     }
 
 

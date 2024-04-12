@@ -1,0 +1,19 @@
+name: r_download
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+  - r
+dependencies:
+  - r-essentials
+  - r-base
+  - r-tidyverse
+  - r-optparse
+  - bioconductor-edger
+  - bioconductor-recount3
+  - bioconductor-tcgabiolinks
+  - bioconductor-genomicdatacommons
+  - r-devtools
+  - r-recount
+  - r-data.table
+  - r-huge

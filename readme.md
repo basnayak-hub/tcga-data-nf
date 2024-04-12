@@ -28,6 +28,23 @@ The docker container is hosted on docker.io.
 
 ```docker pull violafanfani/tcga-data-nf:0.0.12```
 
+### Conda
+
+Alternatively, one can run the workflow with conda environments. 
+
+We use the process selectors labels to specify the different environments,
+allowing the user to specify their own environments too. 
+
+Labels: 
+- `merge_tables`: merge metadata, only requires python and pandas
+- `r_download`: all r packages useful for download
+- `prepare_expression`:
+- `prepare_methylation`:
+- `analyze_pandas`:
+- `analyze_dragon`:
+
+More details in the [docs](docs.md).
+
 ### Temporarily (until this is published)
 
 1. Clone the nextflow repo 
@@ -318,6 +335,7 @@ results/test_full
         ├── methylation
         └── recount3
 ```
+
 
 ## Authors
 

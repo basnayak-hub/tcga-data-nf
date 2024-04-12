@@ -1,7 +1,5 @@
 library(data.table)
-library(NetSciDataCompanion)
 library(stringr)
-
 library("recount3")
 library('NetSciDataCompanion')
 library("optparse")
