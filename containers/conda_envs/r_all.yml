@@ -14,6 +14,6 @@ dependencies:
   - bioconductor-tcgabiolinks
   - bioconductor-genomicdatacommons
   - r-devtools
-  - r-recount
+  - bioconductor-recount
   - r-data.table
   - r-huge
