@@ -16,7 +16,10 @@ process downloadRecount{
             then
                 echo "running conda";Rscript '${baseDir}/bin/r/install_local_download.R'
             fi
-            Rscript '${baseDir}/bin/r/install_local_download.R'
+            Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
+            echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
+            echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
+
 
         """
     stub:
@@ -26,16 +29,7 @@ process downloadRecount{
         """
 }
 
-            //Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
-            //echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
-            //echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
-///
-            // echo ${params.conda}
-            // if [[${params.conda}]]
-            // then
-            //     Rscript '${baseDir}/bin/r/install_local_download.R'
-            // fi
-///
+
 
 
 // Concatenate all the metadata recount table in one file
@@ -124,7 +118,13 @@ process downloadMethylation{
             then
                 echo "running conda";Rscript '${baseDir}/bin/r/install_local_download.R'
             fi
-            Rscript '${baseDir}/bin/r/install_local_download.R'
+            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list ${samples}
+            bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt" "${uuid}_methylation_paths.txt"
+	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
+            mv "${uuid}_methylations_labeled.txt" "${uuid}_methylations.txt";
+            echo "uuid,project,gdc_type,gdc_platform,download_dir,samples,methylation_manifest,methylation_table" > "${uuid}_methylation_metadata.csv";
+            echo "${uuid},${project},${gdc_type},${gdc_platform},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/${uuid}_methylation_manifest.txt,${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/${uuid}_methylations.txt" >> "${uuid}_methylation_metadata.csv"
+        
 """
 
     stub:
@@ -137,13 +137,7 @@ process downloadMethylation{
 
 }
 
-            // Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list ${samples}
-            // bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt" "${uuid}_methylation_paths.txt"
-	        // cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
-            // mv "${uuid}_methylations_labeled.txt" "${uuid}_methylations.txt";
-            // echo "uuid,project,gdc_type,gdc_platform,download_dir,samples,methylation_manifest,methylation_table" > "${uuid}_methylation_metadata.csv";
-            // echo "${uuid},${project},${gdc_type},${gdc_platform},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/${uuid}_methylation_manifest.txt,${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/${uuid}_methylations.txt" >> "${uuid}_methylation_metadata.csv"
-        
+
 
 process mergeMethylationMetadata{
     // label uses conda environment

@@ -76,6 +76,8 @@ process GetGeneLevelPromoterMethylation {
     // assume local for starters 
     input:
        tuple val(uuid), val(project), path(methdata)
+       path probe_map
+       path tf_list
 
     // output: file of samples (rows) x genes (columns)
     output:
@@ -84,7 +86,7 @@ process GetGeneLevelPromoterMethylation {
     // return gene-level methylation measurements
     
     """
-        Rscript ${baseDir}/bin/r/get_gene_level_methylation.r -p ${project} -m ${methdata} -o "${uuid}_tf_promoter_methylation_raw.csv" --probemap ${params.methylation.probe_map} --tf_list ${params.methylation.tf_list} > "${uuid}_tf_promoter_methylation_raw.log" 
+        Rscript ${baseDir}/bin/r/get_gene_level_methylation.r -p ${project} -m ${methdata} -o "${uuid}_tf_promoter_methylation_raw.csv" --probemap ${probe_map} --tf_list ${tf_list} > "${uuid}_tf_promoter_methylation_raw.log" 
 
     """
 
@@ -166,7 +168,7 @@ workflow prepareMethylationWf{
                                         }.transpose()
 
 
-    promoterMethCh =  GetGeneLevelPromoterMethylation(prepareMethylationCh)
+    promoterMethCh =  GetGeneLevelPromoterMethylation(prepareMethylationCh, file(params.methylation.probe_map), file(params.methylation.tf_list))
     promoterMethCh
     readyMethCh = CleanMethylationData(promoterMethCh.combine(channelTissues, by: 0))
 

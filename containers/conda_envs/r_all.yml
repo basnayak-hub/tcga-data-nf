@@ -9,6 +9,8 @@ dependencies:
   - r-base
   - r-tidyverse
   - r-optparse
+  - r-htmltools
+  - r-cowplot
   - bioconductor-org.Hs.eg.db
   - bioconductor-edger
   - bioconductor-recount3

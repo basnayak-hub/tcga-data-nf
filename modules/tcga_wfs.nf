@@ -80,25 +80,44 @@ process runTCGAOtterLioness {
             """
 }
 
-process runTCGADragon {
+process alignMethylationExpression {
 
-    label "netzoopy_dragon"
+    label 'r_base'
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
 
     input:
         tuple val(uuid),path(methylationData),path(expressionData)
     	// output: file of samples (rows) x genes (columns)
     output:
-        tuple val(uuid),path(methylationData),path(expressionData),path("${uuid}_dragon_filtered_expression.csv"), path("${uuid}_dragon_mat.tsv"), path("${uuid}_dragon_input.tsv"), path("${uuid}_dragon.log")
+        tuple val(uuid),path(methylationData),path(expressionData),path("${uuid}_dragon_filtered_expression.csv")
     
     script:
     """
-    Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
-    run_dragon.py dragon -m ${methylationData} -e "${uuid}_dragon_filtered_expression.csv" -i "${uuid}_dragon_input.tsv" -o "${uuid}_dragon_mat.tsv" > "${uuid}_dragon.log"
+        Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
     """
     stub:
         """
         touch "${uuid}_dragon_filtered_expression.csv"
+        """
+}
+
+process runTCGADragon {
+
+    label "netzoopy_dragon"
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
+
+    input:
+        tuple val(uuid),path(methylationData),path(expressionData), path(expressionAlignedData)
+    	// output: file of samples (rows) x genes (columns)
+    output:
+        tuple val(uuid),path(methylationData),path(expressionData),path(expressionAlignedData), path("${uuid}_dragon_mat.tsv"), path("${uuid}_dragon_input.tsv"), path("${uuid}_dragon.log")
+    
+    script:
+    """
+    run_dragon.py dragon -m ${methylationData} -e ${expressionAlignedData} -i "${uuid}_dragon_input.tsv" -o "${uuid}_dragon_mat.tsv" > "${uuid}_dragon.log"
+    """
+    stub:
+        """
         touch "${uuid}_dragon_input.tsv"
         touch "${uuid}_dragon_mat.tsv" 
         touch "${uuid}_dragon.log"
@@ -113,20 +132,18 @@ process runTCGALionessDragon{
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/lioness_dragon/", mode: 'copy', pattern:"*",  overwrite: true
 
     input:
-        tuple val(uuid),path(methylationData),path(expressionData)
+        tuple val(uuid),path(methylationData),path(expressionData), path(expressionAlignedData)
 
     output:
-        tuple val(uuid),path(methylationData),path(expressionData), path("lioness_dragon/", type:'dir'), path("${uuid}_lioness_dragon.log")
+        tuple val(uuid),path(methylationData),path(expressionData), path(expressionAlignedData), path("lioness_dragon/", type:'dir'), path("${uuid}_lioness_dragon.log")
 
     script:
     """
-    Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
-    run_dragon.py lioness-dragon -m ${methylationData} -e "${uuid}_dragon_filtered_expression.csv" -o lioness_dragon > "${uuid}_lioness_dragon.log"
+    run_dragon.py lioness-dragon -m ${methylationData} -e ${expressionAlignedData} -o lioness_dragon > "${uuid}_lioness_dragon.log"
     """
 
     stub:
         """
-        touch "${uuid}_dragon_filtered_expression.csv"
         mkdir lioness_dragon
         touch "${uuid}_lioness_dragon.log"
         """
@@ -205,7 +222,8 @@ workflow DragonTCGAWf {
 
     take:data
     main:
-    dragon = runTCGADragon(data)
+    dragonCh = alignMethylationExpression(data)
+    dragon = runTCGADragon(dragonCh)
 
 }
 
@@ -213,7 +231,8 @@ workflow DragonLionessTCGAWf {
 
     take:data
     main:
-    dragon = runTCGALionessDragon(data)
+    dragonCh = alignMethylationExpression(data)
+    dragon = runTCGALionessDragon(dragonCh)
 
 }
 

@@ -1,6 +1,7 @@
 # get expression data from s3 and clean
+library(tidyverse)
 library(data.table)
-library(NetSciDataCompanion)
+library(SummarizedExperiment)
 args = commandArgs(trailingOnly=TRUE)
 
 expr_rds = args[1]
