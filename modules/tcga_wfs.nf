@@ -190,6 +190,7 @@ workflow PandaTCGAWf {
 
     take:data
     main:
+    data.view()
     lio = runTCGAPanda(data)
     //lio.take(3).view()
     //runTCGAPandaExplore(lio.take(3))
@@ -259,10 +260,12 @@ workflow analyzeExpressionWf{
                     //otter: it[-1] == 'otter'
                     //otterlioness: it[-1] == 'otter_lioness'    
                 }.set { zooAnalysisCh }
+                
+    
 
-    PandaTCGAWf(zooAnalysisCh.panda.map{it -> tuple(it[1], it[2])})
+    PandaTCGAWf(zooAnalysisCh.panda.map{it -> tuple(it[0], it[1])})
 
-    LionessPandaTCGAWf(zooAnalysisCh.pandalioness.map{it -> tuple(it[1], it[2])})
+    LionessPandaTCGAWf(zooAnalysisCh.pandalioness.map{it -> tuple(it[0], it[1])})
 
     //LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
 

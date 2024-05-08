@@ -27,7 +27,8 @@ recount_data = recount3::create_rse_manual(
   project_home = project_home, #"data_sources/gtex",
   organism = organism,
   annotation = gencodev,
-  type = recount_type
+  type = recount_type,
+  recount3_url = getOption("recount3_url", "https://recount-opendata.s3.amazonaws.com/recount3/release")
 )
 
 print('Data have been downloaded...')

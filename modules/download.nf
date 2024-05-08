@@ -495,163 +495,85 @@ workflow fullDownloadWf{
     take:
         dataCh
     main:
-        //println(dataCh.value.getClass())
         // Empty channels
         dr = Channel.empty()
         dmu = Channel.empty()
         dme = Channel.empty()
         dc = Channel.empty()
-        dcnv = Channel.empty()
+
         // DOWNLOAD RECOUNT3
-
-        dataCh.map{it -> it}.view{"Key: ${it.key}, Modalities: ${it.value.keySet()}"}
-        modalities = dataCh.map{it -> it.value.keySet()}
-
-        dChRe = dataCh.map{it -> it}.view{"all: ${it}"}
-
-        dChRe = dataCh.map{it -> if(it.value.keySet().contains("expression_recount3")){
-                    tuple(
-                            it.key,
-                            it.value.get('expression_recount3').project,
-                            it.value.get('expression_recount3').project_home,
-                            it.value.get('expression_recount3').organism,
-                            it.value.get('expression_recount3').annotation,
-                            it.value.get('expression_recount3').type,
-                            file(it.value.get('expression_recount3').samples))
-                    }}.view()
+        dChRe = dataCh.map{
+            it -> if(it.value.keySet().contains('expression_recount3')){
+                tuple(
+                    it.key,
+                    it.value.get('expression_recount3').project,
+                    it.value.get('expression_recount3').project_home,
+                    it.value.get('expression_recount3').organism,
+                    it.value.get('expression_recount3').annotation,
+                    it.value.get('expression_recount3').type,
+                    file(it.value.get('expression_recount3').samples)
+                )
+            }
+        }
         dr = downloadRecount3Wf(dChRe)
-        // RECOUNT3
-        // dChRe = dataCh.map{it -> get_expression_recount3(it)}.view{"expression: ${it}"}
-        // dChRe.ifEmpty{println('No expression_recount3, skipping')}
-        //     .with{
-        //         dr = downloadRecount3Wf(dChRe)
-        //     }
-
-
-        dChMu = dataCh.map{it -> if(it.value.keySet().contains("mutation_tcgabiolinks")){
-                    tuple(
-                            it.key,
-                                                it.value.get('mutation_tcgabiolinks').project,
-                                                it.value.get('mutation_tcgabiolinks').data_category,
-                                                it.value.get('mutation_tcgabiolinks').data_type,
-                                                it.value.get('mutation_tcgabiolinks').download_dir,
-                                                file(it.value.get('mutation_tcgabiolinks').samples))
-                    }}
+        
+        // DOWNLOAD MUTATIONS
+        dChMu = dataCh.map{
+            it -> if(it.value.keySet().contains('mutation_tcgabiolinks')){
+                tuple(
+                    it.key,
+                    it.value.get('mutation_tcgabiolinks').project,
+                    it.value.get('mutation_tcgabiolinks').data_category,
+                    it.value.get('mutation_tcgabiolinks').data_type,
+                    it.value.get('mutation_tcgabiolinks').download_dir,
+                    file(it.value.get('mutation_tcgabiolinks').samples)
+                )
+            }
+        }
         dmu = downloadMutationsWf(dChMu)
-        // MUTATIONS
-        // dChMu = dataCh.map{it -> get_mutation_tcgabiolinks(it)}.view{"mutation: ${it}"}
-        // dChMu.ifEmpty{println('No mutation_tcgabiolinks, skipping')}
-        //     .with{
-        //         dmu = downloadMutationsWf(dChMu)}
-
-        // // CNV
-        // dChCNV = dataCh.map{it -> get_cnv_tcgabiolinks(it)}.view{"cnv: ${it}"}
-        // dChCNV.ifEmpty{println('No cnv_tcgabiolinks, skipping')}
-        //     .with{
-        //         dcnv = downloadCNVWf(dChCNV)
-        //     }
         
-        // // METHYLATION
-        // dChMe = dataCh.map{it -> get_methylation_gdc(it)}.view{"methylation: ${it}"}
-        // dChMe.ifEmpty{println('No methylation_gdc, skipping')}
-        //     .with{
-        //                 dme = downloadMethylationWf(dChMe)
-        //     }
+        //DOWNLOAD CNV   
+        dChCNV = dataCh.map{
+            it -> if(it.value.keySet().contains('cnv_tcgabiolinks')){
+                tuple(
+                    it.key,
+                    it.value.get('cnv_tcgabiolinks').project,
+                    it.value.get('cnv_tcgabiolinks').workflow_type,
+                    file(it.value.get('cnv_tcgabiolinks').samples)
+                )
+            }
+        }
+        dcnv = downloadCNVWf(dChCNV)
 
-        // // CLINICAL
-        // dChCl = dataCh.map{it -> get_clinical_tcgabiolinks(it)}.view{"clinical: ${it}"}
-        // dChCl.ifEmpty{println('No clinical_tcgabiolinks, skipping')}
-        //     .with{
-        //                 dc = downloadClinicalWf(dChCl)
-        //     }           
+        // DOWNLOAD METHYLATION
+        dChMe = dataCh.map{
+            it -> if(it.value.keySet().contains('methylation_gdc')){
+                tuple(
+                    it.key,
+                    it.value.get('methylation_gdc').project,
+                    it.value.get('methylation_gdc').gdc_type,
+                    it.value.get('methylation_gdc').gdc_platform,
+                    it.value.get('methylation_gdc').download_dir,
+                    file(it.value.get('methylation_gdc').samples)
+                )
+            }
+        }
+        dme = downloadMethylationWf(dChMe)
 
+        // DOWNLOAD CLINICAL
+        dChCl = dataCh.map{
+            it -> if(it.value.keySet().contains('clinical_tcgabiolinks')){
+                tuple(
+                    it.key,
+                    it.value.get('clinical_tcgabiolinks').project,
+                    it.value.get('clinical_tcgabiolinks').data_category,
+                    it.value.get('clinical_tcgabiolinks').data_type,
+                    it.value.get('clinical_tcgabiolinks').data_format
+                )
+            }
+        }
+        dc = downloadClinicalWf(dChCl)
 
-        // a.ifEmpty{println('No expression_recount3, skipping')}
-        //    .with{
-        //         dChRe = dataCh.map{it -> tuple(
-        //                                                 it.key,
-        //                                                 it.value.get('expression_recount3').project,
-        //                                                 it.value.get('expression_recount3').project_home,
-        //                                                 it.value.get('expression_recount3').organism,
-        //                                                 it.value.get('expression_recount3').annotation,
-        //                                                 it.value.get('expression_recount3').type,
-        //                                                 file(it.value.get('expression_recount3').samples))
-        //                                                 }.view()
-        //    }
-        
-        // dChRe = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('expression_recount3').project,
-        //                                         it.value.get('expression_recount3').project_home,
-        //                                         it.value.get('expression_recount3').organism,
-        //                                         it.value.get('expression_recount3').annotation,
-        //                                         it.value.get('expression_recount3').type,
-        //                                         file(it.value.get('expression_recount3').samples))
-        //                                         }
-        // dChRe.ifEmpty{println('No expression_recount3, skipping')}
-        //     .with{
-        //         dr = downloadRecount3Wf(dChRe)
-        //     }
-            
-        // //}
-        // // DOWNLOAD MUTATIONS
-
-        // dChMu = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('mutation_tcgabiolinks').project,
-        //                                         it.value.get('mutation_tcgabiolinks').data_category,
-        //                                         it.value.get('mutation_tcgabiolinks').data_type,
-        //                                         it.value.get('mutation_tcgabiolinks').download_dir,
-        //                                         file(it.value.get('mutation_tcgabiolinks').samples))
-        //                                         }
-        // dChMu.ifEmpty{println('No mutation_tcgabiolinks, skipping')}
-        //     .with{
-        //         dmu = downloadMutationsWf(dChMu)
-        //     }
-        
-        // //DOWNLOAD CNV
-        // dChCNV = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('cnv_tcgabiolinks').project,
-        //                                         it.value.get('cnv_tcgabiolinks').workflow_type,
-        //                                         file(it.value.get('cnv_tcgabiolinks').samples))
-        //                                         }
-            
-        // dChCNV.ifEmpty{println('No cnv_tcgabiolinks, skipping')}
-        //     .with{
-        //         dcnv = downloadCNVWf(dChCNV)
-        //     }
-            
-        // // DOWNLOAD METHYLATION
-        
-        // dChMe = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('methylation_gdc').project,
-        //                                         it.value.get('methylation_gdc').gdc_type,
-        //                                         it.value.get('methylation_gdc').gdc_platform,
-        //                                         it.value.get('methylation_gdc').download_dir,
-        //                                         file(it.value.get('methylation_gdc').samples))
-        //                                         }
-        // dChMe.ifEmpty{println('No methylation_gdc, skipping')}
-        //     .with{
-        //                 dme = downloadMethylationWf(dChMe)
-        //     }
-
-
-        // // DOWNLOAD CLINICAL
-        
-        // dChCl = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('clinical_tcgabiolinks').project,
-        //                                         it.value.get('clinical_tcgabiolinks').data_category,
-        //                                         it.value.get('clinical_tcgabiolinks').data_type,
-        //                                         it.value.get('clinical_tcgabiolinks').data_format)
-        //                                         }
-        // dChCl.ifEmpty{println('No clinical_tcgabiolinks, skipping')}
-        //     .with{
-        //                 dc = downloadClinicalWf(dChCl)
-        //     }                                        
-            
     emit:
         dr
         dmu
