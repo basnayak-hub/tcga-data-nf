@@ -38,30 +38,36 @@ log.info motd
 
 
 workflow devWf{
+    take:
+        dataCh
     main:
-        modalities = params.download_metadata.keySet()
+        //println(dataCh.value.getClass())
+        // Empty channels
+        dr = Channel.empty()
+        dmu = Channel.empty()
+        dme = Channel.empty()
+        dc = Channel.empty()
+        // DOWNLOAD RECOUNT3
 
-        if (modalities.contains('methylation_gdc')){
-        channelMethylation = Channel.from(params.download_metadata.methylation_gdc.entrySet())
-                                    .map{
-                                        item -> tuple(
-                                            item.getKey(),
-                                            item.getValue().project,
-                                            item.getValue().gdc_type,
-                                            item.getValue().gdc_platform,
-                                            item.getValue().download_dir,
-                                        )
-                                    }
+        modalities = dataCh.map{it -> it.value.keySet()}.collect()
+        dataCh.map{it -> tuple(it.key)}.view{"Keys: ${it}"}
+    //     //if (dataCh.containsKey('expression_recount3')){
+            dChRe = dataCh.map{it -> tuple(
+                                                it.key,
+                                                it.value.get('expression_recount3').project,
+                                                it.value.get('expression_recount3').project_home,
+                                                it.value.get('expression_recount3').organism,
+                                                it.value.get('expression_recount3').annotation,
+                                                it.value.get('expression_recount3').type,
+                                                file(it.value.get('expression_recount3').samples))
+                                                }.view{"dchre: ${it}"}
+            dr = downloadRecount3Wf(dChRe)
 
-            dme = downloadMethylationWf(channelMethylation)
-            mergeMethylationMetadata(dme.map{it -> it[-1]}.collect())
-        }   
-
-         if (modalities.contains('expression_recount3')){
-            // Channel for recount3 data download
-            downloadRecount3Wf(params.download_metadata.expression_recount3)
+    //      if (modalities.contains('expression_recount3')){
+    //         // Channel for recount3 data download
+    //         downloadRecount3Wf(params.download_metadata.expression_recount3)
+    // }
     }
-}
 
 
 // COPY CONFIG FILES
@@ -107,9 +113,13 @@ workflow fullWf{
     // Full download
     fullDownCh = fullDownloadWf(dCh)
 
+    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}.view{"full: ${it}"}
+    fullDownCh.dmu.map{it -> tuple(it[0], it[1], it[7], it[7])}.view{"full: ${it}"}
+
+    // view fullDownCh
     // PREPARE  (prepare expression and methylation)
     // Recount prepare (from fullDownCh.dr)
-    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}
+    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}.view()
     readyRecount = prepareRecountWf(fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7])})
     
     // Methylation prepare (from fullDownCh.dme)
@@ -164,10 +174,15 @@ workflow {
     } else if (params.pipeline == 'prepare')
         // PREPARE
         prepareWf()
-    else if (params.pipeline == 'dev')
+    else if (params.pipeline == 'dev'){
         // This is only for development purposes
-        downloadWf()
-    else if (params.pipeline == 'full')
+            // DOWNLOAD
+        // Data channel, metadata for Download
+        dCh = Channel.fromPath(params.full_metadata).splitJson().view{"Item: ${it}"}
+
+        //Testing
+        dCh = devWf(dCh)
+    } else if (params.pipeline == 'full')
         // FULL PIPELINE
         fullWf()
     else

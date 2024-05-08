@@ -118,6 +118,7 @@ workflow prepareRecountWf{
         prepareRecountCh
     main:
     
+    prepareRecountCh.view{"hello: ${it}"}
     // Tissues channel
     channelTissues = Channel.from(params.tissues.entrySet())
                                         .map{

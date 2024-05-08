@@ -260,9 +260,9 @@ workflow analyzeExpressionWf{
                     //otterlioness: it[-1] == 'otter_lioness'    
                 }.set { zooAnalysisCh }
 
-    PandaTCGAWf(zooAnalysisCh.panda)
+    PandaTCGAWf(zooAnalysisCh.panda.map{it -> tuple(it[1], it[2])})
 
-    LionessPandaTCGAWf(zooAnalysisCh.pandalioness)
+    LionessPandaTCGAWf(zooAnalysisCh.pandalioness.map{it -> tuple(it[1], it[2])})
 
     //LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
 
