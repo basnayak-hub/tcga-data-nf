@@ -418,72 +418,85 @@ workflow fullDownloadWf{
     take:
         dataCh
     main:
-        //println(dataCh.value.getClass())
         // Empty channels
         dr = Channel.empty()
         dmu = Channel.empty()
         dme = Channel.empty()
         dc = Channel.empty()
-        // DOWNLOAD RECOUNT3
 
-        modalities = dataCh.map{it -> it.value.keySet()}.collect()
-        //if (dataCh.containsKey('expression_recount3')){
-            dChRe = dataCh.map{it -> tuple(
-                                                it.key,
-                                                it.value.get('expression_recount3').project,
-                                                it.value.get('expression_recount3').project_home,
-                                                it.value.get('expression_recount3').organism,
-                                                it.value.get('expression_recount3').annotation,
-                                                it.value.get('expression_recount3').type,
-                                                file(it.value.get('expression_recount3').samples))
-                                                }
-            dr = downloadRecount3Wf(dChRe)
-        //}
+        // DOWNLOAD RECOUNT3
+        dChRe = dataCh.map{
+            it -> if(it.value.keySet().contains('expression_recount3')){
+                tuple(
+                    it.key,
+                    it.value.get('expression_recount3').project,
+                    it.value.get('expression_recount3').project_home,
+                    it.value.get('expression_recount3').organism,
+                    it.value.get('expression_recount3').annotation,
+                    it.value.get('expression_recount3').type,
+                    file(it.value.get('expression_recount3').samples)
+                )
+            }
+        }
+        dr = downloadRecount3Wf(dChRe)
+        
         // DOWNLOAD MUTATIONS
-        //if (dataCh.map{it -> it.value.keySet()}.contains('mutation_tcgabiolinks')){
-            dChMu = dataCh.map{it -> tuple(
-                                                it.key,
-                                                it.value.get('mutation_tcgabiolinks').project,
-                                                it.value.get('mutation_tcgabiolinks').data_category,
-                                                it.value.get('mutation_tcgabiolinks').data_type,
-                                                it.value.get('mutation_tcgabiolinks').download_dir,
-                                                file(it.value.get('mutation_tcgabiolinks').samples))
-                                                }
-            dmu = downloadMutationsWf(dChMu)
-        //}
-        //DOWNLOAD CNV
-            dChCNV = dataCh.map{it -> tuple(
-                                                it.key,
-                                                it.value.get('cnv_tcgabiolinks').project,
-                                                it.value.get('cnv_tcgabiolinks').workflow_type,
-                                                file(it.value.get('cnv_tcgabiolinks').samples))
-                                                }
-            dcnv = downloadCNVWf(dChCNV)
+        dChMu = dataCh.map{
+            it -> if(it.value.keySet().contains('mutation_tcgabiolinks')){
+                tuple(
+                    it.key,
+                    it.value.get('mutation_tcgabiolinks').project,
+                    it.value.get('mutation_tcgabiolinks').data_category,
+                    it.value.get('mutation_tcgabiolinks').data_type,
+                    it.value.get('mutation_tcgabiolinks').download_dir,
+                    file(it.value.get('mutation_tcgabiolinks').samples)
+                )
+            }
+        }
+        dmu = downloadMutationsWf(dChMu)
+        
+        //DOWNLOAD CNV   
+        dChCNV = dataCh.map{
+            it -> if(it.value.keySet().contains('cnv_tcgabiolinks')){
+                tuple(
+                    it.key,
+                    it.value.get('cnv_tcgabiolinks').project,
+                    it.value.get('cnv_tcgabiolinks').workflow_type,
+                    file(it.value.get('cnv_tcgabiolinks').samples)
+                )
+            }
+        }
+        dcnv = downloadCNVWf(dChCNV)
 
         // DOWNLOAD METHYLATION
-        //if (dataCh.map{it -> it.value.keySet()}.contains('methylation_gdc')){
-            dChMe = dataCh.map{it -> tuple(
-                                                it.key,
-                                                it.value.get('methylation_gdc').project,
-                                                it.value.get('methylation_gdc').gdc_type,
-                                                it.value.get('methylation_gdc').gdc_platform,
-                                                it.value.get('methylation_gdc').download_dir,
-                                                file(it.value.get('methylation_gdc').samples))
-                                                }
+        dChMe = dataCh.map{
+            it -> if(it.value.keySet().contains('methylation_gdc')){
+                tuple(
+                    it.key,
+                    it.value.get('methylation_gdc').project,
+                    it.value.get('methylation_gdc').gdc_type,
+                    it.value.get('methylation_gdc').gdc_platform,
+                    it.value.get('methylation_gdc').download_dir,
+                    file(it.value.get('methylation_gdc').samples)
+                )
+            }
+        }
         dme = downloadMethylationWf(dChMe)
-        //}
 
         // // DOWNLOAD CLINICAL
-        // if (dataCh.map{it -> it.value.keySet()}.contains('clinical_tcgabiolinks')){
-            dChCl = dataCh.map{it -> tuple(
-                                                it.key,
-                                                it.value.get('clinical_tcgabiolinks').project,
-                                                it.value.get('clinical_tcgabiolinks').data_category,
-                                                it.value.get('clinical_tcgabiolinks').data_type,
-                                                it.value.get('clinical_tcgabiolinks').data_format)
-                                                }
-            dc = downloadClinicalWf(dChCl)
-        //}
+        dChCl = dataCh.map{
+            it -> if(it.value.keySet().contains('clinical_tcgabiolinks')){
+                tuple(
+                    it.key,
+                    it.value.get('clinical_tcgabiolinks').project,
+                    it.value.get('clinical_tcgabiolinks').data_category,
+                    it.value.get('clinical_tcgabiolinks').data_type,
+                    it.value.get('clinical_tcgabiolinks').data_format
+                )
+            }
+        }
+        dc = downloadClinicalWf(dChCl)
+
     emit:
         dr
         dmu
