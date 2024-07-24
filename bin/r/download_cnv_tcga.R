@@ -50,8 +50,12 @@ cn_rds <- GDCprepare(queried)
 
 if (nchar(opt$sample_list)>3){
     barcodes = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
-    barcodes = substr(barcodes$V1,1,12)
-    cn_rds = cn_rds[,substr(cn_rds$sample,1,12) %in% barcodes]
+    nnn = nchar(barcodes$V1[1])
+    # Check that this is correct
+    if (nnn>12){nnn=12}
+    # select based on nnn
+    barcodes = substr(barcodes$V1,1,nnn)
+    cn_rds = cn_rds[,substr(cn_rds$sample,1,nnn) %in% barcodes]
 }
 
 

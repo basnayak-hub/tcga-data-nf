@@ -126,9 +126,6 @@ workflow fullWf{
     fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}
     readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
 
-    // //fullDownloadWf(params.full_metadata.entrySet().each{it -> it.getKey()},dCh.map{it -> it.getValue()})
-    // //Channel.from(params.full_metadata.keySet()) uuids = params.full_metadata.keySet()
-
     // ANALYZE
     
     readyRecount.map{it -> tuple(it[0],it[11])}

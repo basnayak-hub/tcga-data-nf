@@ -59,7 +59,9 @@ if (nchar(opt$sample_list)>3){
   ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
   submitters = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
   print(submitters$V1)
-  ge_manifest = ge_manifest[ong$mapUUIDtoTCGA(ge_manifest$id)$submitter %in% submitters$V1,]
+  # Selecting the submitter IDs
+  nnn = nchar(submitters$V1[1])
+  ge_manifest = ge_manifest[substr(ong$mapUUIDtoTCGA(ge_manifest$id)$submitter,1,nnn) %in% submitters$V1,]
   print(ge_manifest)
 }
 

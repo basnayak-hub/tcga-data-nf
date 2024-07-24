@@ -45,7 +45,9 @@ if (nchar(sample_list)>3){
   print('Filtering only samples in the sample list...')
   ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
-  recount_data = recount_data[,ong$extractSampleAndTypeAndVial(recount_data$tcga.tcga_barcode) %in% submitters$V1]
+  # Flexible filtering, could be done on sample only
+  nnn = nchar(submitters$V1[1])
+  recount_data = recount_data[,substr(recount_data$tcga.tcga_barcode, 1, nnn) %in% submitters$V1]
 
   print('Data have been filtered by sample list...')
   print('Clinical Data has shape (samples X clinical variables):')

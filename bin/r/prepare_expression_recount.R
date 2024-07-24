@@ -128,6 +128,7 @@ rds_info <- obj$extractSampleAndGeneInfo(test_exp_rds)
 rds_sample_info <- rds_info$rds_sample_info
 rds_gene_info <- rds_info$rds_gene_info
 
+print(test_exp_rds)
 # Map column names to TCGA barcodes
 print('Map Barcodes...')
 if (normalization %in% c('count','tpm','logtpm') ){
@@ -142,7 +143,8 @@ if (normalization %in% c('count','tpm','logtpm') ){
   # Normalize data
   print('Normalize with CPM...')
   # Here we call it xpm, so it's the same for tpm and cpm
-  test_exp_all <- obj$logCPMNormalization(test_exp_rds)
+  # this is temporary
+  test_exp_all <- obj$logCPMNormalization(assay(test_exp_rds))
   test_exp_count <- test_exp_all$counts
   test_exp_xpm <- test_exp_all$CPM
   test_exp_logxpm <- test_exp_all$logCPM

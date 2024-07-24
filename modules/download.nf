@@ -12,10 +12,6 @@ process downloadRecount{
             if ! test -f ${samples}; then
             touch ${samples}
             fi
-            if [[ ${workflow.profile} == *"conda"* ]]
-            then
-                echo "running conda";Rscript '${baseDir}/bin/r/install_local_download.R'
-            fi
             Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
             echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
             echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
@@ -113,11 +109,6 @@ process downloadMethylation{
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
     script:
         """
-            cat '${baseDir}/bin/r/install_local_download.R'
-            if [[ ${workflow.profile} == *"conda"* ]]
-            then
-                echo "running conda";Rscript '${baseDir}/bin/r/install_local_download.R'
-            fi
             Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list ${samples}
             bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt" "${uuid}_methylation_paths.txt"
 	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"

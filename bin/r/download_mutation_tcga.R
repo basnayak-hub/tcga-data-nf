@@ -41,7 +41,11 @@ print(length(unique(muts$Tumor_Sample_Barcode)))
 if (nchar(sample_list)>3){
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
   print('Subselecting the samples...')
-  muts = muts[substr(muts$Tumor_Sample_Barcode, 1, 16) %in% submitters$V1,]
+  # Check length of submitters
+  # TODO: add check that all submitters have same length
+  nnn = nchar(submitters$V1[1])
+  # select based on nnn
+  muts = muts[substr(muts$Tumor_Sample_Barcode, 1, nnn) %in% submitters$V1,]
   print('Mutation Data has now shape (mutations x annotations):')
   print(dim(muts))
   print(length(unique(muts$Tumor_Sample_Barcode)))
