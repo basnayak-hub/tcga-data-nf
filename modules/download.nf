@@ -62,7 +62,10 @@ process downloadMutations{
         tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), path(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
     script:
         """
-            Rscript '${baseDir}/bin/r/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${samples}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv";
+            if ! test -f ${samples}; then
+            touch ${samples}
+            fi
+            Rscript '${baseDir}/bin/r/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${samples}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv" > "${uuid}_download_mutations.log";
             echo "uuid,project,data_category,data_type,download_dir,samples,mutation_table,pivot_table" > "${uuid}_mutations_metadata.csv";
             echo "${uuid},${project},${data_category},${data_type},${download_dir},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/mutations/${uuid}_mutations.txt,${params.resultsDir}/${params.batchName}/${uuid}/data_download/mutations/${uuid}_mutations_pivot.csv" >> "${uuid}_mutations_metadata.csv"
         """
@@ -97,6 +100,7 @@ process mergeMutationsMetadata{
 }
 
 
+
 process downloadMethylation{
 
     label "r_download"
@@ -109,6 +113,9 @@ process downloadMethylation{
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
     script:
         """
+            if ! test -f ${samples}; then
+            touch ${samples}
+            fi
             Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list ${samples}
             bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt" "${uuid}_methylation_paths.txt"
 	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
@@ -127,8 +134,6 @@ process downloadMethylation{
 
 
 }
-
-
 
 process mergeMethylationMetadata{
     // label uses conda environment
@@ -184,6 +189,9 @@ process downloadCNV{
         tuple val(uuid),val(project),val(workflow_type), path(samples) ,file("${uuid}.rds"),file("${uuid}.csv"),file("${uuid}_cnv_metatada.csv")
     script:
         """
+            if ! test -f ${samples}; then
+            touch ${samples}
+            fi
             Rscript '${baseDir}/bin/r/download_cnv_tcga.R' -p ${project} --analysis_workflow_type ${workflow_type} --sample_list ${samples} --output_rds "${uuid}.rds" --output_table ${uuid}.csv > "${uuid}_cnv_downloads.log";
             echo "uuid,project,workflow_type,samples,output_rds,output_table" > "${uuid}_cnv_metatada.csv";
             echo "${uuid},${project},${workflow_type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/${uuid}.rds,${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/${uuid}.csv"  >> "${uuid}_cnv_metatada.csv"
@@ -260,7 +268,7 @@ workflow downloadMethylationWf{
         //                                 )
         //                             }
 
-        dme = downloadMethylation(channelMethylation)
+        dme = downloadMethylation(channelMethylation) 
         mergeMethylationMetadata(dme.map{it -> it[-1]}.collect())
     emit: dme
 }

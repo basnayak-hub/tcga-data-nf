@@ -81,10 +81,24 @@ for(i in 1:nrow(ge_manifest)){
 #for(i in 1:3){
       options(warn=2)
       print(paste("Processing file:",i))
+        
+      download_finished <- FALSE
+
+      while(!download_finished) {
+
+          tmp <- tryCatch({
+
+                  fullpath = gdcdata(ge_manifest$id[[i]])
+                  print(ge_manifest$id[[i]])
+                  print(paste("fullpath:",fullpath))
+                  download_finished <- TRUE
+
+                },
+                error = function(e) {Sys.sleep(800)})
+        }
       
       # This should be the line that actually downloads the file 
-      fullpath = gdcdata(ge_manifest$id[[i]])
-      print(paste("fullpath:",fullpath))
+
       fullpath_list[[i]] = fullpath
       dirname = names(fullpath) 
 }
@@ -92,3 +106,4 @@ for(i in 1:nrow(ge_manifest)){
 # KS: pathdf is written to a convenience file for the bash join
 pathdf = data.frame("file"=unlist(fullpath_list)) 
 write.table(pathdf,file = pathlist_outpath, sep="\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+print("DONE: all files downloaded")

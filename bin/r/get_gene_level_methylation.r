@@ -53,7 +53,7 @@ print(head(all_genes))
 
 # filter methylation beta to only probes that are in the tf list
 # Manage list of TF
-if (tf_list_fn!=''){
+if (tf_list_fn!=' '){
 
   # Read TF list
   print(paste(c('Reading TF list', tf_list_fn)), collapse = " ")
@@ -77,7 +77,7 @@ barcodes = my_friend$mapUUIDtoTCGA(row.names(gene_map))
 # sanity check
 print("gene map row names")
 print(row.names(gene_map)[1:5])
-print("Sanity check on order")
+print("Sanity check on order (should be 0)")
 sum(order(row.names(barcodes)) != order(row.names(gene_map)))
 
 # add TCGA and write to file 

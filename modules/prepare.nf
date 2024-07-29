@@ -84,9 +84,10 @@ process GetGeneLevelPromoterMethylation {
         tuple val(uuid), val(project), path(methdata), path("${uuid}_tf_promoter_methylation_raw.csv")
 
     // return gene-level methylation measurements
-    
+    script:
+    def filter = tf_list.name != 'NO_FILE' ? "--tf_list ${tf_list}" : ""
     """
-        Rscript ${baseDir}/bin/r/get_gene_level_methylation.r -p ${project} -m ${methdata} -o "${uuid}_tf_promoter_methylation_raw.csv" --probemap ${probe_map} --tf_list ${tf_list} > "${uuid}_tf_promoter_methylation_raw.log" 
+        Rscript ${baseDir}/bin/r/get_gene_level_methylation.r -p ${project} -m ${methdata} -o "${uuid}_tf_promoter_methylation_raw.csv" --probemap ${probe_map} ${filter} > "${uuid}_tf_promoter_methylation_raw.log" 
 
     """
 

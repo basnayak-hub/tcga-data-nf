@@ -154,7 +154,10 @@ workflow {
     if (params.pipeline == 'download'){
         // DOWNLOAD
         downloadWf()
-    } else if (params.pipeline == 'analyze'){
+    } else if (params.pipeline == 'prepare'){
+        // PREPARE
+        prepareWf() 
+        } else if (params.pipeline == 'analyze'){
         // ANALYZE
         data = Channel
                     .fromPath(params.metadata_expression, checkIfExists: true)
@@ -168,17 +171,6 @@ workflow {
                     .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
 
         analyzeDragonWf(dataDragon)
-    } else if (params.pipeline == 'prepare')
-        // PREPARE
-        prepareWf()
-    else if (params.pipeline == 'dev'){
-        // This is only for development purposes
-            // DOWNLOAD
-        // Data channel, metadata for Download
-        dCh = Channel.fromPath(params.full_metadata).splitJson().view{"Item: ${it}"}
-
-        //Testing
-        dCh = devWf(dCh)
     } else if (params.pipeline == 'full')
         // FULL PIPELINE
         fullWf()
