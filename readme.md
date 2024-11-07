@@ -3,7 +3,7 @@
 
 ![](https://github.com/QuackenbushLab/tcga-data-nf/workflows/build/badge.svg)
 
-version = '0.0.13'
+version = '0.0.14'
 
 Workflow to download and prepare TCGA data.
 
