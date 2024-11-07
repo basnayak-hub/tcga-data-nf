@@ -1,6 +1,9 @@
 # tcga-data-nf
+## End-to-end reproducible processing of cancer regulatory networks from TCGA data
 
 ![](https://github.com/QuackenbushLab/tcga-data-nf/workflows/build/badge.svg)
+
+version = '0.0.14'
 
 Workflow to download and prepare TCGA data.
 
@@ -242,8 +245,9 @@ Detailed output folder structure can be found at the [docs](docs.md##result-fold
 
 ## Authors
 
-- Kate Hoff Shutta
+
 - Viola Fanfani
+- Kate Hoff Shutta
 - Panagiotis Mandros
-- Enakshi Saha
 - Jonas Fischer
+- Enakshi Saha

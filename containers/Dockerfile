@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.documentation="https://github.com/QuackenbushLab/
 LABEL org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf"
 LABEL org.opencontainers.image.vendor="https://github.com/QuackenbushLab"
 LABEL org.opencontainers.image.authors="Viola Fanfani"
-LABEL org.opencontainers.image.revision="v0.0.13"
+LABEL org.opencontainers.image.revision="v0.0.14"
 
 # if your image defaults to a non-root user, then you may want to make the
 # next 3 ARG commands match the values in your image. You can get the values
@@ -64,6 +64,6 @@ RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
 RUN R -e "devtools::install_github('immunogenomics/presto')"
 RUN R -e "devtools::install_github('aet21/EpiSCORE')"
 
-ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
+#ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
 #RUN R -e "devtools::install_local('/opt/NetSciDataCompanion/', force=TRUE, dependencies=T)"
 RUN R -e "devtools::install_github('https://github.com/QuackenbushLab/NetworkDataCompanion')"
