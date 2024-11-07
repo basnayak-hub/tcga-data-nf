@@ -3,6 +3,8 @@ FROM violafanfani/tcga-data-base-r:0.0.4
 
 USER root
 
+RUN ping -c 4 google.com
+
 # adding opencontainer labels to link registry to github repository
 LABEL org.opencontainers.image.title="tcga-data-nf"
 LABEL org.opencontainers.image.description="Workflow to download and prepare TCGA data"
@@ -14,7 +16,6 @@ LABEL org.opencontainers.image.authors="Viola Fanfani"
 LABEL org.opencontainers.image.revision="v0.0.13"
 
 RUN apt-get update && apt-get install -y ca-certificates
-RUN apt-get update && apt-get install -y
 
 RUN python3 -m pip install --upgrade pip
 
