@@ -16,6 +16,7 @@ process prepareTCGARecount{
                 path("recount3_${uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.log")
 
     script:
+        log.info "... Preparing recount for $uuid,$tcga_project,$tcga_expression_fn"
         """
         Rscript '${baseDir}/bin/r/prepare_expression_recount.R' -p ${tcga_project}\
             -e ${tcga_expression_fn} \
@@ -85,6 +86,7 @@ process GetGeneLevelPromoterMethylation {
 
     // return gene-level methylation measurements
     script:
+    log.info "... Getting gene level promoter methylation $uuid,$project"
     def filter = tf_list.name != 'NO_FILE' ? "--tf_list ${tf_list}" : ""
     """
         Rscript ${baseDir}/bin/r/get_gene_level_methylation.r -p ${project} -m ${methdata} -o "${uuid}_tf_promoter_methylation_raw.csv" --probemap ${probe_map} ${filter} > "${uuid}_tf_promoter_methylation_raw.log" 
@@ -108,6 +110,8 @@ process CleanMethylationData {
     output:
         tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.csv"), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.log")
     
+    script:
+    log.info "... Cleaning methylation data $uuid,$project"
     """
          Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
     """
@@ -119,7 +123,7 @@ workflow prepareRecountWf{
         prepareRecountCh
     main:
     
-    prepareRecountCh.view{"hello: ${it}"}
+    //prepareRecountCh.view{"hello: ${it}"}
     // Tissues channel
     channelTissues = Channel.from(params.tissues.entrySet())
                                         .map{
@@ -184,8 +188,8 @@ workflow prepareWf{
 
     // Prepare Recount
     if (params.recount.metadata_prepare!='') {
-        println('Recount Channel')
-        println(params.recount.metadata_prepare)
+        //println('Recount Channel')
+        //println(params.recount.metadata_prepare)
         // Data channel
         prepareRecountCh = Channel
                     .fromPath( params.recount.metadata_prepare)
@@ -198,8 +202,8 @@ workflow prepareWf{
     // Prepare Methylation
     if (params.methylation.metadata_prepare!=''){    
     // Data channel
-    println('Methylation Channel')
-    println(params.methylation.metadata_prepare)
+    //println('Methylation Channel')
+    //println(params.methylation.metadata_prepare)
     
     prepareMethylationCh = Channel
                 .fromPath( params.methylation.metadata_prepare)

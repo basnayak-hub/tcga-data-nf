@@ -1,2 +1,0 @@
-tcga_uuid,tcga_project,tcga_expression_file,tcga_patient_file
-tcga_blca,TCGA_BLCA,testdata/tcga_blca.rds,testdata/clinical_patient_blca.csv

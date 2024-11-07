@@ -13,6 +13,7 @@ process runTCGAPanda {
             tuple val(uuid), path(expression), path("panda_${uuid}.txt"), path("panda_${uuid}.log")
         
         script:
+        log.info "... Running PANDA $uuid,$expression"
             """
                 ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
                 netzoopy panda -e ${uuid}.nodot.txt -m "${params.zoo.motif}" -p ${params.zoo.ppi} -o panda_${uuid}.txt ${params.zoo.panda} > panda_${uuid}.log
@@ -39,6 +40,7 @@ process runTCGALioness {
             tuple val(uuid), path(expression), path("panda.txt"), path("lioness/", type:'dir')
         
         script:
+        log.info "... Running PANDA LIONESS $uuid,$expression"
             """
                 ${baseDir}/bin/bash/remove_dot_ensembl.sh ${expression} ${uuid}.nodot.txt;
                 netzoopy lioness -e ${uuid}.nodot.txt -m ${params.zoo.motif} -p ${params.zoo.ppi} -op panda.txt -ol lioness/ ${params.zoo.panda_lioness} > panda_lioness_${uuid}.log
@@ -66,6 +68,7 @@ process runTCGAOtterLioness {
             tuple val(uuid), path(expression), path("./otter/otter.h5"), path("./otter/lioness_otter/", type:'dir')
         
         shell:
+            log.info "... Running OTTER LIONESS $uuid,$expression"
             '''
                 cat !{expression} | awk 'BEGIN { OFS=FS="\\t" } {  sub(/\\..*$/, "", \$1); print  }' >> !{uuid}.nodot.txt;
                 netzoopy otterlioness -e !{uuid}.nodot.txt -m !{params.zoo.motif} -p !{params.zoo.ppi} -of otter/ !{params.zoo.otter_lioness} >> otter_lioness_!{uuid}.log
@@ -92,6 +95,7 @@ process alignMethylationExpression {
         tuple val(uuid),path(methylationData),path(expressionData),path("${uuid}_dragon_filtered_expression.csv")
     
     script:
+        log.info "... Align methylation and expression $uuid,$expressionData, $methylationData"
     """
         Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
     """
@@ -113,9 +117,10 @@ process runTCGADragon {
         tuple val(uuid),path(methylationData),path(expressionData),path(expressionAlignedData), path("${uuid}_dragon_mat.tsv"), path("${uuid}_dragon_input.tsv"), path("${uuid}_dragon.log")
     
     script:
-    """
-    run_dragon.py dragon -m ${methylationData} -e ${expressionAlignedData} -i "${uuid}_dragon_input.tsv" -o "${uuid}_dragon_mat.tsv" > "${uuid}_dragon.log"
-    """
+        log.info "... Running DRAGON $uuid,$expressionAlignedData"
+        """
+        run_dragon.py dragon -m ${methylationData} -e ${expressionAlignedData} -i "${uuid}_dragon_input.tsv" -o "${uuid}_dragon_mat.tsv" > "${uuid}_dragon.log"
+        """
     stub:
         """
         touch "${uuid}_dragon_input.tsv"
@@ -138,6 +143,7 @@ process runTCGALionessDragon{
         tuple val(uuid),path(methylationData),path(expressionData), path(expressionAlignedData), path("lioness_dragon/", type:'dir'), path("${uuid}_lioness_dragon.log")
 
     script:
+    log.info "... Running LIONESS DRAGON $uuid,$expressionAlignedData"
     """
     run_dragon.py lioness-dragon -m ${methylationData} -e ${expressionAlignedData} -o lioness_dragon > "${uuid}_lioness_dragon.log"
     """
@@ -190,7 +196,7 @@ workflow PandaTCGAWf {
 
     take:data
     main:
-    data.view()
+    data
     lio = runTCGAPanda(data)
     //lio.take(3).view()
     //runTCGAPandaExplore(lio.take(3))

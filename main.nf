@@ -36,40 +36,6 @@ Revision     : $workflow.revision
 
 log.info motd
 
-
-workflow devWf{
-    take:
-        dataCh
-    main:
-        //println(dataCh.value.getClass())
-        // Empty channels
-        dr = Channel.empty()
-        dmu = Channel.empty()
-        dme = Channel.empty()
-        dc = Channel.empty()
-        // DOWNLOAD RECOUNT3
-
-        modalities = dataCh.map{it -> it.value.keySet()}.collect()
-        dataCh.map{it -> tuple(it.key)}.view{"Keys: ${it}"}
-    //     //if (dataCh.containsKey('expression_recount3')){
-            dChRe = dataCh.map{it -> tuple(
-                                                it.key,
-                                                it.value.get('expression_recount3').project,
-                                                it.value.get('expression_recount3').project_home,
-                                                it.value.get('expression_recount3').organism,
-                                                it.value.get('expression_recount3').annotation,
-                                                it.value.get('expression_recount3').type,
-                                                file(it.value.get('expression_recount3').samples))
-                                                }.view{"dchre: ${it}"}
-            dr = downloadRecount3Wf(dChRe)
-
-    //      if (modalities.contains('expression_recount3')){
-    //         // Channel for recount3 data download
-    //         downloadRecount3Wf(params.download_metadata.expression_recount3)
-    // }
-    }
-
-
 // COPY CONFIG FILES
 process copyConfigFiles{
     publishDir "${params.resultsDir}",pattern:"${params.logInfoFile}", mode: 'copy', overwrite: true

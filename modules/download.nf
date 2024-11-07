@@ -8,6 +8,7 @@ process downloadRecount{
     output:
         tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), path(samples) ,file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
     script:
+        log.info "Downloading recount for $uuid, $project"
         """
             if ! test -f ${samples}; then
             touch ${samples}
@@ -24,9 +25,6 @@ process downloadRecount{
         touch "${uuid}_recount3_metatada.csv"
         """
 }
-
-
-
 
 // Concatenate all the metadata recount table in one file
 process mergeRecountMetadata{
@@ -61,6 +59,7 @@ process downloadMutations{
     output:
         tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), path(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
     script:
+    log.info "Downloading mutations for $uuid, $project"
         """
             if ! test -f ${samples}; then
             touch ${samples}
@@ -112,6 +111,7 @@ process downloadMethylation{
     output:
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
     script:
+    log.info "Downloading methulation for $uuid, $project"
         """
             if ! test -f ${samples}; then
             touch ${samples}
@@ -166,6 +166,7 @@ process downloadClinical{
     output:
         tuple val(uuid),val(project),val(data_category),val(data_type),val(data_format),path("*")
     script:
+    log.info "Downloading clinical data for $uuid, $project"
         """
             Rscript '${baseDir}/bin/r/download_clinical_tcga.R' ${project}  "${data_category}" "${data_type}" "${data_format}" "." 
         """
@@ -189,6 +190,7 @@ process downloadCNV{
         tuple val(uuid),val(project),val(workflow_type), path(samples) ,file("${uuid}.rds"),file("${uuid}.csv"),file("${uuid}_cnv_metatada.csv")
     script:
         """
+        log.info "Downloading CNV for $uuid, $project"
             if ! test -f ${samples}; then
             touch ${samples}
             fi
@@ -335,7 +337,7 @@ workflow downloadWf{
                                                 item.value.type,
                                                 file(item.value.samples),
                                             )
-                                        }.view()
+                                        }
         
             downloadRecount3Wf(channelRecount)
         }
@@ -401,8 +403,8 @@ def get_expression_recount3 ( x ) {
     if (x.value.get('expression_recount3')){println('expression_recount3 exists')
 
     def filePath = params.inputFile ?: null  // Assuming you have a parameter named inputFile
-    println(x.value.get('expression_recount3').samples)
-    println(x.value.get('expression_recount3').samples==null)
+    //println(x.value.get('expression_recount3').samples)
+    //println(x.value.get('expression_recount3').samples==null)
     if (x.value.get('expression_recount3').samples != null) {
         fileObj = file(filePath)
     } else {
@@ -470,25 +472,6 @@ def get_clinical_tcgabiolinks ( x ) {
         return a
     } else {return null}
     }
-
-
-
-        // // DOWNLOAD CLINICAL
-        
-        // dChCl = dataCh.map{it -> tuple(
-        //                                         it.key,
-        //                                         it.value.get('clinical_tcgabiolinks').project,
-        //                                         it.value.get('clinical_tcgabiolinks').data_category,
-        //                                         it.value.get('clinical_tcgabiolinks').data_type,
-        //                                         it.value.get('clinical_tcgabiolinks').data_format)
-        //                                         }
-        // dChCl.ifEmpty{println('No clinical_tcgabiolinks, skipping')}
-        //     .with{
-        //                 dc = downloadClinicalWf(dChCl)
-        //     }                                        
-        
-
-
 
 workflow fullDownloadWf{
     take:

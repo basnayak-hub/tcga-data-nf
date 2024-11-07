@@ -11,12 +11,33 @@ The workflow divides the process of downloading the data in two steps:
 
 The idea is that data should be downloaded once, and then prepared for the task at hand.
 
-:warning: For the moment the NetSciDataCompanion package needs to be installed locally. Once the package is ready, it
-will be migrated to a public repo and installed from github.
+:warning: For the moment the NetworkDataCompanion package needs to be installed locally. 
 
 :warning: GitHub is still not allowing the QuackenbushLab to run actions. The docker image is built and pushed 
 manually.
 
+## Getting started 
+
+1. First you'll need to [install](https://www.nextflow.io/docs/latest/install.html) nextflow on your machine. Follow the
+   `hello world` example to check if Nextflow is up and running.
+2. Pull the workflow `nextflow pull QuackenbushLab/tcga-data-nf`
+3. Install and pull the docker/singularity container or conda to run the whole pipeline
+  3a. **DOCKER**: 
+    - [Install](https://docs.docker.com/engine/install/) docker on your machine
+    - Pull the container for this workflow `docker pull violafanfani/tcga-data-nf`
+    - use the `-profile docker` option when running the workflow
+  3b. **CONDA**:
+    - Install [conda](https://docs.anaconda.com/miniconda/).
+    - Use the `-profile conda` option when running the workflow
+4. Run some test workflows
+  4a. test the download: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, testDownload `
+  4a. test the prepare: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, testPrepare`
+  4a. test the analyze: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, testAnalyze`
+  4a. test the full workflow: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, test `
+
+If you can run all these steps, you can procede defining your own configuration files and run your own analysis. 
+
+:warning: The full workflow can be slow (>45minutes).  
 
 
 ## Running the workflow
@@ -25,10 +46,9 @@ manually.
 
 The docker container is hosted on docker.io. 
 
-
 ```docker pull violafanfani/tcga-data-nf:0.0.12```
 
-More details on the container can be found in the [docs](docs.md)
+More details on the container can be found in the [docs](docs.md#Docker)
 
 ### Conda
 
@@ -132,7 +152,7 @@ params{
 
 #### Testing: testDownload
 
-Download testing can be done by specifying the `--profile testDownload`
+Download testing can be done by specifying the `-profile testDownload`
 parameter. 
 
 The data to be downloaded is specified in the `testdata/download_json.json` file. 
