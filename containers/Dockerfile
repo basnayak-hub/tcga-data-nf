@@ -61,6 +61,6 @@ RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
 RUN R -e "devtools::install_github('immunogenomics/presto')"
 RUN R -e "devtools::install_github('aet21/EpiSCORE')"
 
-ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
+#ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
 #RUN R -e "devtools::install_local('/opt/NetSciDataCompanion/', force=TRUE, dependencies=T)"
 RUN R -e "devtools::install_github('https://github.com/QuackenbushLab/NetworkDataCompanion')"
