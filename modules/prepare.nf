@@ -19,7 +19,7 @@ process prepareTCGARecount{
         log.info "... Preparing recount for $uuid,$tcga_project,$tcga_expression_fn"
         """
         pwd;
-        ls testdata/;
+        ls ~/testdata/;
         Rscript '${baseDir}/bin/r/prepare_expression_recount.R' -p ${tcga_project}\
             -e ${tcga_expression_fn} \
                 -r recount3_${uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.rds \
