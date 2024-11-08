@@ -111,7 +111,7 @@ process downloadMethylation{
     output:
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
     script:
-    log.info "Downloading methulation for $uuid, $project"
+    log.info "Downloading methylation for $uuid, $project"
         """
             if ! test -f ${samples}; then
             touch ${samples}
@@ -189,8 +189,8 @@ process downloadCNV{
     output:
         tuple val(uuid),val(project),val(workflow_type), path(samples) ,file("${uuid}.rds"),file("${uuid}.csv"),file("${uuid}_cnv_metatada.csv")
     script:
-        """
         log.info "Downloading CNV for $uuid, $project"
+        """
             if ! test -f ${samples}; then
             touch ${samples}
             fi

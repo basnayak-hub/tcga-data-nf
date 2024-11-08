@@ -6,7 +6,7 @@
               "organism" : "human",
               "annotation" : "gencode_v26",
               "type" : "gene",
-              "samples" : "testdata/tcga_paad_samples.txt"
+              "samples" : "$baseDir/testdata/tcga_paad_samples.txt"
             },
       "gtex_pancreas": {
                   "project": "PANCREAS",
@@ -23,13 +23,13 @@
               "data_category" : "Simple Nucleotide Variation",
               "data_type" : "Masked Somatic Mutation",
               "download_dir" : "gdc_tcga_mutation",
-              "samples" : "testdata/tcga_paad_mutation_samples.txt"
+              "samples" : "$baseDir/testdata/tcga_paad_mutation_samples.txt"
             }},
       "cnv_tcgabiolinks":{
                   "tcga_paad":{
                         "project" : "TCGA-PAAD",
                         "workflow_type" : "ASCAT3",
-                        "samples" : "testdata/tcga_paad_mutation_samples.txt"
+                        "samples" : "$baseDir/testdata/tcga_paad_mutation_samples.txt"
                       }},
       "clinical_tcgabiolinks": {
         "tcga_paad":{
@@ -44,7 +44,7 @@
               "gdc_type" : "methylation_beta_value",
               "gdc_platform" : "illumina human methylation 450",
               "download_dir" : "gdc_tcga_methylation",
-              "samples" : "testdata/tcga_paad_samples.txt"
+              "samples" : "$baseDir/testdata/tcga_paad_samples.txt"
             }
       }
 }
