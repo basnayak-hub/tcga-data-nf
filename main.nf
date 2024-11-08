@@ -107,9 +107,9 @@ workflow fullWf{
 
 process copyTests{
     input:
-        dir("$workflow.projectDir/testdata")
+        path("$workflow.projectDir/testdata")
     output:
-        dir("./testdata")
+        path("./testdata")
     script:
         """
         cp -r "$workflow.projectDir/testdata" "./testdata"
