@@ -193,11 +193,17 @@ workflow prepareWf{
         //println('Recount Channel')
         //println(params.recount.metadata_prepare)
         // Data channel
+    if (params.profile == 'test' || params.profile == 'testAnalyze' || params.profile == 'testPrepare' || params.profile == 'testDownload') {
+                prepareRecountCh = Channel
+                    .fromPath( params.recount.metadata_prepare)
+                    .splitCsv( header: true)
+                    .map { row -> tuple( row.uuid,row.project, file("$workflow.projectDir/testdata/"row.output_rds)) }
+    } else {
         prepareRecountCh = Channel
                     .fromPath( params.recount.metadata_prepare)
                     .splitCsv( header: true)
                     .map { row -> tuple( row.uuid,row.project, file(row.output_rds)) }
-
+    }   
         prepareRecountWf(prepareRecountCh)
 
     }
