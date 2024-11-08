@@ -106,8 +106,6 @@ workflow fullWf{
 
 
 process copyTests{
-    input:
-        path("$workflow.projectDir/testdata")
     output:
         path("./testdata")
     script:
