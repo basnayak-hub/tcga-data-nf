@@ -114,6 +114,14 @@ process copyTests{
         """
 }
 
+process createTestLink
+{
+    script:
+        """
+        ln -s "$workflow.projectDir/testdata" "./testdata/"
+        """
+}
+
 workflow {
 
     // First we copy the configuration files and motd into the resultsDir
@@ -121,7 +129,8 @@ workflow {
 
     println "Pipeline: ${params.pipeline}"
 
-    copyTests()
+    //copyTests()
+    createTestLink()
 
     // We separate pipelines for downloading, preparing, analyzing  the data
     // This allows for separate management of raw data and intermediate clean data
