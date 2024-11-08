@@ -1,2 +1,2 @@
 uuid,project,gdc_type,gdc_platform,download_dir,samples,methylation_manifest,methylation_table
-tcga_paad,TCGA-PAAD,methylation_beta_value,illumina human methylation 450,gdc_tcga_methylation,tcga_paad_samples.txt,"$workflow.projectDir/testdata/tcga_test/tcga_paad_methylation_manifest.txt","$workflow.projectDir/testdata/tcga_test/tcga_paad_methylations_shuffled.txt"
+tcga_paad,TCGA-PAAD,methylation_beta_value,illumina human methylation 450,gdc_tcga_methylation,tcga_paad_samples.txt,testdata/tcga_test/tcga_paad_methylation_manifest.txt,testdata/tcga_test/tcga_paad_methylations_shuffled.txt

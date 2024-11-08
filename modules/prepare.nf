@@ -18,8 +18,6 @@ process prepareTCGARecount{
     script:
         log.info "... Preparing recount for $uuid,$tcga_project,$tcga_expression_fn"
         """
-        pwd;
-        ls ~/testdata/;
         Rscript '${baseDir}/bin/r/prepare_expression_recount.R' -p ${tcga_project}\
             -e ${tcga_expression_fn} \
                 -r recount3_${uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.rds \
@@ -187,23 +185,29 @@ workflow prepareMethylationWf{
 
 workflow prepareWf{
     main:
-
+    println("Prepare Workflow, params.profile: ${params.profileName}")
     // Prepare Recount
     if (params.recount.metadata_prepare!='') {
         //println('Recount Channel')
         //println(params.recount.metadata_prepare)
         // Data channel
-    if (params.profile == 'test' || params.profile == 'testAnalyze' || params.profile == 'testPrepare' || params.profile == 'testDownload') {
-                prepareRecountCh = Channel
+
+        if (params.profileName == 'testPrepare') {       
+            println('Test Prepare') 
+            prepareRecountCh = Channel
                     .fromPath( params.recount.metadata_prepare)
                     .splitCsv( header: true)
-                    .map { row -> tuple( row.uuid,row.project, file("$workflow.projectDir/testdata/"row.output_rds)) }
-    } else {
-        prepareRecountCh = Channel
+                    .map { row -> 
+                    def expressionFilePath = "${workflow.projectDir}/${row.output_rds}"
+                    tuple( row.uuid,row.project, file(expressionFilePath)) }.view()
+                    } else {        
+                        
+            prepareRecountCh = Channel
                     .fromPath( params.recount.metadata_prepare)
                     .splitCsv( header: true)
                     .map { row -> tuple( row.uuid,row.project, file(row.output_rds)) }
-    }   
+                    } 
+
         prepareRecountWf(prepareRecountCh)
 
     }
@@ -212,11 +216,24 @@ workflow prepareWf{
     // Data channel
     //println('Methylation Channel')
     //println(params.methylation.metadata_prepare)
-    
+
+        if (params.profileName == 'testPrepare') {        
+    prepareMethylationCh = Channel
+                .fromPath( params.methylation.metadata_prepare)
+                .splitCsv( header: true)
+                .map { row -> 
+                def methylationFilePath = "${workflow.projectDir}/${row.methylation_table}"
+                tuple( row.uuid,row.project, file(methylationFilePath) ) }
+                    } else {        
+                        
     prepareMethylationCh = Channel
                 .fromPath( params.methylation.metadata_prepare)
                 .splitCsv( header: true)
                 .map { row -> tuple( row.uuid,row.project, file(row.methylation_table) ) }
+                    }
+
+
+
 
     prepareMethylationWf(prepareMethylationCh)
 

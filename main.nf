@@ -130,7 +130,7 @@ workflow {
     println "Pipeline: ${params.pipeline}"
 
     //copyTests()
-    createTestLink()
+    //createTestLink()
 
     // We separate pipelines for downloading, preparing, analyzing  the data
     // This allows for separate management of raw data and intermediate clean data
