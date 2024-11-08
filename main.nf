@@ -109,7 +109,7 @@ process copyTests{
     input:
         dir("$workflow.projectDir/testdata")
     output:
-        dir(dir("./testdata"))
+        dir("./testdata")
     script:
         """
         cp -r "$workflow.projectDir/testdata" "./testdata"
