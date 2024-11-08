@@ -18,6 +18,7 @@ process prepareTCGARecount{
     script:
         log.info "... Preparing recount for $uuid,$tcga_project,$tcga_expression_fn"
         """
+        pwd;
         ls ./testdata;
         Rscript '${baseDir}/bin/r/prepare_expression_recount.R' -p ${tcga_project}\
             -e ${tcga_expression_fn} \
