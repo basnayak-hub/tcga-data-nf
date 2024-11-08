@@ -110,7 +110,7 @@ process copyTests{
         path("./testdata")
     script:
         """
-        cp -r "$workflow.projectDir/testdata" "./testdata"
+        cp -r "$workflow.projectDir/testdata" "./testdata";ls ./testdata
         """
 }
 
