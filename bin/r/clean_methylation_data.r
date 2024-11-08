@@ -1,4 +1,4 @@
-library(NetSciDataCompanion)
+library(NetworkDataCompanion)
 
 library("optparse")
 

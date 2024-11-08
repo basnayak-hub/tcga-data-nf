@@ -1,6 +1,6 @@
 library(GenomicDataCommons)
 library(optparse)
-library(NetSciDataCompanion)
+library(NetworkDataCompanion)
 
 # args<-commandArgs(TRUE)
 

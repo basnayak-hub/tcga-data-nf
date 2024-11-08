@@ -1,5 +1,5 @@
 library("recount3")
-library('NetSciDataCompanion')
+library('NetworkDataCompanion')
 library("optparse")
 library("limma")
 library("ggplot2") 

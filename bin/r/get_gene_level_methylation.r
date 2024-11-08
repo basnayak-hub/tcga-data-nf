@@ -1,7 +1,7 @@
 library(data.table)
 library(stringr)
 library("recount3")
-library('NetSciDataCompanion')
+library(NetworkDataCompanion)
 library("optparse")
 
 option_list = list(
