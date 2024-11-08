@@ -1,0 +1,7 @@
+click
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+pyyaml

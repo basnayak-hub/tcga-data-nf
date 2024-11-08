@@ -1,32 +1,28 @@
-# This is the image we are going add micromaba to:
-FROM violafanfani/tcga-data-base-r:0.0.4
+FROM violafanfani/tcga-data-base-r:0.0.5
 
 USER root
 
-RUN ping -c 4 google.com
+# Combine apt-get update and install dependencies
+RUN apt-get update && apt-get install -y \
+    iputils-ping \
+    ca-certificates \
+    python3 \
+    python3-pip \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev
 
-# adding opencontainer labels to link registry to github repository
-LABEL org.opencontainers.image.title="tcga-data-nf"
-LABEL org.opencontainers.image.description="Workflow to download and prepare TCGA data"
-LABEL org.opencontainers.image.url="https://hub.docker.com/r/violafanfani/tcga-data-nf"
-LABEL org.opencontainers.image.documentation="https://github.com/QuackenbushLab/tcga-data-nf"
-LABEL org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf"
-LABEL org.opencontainers.image.vendor="https://github.com/QuackenbushLab"
-LABEL org.opencontainers.image.authors="Viola Fanfani"
-LABEL org.opencontainers.image.revision="v0.0.13"
-
-RUN apt-get update && apt-get install -y ca-certificates
-
+# Upgrade pip and install Python dependencies
 RUN python3 -m pip install --upgrade pip
+COPY containers/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir git+https://github.com/netZoo/netZooPy.git
 
-###
-RUN apt-get update
-
-
+# Install R dependencies
 RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
 RUN R -e "devtools::install_github('immunogenomics/presto')"
 RUN R -e "devtools::install_github('aet21/EpiSCORE')"
-
-ADD  NetSciDataCompanion/ /opt/NetSciDataCompanion/
-#RUN R -e "devtools::install_local('/opt/NetSciDataCompanion/', force=TRUE, dependencies=T)"
 RUN R -e "devtools::install_github('https://github.com/QuackenbushLab/NetworkDataCompanion')"
+
+# Final clean-up if necessary
+# RUN apt-get clean && rm -rf /var/lib/apt/lists/*
