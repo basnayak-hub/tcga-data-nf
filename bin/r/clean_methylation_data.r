@@ -113,7 +113,7 @@ to_mval = as.logical(opt$to_mval) #args[7]
 meth_raw = read.csv(methpath,row.names=1)
 
 # there are duplicates to handle
-my_friend = NetSciDataCompanion::CreateNetSciDataCompanionObject()
+my_friend = NetworkDataCompanion::CreateNetworkDataCompanionObject()
 
 # tissueDF = my_friend$getTissueType(meth_raw$TCGA_barcode[1])
 # for(i in 2:nrow(meth_raw))

@@ -36,7 +36,7 @@ meth_df = fread(methpath,data.table=F)
 # Probe list
 probe_list = meth_df$probeID
 # Get NetsciDataCompanion object
-my_friend = NetSciDataCompanion::CreateNetSciDataCompanionObject(project_name=project)
+my_friend = NetworkDataCompanion::CreateNetworkDataCompanionObject(project_name=project)
 
 # Read probe map
 my_map = data.frame(fread(probe_map_fn,sep=",",header=T),row.names=1)

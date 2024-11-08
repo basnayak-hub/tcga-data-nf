@@ -1,5 +1,5 @@
 library("recount3")
-library("NetSciDataCompanion")
+library("NetworkDataCompanion")
 
 args<-commandArgs(TRUE)
 print(paste("Downloading data from recount3 for:",args[2],'project:',args[1]))
@@ -43,7 +43,7 @@ print(sample_list)
 # Adding support to filter the sample list
 if (nchar(sample_list)>3){
   print('Filtering only samples in the sample list...')
-  ong = NetSciDataCompanion::CreateNetSciDataCompanionObject()
+  ong = NetworkDataCompanion::CreateNetworkDataCompanionObject()
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
   # Flexible filtering, could be done on sample only
   nnn = nchar(submitters$V1[1])

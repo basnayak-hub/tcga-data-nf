@@ -113,9 +113,9 @@ print(paste0('Patient data:',patient_data))
 print(project_name %in% gtex_projects)
 
 if (project_name %in% gtex_projects){
-  obj <- CreateNetSciDataCompanionObject()
+  obj <- CreateNetworkDataCompanionObject()
 } else {
-obj <- CreateNetSciDataCompanionObject( project_name = project_name)
+obj <- CreateNetworkDataCompanionObject( project_name = project_name)
 }
 
 
