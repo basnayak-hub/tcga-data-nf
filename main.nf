@@ -118,7 +118,7 @@ process createTestLink
 {
     script:
         """
-        ln -s "$workflow.projectDir/testdata" "./testdata/"
+        ln -s "$workflow.projectDir/testdata" "testdata/"
         """
 }
 
