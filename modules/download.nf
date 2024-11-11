@@ -3,11 +3,11 @@ process preprocessMetadata {
     path(templateFile)
 
     output:
-    path "processed_download.json"
+    path "processed_download.config"
 
     script:
     """
-    bash ${baseDir}/bin/preprocess_metadata_test.sh ${templateFile} processed_download.json ${params.testDataFolder}
+    bash ${baseDir}/bin/preprocess_metadata_test.sh ${templateFile} processed_download.config ${params.testDataFolder}
     """
 }
 
@@ -21,20 +21,14 @@ process downloadRecount{
     output:
         tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), path(samples) ,file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
     script:
-        def samplesPath = samples
-        if (params.profileName == 'testDownload') {
-            samplesPath = "${params.testDataFolder}/${samples}"
-        }
         log.info "Downloading recount for $uuid, $project"
         """
-            if ! test -f ${samplesPath}; then
-            touch ${samplesPath}
+            if ! test -f ${samples}; then
+            touch ${samples}
             fi
             Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
             echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
             echo "${uuid},${project},${project_home},${organism},${annotation},${type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/${uuid}.rds" >> "${uuid}_recount3_metatada.csv"
-
-
         """
     stub:
         """
@@ -301,12 +295,12 @@ workflow downloadWf{
     
         // Read the metadata file
         if (params.profileName == 'testDownload') {
-            mtd = preprocessMetadata("${params.download_metadata}").view()
-        expression_recount3 = mtd.splitJson(path: "expression_recount3").view()
-        mutation_tcgabiolinks = mtd.splitJson(path: "mutation_tcgabiolinks").view()
-        clinical_tcgabiolinks = mtd.splitJson(path: "clinical_tcgabiolinks").view()
-        methylation_gdc = mtd.splitJson(path: "methylation_gdc").view()
-        cnv_tcgabiolinks = mtd.splitJson(path: "cnv_tcgabiolinks").view()
+            mtd = preprocessMetadata("${params.download_metadata}")
+        expression_recount3 = mtd.splitJson(path: "expression_recount3")
+        mutation_tcgabiolinks = mtd.splitJson(path: "mutation_tcgabiolinks")
+        clinical_tcgabiolinks = mtd.splitJson(path: "clinical_tcgabiolinks")
+        methylation_gdc = mtd.splitJson(path: "methylation_gdc")
+        cnv_tcgabiolinks = mtd.splitJson(path: "cnv_tcgabiolinks")
         } else {
 
         expression_recount3 = Channel.fromPath(params.download_metadata).splitJson(path: "expression_recount3")
