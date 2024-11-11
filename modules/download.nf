@@ -70,14 +70,10 @@ process downloadMutations{
     output:
         tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), path(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
     script:
-        def samplesPath = samples
-        if (params.profileName == 'testDownload') {
-            samplesPath = file("${params.testDataFolder}/${samples}")
-        }
-    log.info "Downloading mutations for $uuid, $project with samples path: ${samplesPath}"
+    log.info "Downloading mutations for $uuid, $project with samples path: ${samples}"
         """
-            if ! test -f ${samplesPath}; then
-            touch ${samplesPath}
+            if ! test -f ${samples}; then
+            touch ${samples}
             fi
             Rscript '${baseDir}/bin/r/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${samples}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv" > "${uuid}_download_mutations.log";
             echo "uuid,project,data_category,data_type,download_dir,samples,mutation_table,pivot_table" > "${uuid}_mutations_metadata.csv";
@@ -126,14 +122,10 @@ process downloadMethylation{
     output:
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
     script:
-        def samplesPath = samples
-        if (params.profileName == 'testDownload') {
-            samplesPath = "${params.testDataFolder}/${samples}"
-        }
     log.info "Downloading methylation for $uuid, $project"
         """
-            if ! test -f ${samplesPath}; then
-            touch ${samplesPath}
+            if ! test -f ${samples}; then
+            touch ${samples}
             fi
             Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list "${samples}"
             bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt" "${uuid}_methylation_paths.txt"
@@ -208,13 +200,10 @@ process downloadCNV{
     output:
         tuple val(uuid),val(project),val(workflow_type), path(samples) ,file("${uuid}.rds"),file("${uuid}.csv"),file("${uuid}_cnv_metatada.csv")
     script:
-        if (params.profileName == 'testDownload') {
-            samplesPath = file("${params.testDataFolder}/${samples}")
-        }
         log.info "Downloading CNV for $uuid, $project"
         """
-            if ! test -f ${samplesPath}; then
-            touch ${samplesPath}
+            if ! test -f ${samples}; then
+            touch ${samples}
             fi
             Rscript '${baseDir}/bin/r/download_cnv_tcga.R' -p ${project} --analysis_workflow_type ${workflow_type} --sample_list "${samples}" --output_rds "${uuid}.rds" --output_table ${uuid}.csv > "${uuid}_cnv_downloads.log";
             echo "uuid,project,workflow_type,samples,output_rds,output_table" > "${uuid}_cnv_metatada.csv";

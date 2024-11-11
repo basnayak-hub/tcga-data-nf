@@ -52,3 +52,16 @@ process preprocessDragonMetadata {
     bash preprocess_metadata_test.sh ${templateFile} "processed_dragon_metadata.csv" ${params.testDataFolder}
     """
 }
+
+process preprocessFullMetadata {
+    input:
+    path(templateFile)
+
+    output:
+    path "processed_full.config"
+
+    script:
+    """
+    bash ${baseDir}/bin/preprocess_metadata_test.sh ${templateFile} processed_full.config ${params.testDataFolder}
+    """
+}

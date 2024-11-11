@@ -7,7 +7,7 @@ nextflow.enable.dsl=2
 include {fullDownloadWf; downloadRecount;downloadRecount3Wf; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf;  downloadWf} from './modules/download.nf'
 include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf} from './modules/prepare.nf'
 include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeExpressionWf; analyzeDragonWf} from './modules/tcga_wfs.nf'
-include { preprocessExpressionMetadata; preprocessDragonMetadata } from './modules/others.nf'
+include { preprocessExpressionMetadata; preprocessDragonMetadata; preprocessFullMetadata} from './modules/others.nf'
 
 // printing message of the day
 motd = """
@@ -74,7 +74,15 @@ workflow saveConfig {
 workflow fullWf{
     // DOWNLOAD
     // Data channel, metadata for Download
-    dCh = Channel.fromPath(params.full_metadata).splitJson()
+
+    if (params.profileName=='test'){
+        println "Testing"
+            metadata_full = preprocessFullMetadata("${params.full_metadata}")
+        
+    } else {
+        metadata_full = Channel.fromPath(params.full_metadata)
+    }
+    dCh = metadata_full.splitJson()
 
     //dCh.map{it -> it.value.keySet()}.toString()
     //fullDownloadWf(dCh)
