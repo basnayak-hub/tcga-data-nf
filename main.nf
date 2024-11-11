@@ -59,16 +59,16 @@ process copyMotd{
         """
 }
 
-process preprocessMetadata {
+process preprocessAnalyzeMetadata {
     input:
-    path(templateFile)
+        tuple path(templateFile), path(templateTestFile)
 
     output:
-    path "${baseDir}/processed_metadata.csv" into processedMetadata
+    path(templateTestFile)
 
     script:
     """
-    bash preprocess_metadata.sh ${templateFile} ${baseDir}/processed_metadata.csv ${params.testDataFolder}
+    bash preprocess_metadata_test.sh ${templateFile} ${templateTestFile} ${params.testDataFolder}
     """
 }
 
@@ -137,14 +137,28 @@ workflow {
         prepareWf() 
         } else if (params.pipeline == 'analyze'){
         // ANALYZE
+
+        if (params.profileName=='testAnalyze'){
+            println "Test analyze"
+            testCh = Channel.fromList([tuple(params.metadata_expression, "${workDir}/testExprA.csv"), tuple(params.metadata_dragon, "${workDir}/testDragonA.csv")])
+            preprocessAnalyzeMetadata(testCh)
+
+            metadata_expression = "${workDir}/testExprA.csv"
+            metadata_dragon = "${workDir}/testDragonA.csv"
+            
+        } else {
+            metadata_expression = params.metadata_expression
+            metadata_dragon = params.metadata_dragon
+        }
+
         data = Channel
-                    .fromPath(params.metadata_expression, checkIfExists: true)
+                    .fromPath(metadata_expression, checkIfExists: true)
                     .splitCsv(header:true)
                     .map { row -> tuple(row.uuid, file("${row.expression}"))}
 
         analyzeExpressionWf(data)
         dataDragon = Channel
-                    .fromPath(params.metadata_dragon, checkIfExists: true)
+                    .fromPath(metadata_dragon, checkIfExists: true)
                     .splitCsv(header:true)
                     .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
 

@@ -1,2 +1,2 @@
 uuid,expression
-tcga_paad,testdata/tcga_test/recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull_shuffle.txt
+tcga_paad,{{DATA_DIR}}/tcga_test/recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull_shuffle.txt

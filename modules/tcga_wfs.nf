@@ -289,7 +289,7 @@ workflow analyzeDragonWf{
                     dragonlioness: it[-1] == 'dragon_lioness'
                 }.set { zooAnalysisCh }
 
-    DragonTCGAWf(zooAnalysisCh.dragon)
-    DragonLionessTCGAWf(zooAnalysisCh.dragonlioness)
+    DragonTCGAWf(zooAnalysisCh.dragon.map{it -> tuple(it[0], it[1], it[2])})
+    DragonLionessTCGAWf(zooAnalysisCh.dragonlioness.map{it -> tuple(it[0], it[1], it[2])})
 
 }
