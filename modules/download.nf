@@ -1,3 +1,16 @@
+process preprocessMetadata {
+    input:
+    path(templateFile)
+
+    output:
+    path "processed_download.json"
+
+    script:
+    """
+    bash ${baseDir}/bin/preprocess_metadata_test.sh ${templateFile} processed_download.json ${params.testDataFolder}
+    """
+}
+
 process downloadRecount{
 
     label "r_download"
@@ -8,10 +21,14 @@ process downloadRecount{
     output:
         tuple val(uuid),val(project),val(project_home),val(organism),val(annotation),val(type), path(samples) ,file("${uuid}.rds"),file("${uuid}_recount3_metatada.csv")
     script:
+        def samplesPath = samples
+        if (params.profileName == 'testDownload') {
+            samplesPath = "${params.testDataFolder}/${samples}"
+        }
         log.info "Downloading recount for $uuid, $project"
         """
-            if ! test -f ${samples}; then
-            touch ${samples}
+            if ! test -f ${samplesPath}; then
+            touch ${samplesPath}
             fi
             Rscript '${baseDir}/bin/r/download_expression_recount.R' ${project} ${project_home} ${organism} ${annotation} ${type} ${samples} "${uuid}.rds" > "${uuid}_recount3_downloads.log";
             echo "uuid,project,project_home,organism,annotation,type,samples,output_rds" > "${uuid}_recount3_metatada.csv";
@@ -59,10 +76,14 @@ process downloadMutations{
     output:
         tuple val(uuid),val(project),val(data_category),val(data_type),val(download_dir), path(samples),file("${uuid}_mutations.txt"),file("${uuid}_mutations_pivot.csv"),file("${uuid}_mutations_metadata.csv")
     script:
-    log.info "Downloading mutations for $uuid, $project"
+        def samplesPath = samples
+        if (params.profileName == 'testDownload') {
+            samplesPath = file("${params.testDataFolder}/${samples}")
+        }
+    log.info "Downloading mutations for $uuid, $project with samples path: ${samplesPath}"
         """
-            if ! test -f ${samples}; then
-            touch ${samples}
+            if ! test -f ${samplesPath}; then
+            touch ${samplesPath}
             fi
             Rscript '${baseDir}/bin/r/download_mutation_tcga.R' ${project}  "${data_category}" "${data_type}" "${download_dir}" "${samples}" "${uuid}_mutations.txt" "${uuid}_mutations_pivot.csv" > "${uuid}_download_mutations.log";
             echo "uuid,project,data_category,data_type,download_dir,samples,mutation_table,pivot_table" > "${uuid}_mutations_metadata.csv";
@@ -111,12 +132,16 @@ process downloadMethylation{
     output:
         tuple val(uuid),val(project),val(gdc_type),val(gdc_platform),val(download_dir),path(samples),file("${uuid}_methylation_manifest.txt"), file("${uuid}_methylations.txt"), file("${uuid}_methylation_metadata.csv")
     script:
+        def samplesPath = samples
+        if (params.profileName == 'testDownload') {
+            samplesPath = "${params.testDataFolder}/${samples}"
+        }
     log.info "Downloading methylation for $uuid, $project"
         """
-            if ! test -f ${samples}; then
-            touch ${samples}
+            if ! test -f ${samplesPath}; then
+            touch ${samplesPath}
             fi
-            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list ${samples}
+            Rscript '${baseDir}/bin/r/download_methylation_gdc.R' -p '${project}'  -t '${gdc_type}' --platform '${gdc_platform}' -d '${download_dir}' --manifest_outpath '${uuid}_methylation_manifest.txt' --pathlist_outpath '${uuid}_methylation_paths.txt' --header_outpath '${uuid}_methylation_header.txt' --sample_list "${samples}"
             bash '${baseDir}/bin/bash/join_methylation_gdc.sh'  "${uuid}_methylations.txt" "${uuid}_methylation_paths.txt"
 	        cat  '${uuid}_methylation_header.txt' "${uuid}_methylations.txt" > "${uuid}_methylations_labeled.txt"
             mv "${uuid}_methylations_labeled.txt" "${uuid}_methylations.txt";
@@ -189,12 +214,15 @@ process downloadCNV{
     output:
         tuple val(uuid),val(project),val(workflow_type), path(samples) ,file("${uuid}.rds"),file("${uuid}.csv"),file("${uuid}_cnv_metatada.csv")
     script:
+        if (params.profileName == 'testDownload') {
+            samplesPath = file("${params.testDataFolder}/${samples}")
+        }
         log.info "Downloading CNV for $uuid, $project"
         """
-            if ! test -f ${samples}; then
-            touch ${samples}
+            if ! test -f ${samplesPath}; then
+            touch ${samplesPath}
             fi
-            Rscript '${baseDir}/bin/r/download_cnv_tcga.R' -p ${project} --analysis_workflow_type ${workflow_type} --sample_list ${samples} --output_rds "${uuid}.rds" --output_table ${uuid}.csv > "${uuid}_cnv_downloads.log";
+            Rscript '${baseDir}/bin/r/download_cnv_tcga.R' -p ${project} --analysis_workflow_type ${workflow_type} --sample_list "${samples}" --output_rds "${uuid}.rds" --output_table ${uuid}.csv > "${uuid}_cnv_downloads.log";
             echo "uuid,project,workflow_type,samples,output_rds,output_table" > "${uuid}_cnv_metatada.csv";
             echo "${uuid},${project},${workflow_type},${samples},${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/${uuid}.rds,${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/${uuid}.csv"  >> "${uuid}_cnv_metatada.csv"
         """
@@ -238,18 +266,6 @@ workflow downloadCNVWf{
 workflow downloadRecount3Wf{
     take: channelRecount//parData
     main:
-        // channelRecount = Channel.from(parData.entrySet())
-        //                                 .map{
-        //                                     item -> tuple(
-        //                                         item.getKey(),
-        //                                         item.value.project,
-        //                                         item.value.project_home,
-        //                                         item.value.organism,
-        //                                         item.value.annotation,
-        //                                         item.value.type,
-        //                                         item.value.samples,
-        //                                     )
-        //                                 }
             dr = downloadRecount(channelRecount)
             mergeRecountMetadata(dr.map{it -> it[-1]}.collect())
     emit: dr
@@ -258,18 +274,6 @@ workflow downloadRecount3Wf{
 workflow downloadMethylationWf{
     take: channelMethylation
     main:
-        // channelMethylation = Channel.from(parData.entrySet())
-        //                             .map{
-        //                                 item -> tuple(
-        //                                     item.getKey(),
-        //                                     item.value.project,
-        //                                     item.value.gdc_type,
-        //                                     item.value.gdc_platform,
-        //                                     item.value.download_dir,
-        //                                     item.value.samples,
-        //                                 )
-        //                             }
-
         dme = downloadMethylation(channelMethylation) 
         mergeMethylationMetadata(dme.map{it -> it[-1]}.collect())
     emit: dme
@@ -278,18 +282,6 @@ workflow downloadMethylationWf{
 workflow downloadMutationsWf{
     take: channelMutation
     main:
-        // channelMutation = Channel.from(parData.entrySet())
-        //                             .map{
-        //                                 item -> tuple(
-        //                                     item.getKey(),
-        //                                     item.value.project,
-        //                                     item.value.data_category,
-        //                                     item.value.data_type,
-        //                                     item.value.download_dir,
-        //        cond                             item.value.samples,
-        //                                 )
-        //                             }
-
             dmu = downloadMutations(channelMutation)
             mergeMutationsMetadata(dmu.map{it -> it[-1]}.collect())
     emit: dmu
@@ -298,16 +290,6 @@ workflow downloadMutationsWf{
 workflow downloadClinicalWf{
     take: channelClinical
     main:
-        // channelClinical = Channel.from(parData.entrySet())
-        //                             .map{
-        //                                 item -> tuple(
-        //                                     item.getKey(),
-        //                                     item.value.project,
-        //                                     item.value.data_category,
-        //                                     item.value.data_type,
-        //                                     item.value.data_format,
-        //                                 )
-        //                             }
         dcli = downloadClinical(channelClinical)
     emit: dcli
 }
@@ -318,12 +300,21 @@ workflow downloadWf{
     main:        
     
         // Read the metadata file
+        if (params.profileName == 'testDownload') {
+            mtd = preprocessMetadata("${params.download_metadata}").view()
+        expression_recount3 = mtd.splitJson(path: "expression_recount3").view()
+        mutation_tcgabiolinks = mtd.splitJson(path: "mutation_tcgabiolinks").view()
+        clinical_tcgabiolinks = mtd.splitJson(path: "clinical_tcgabiolinks").view()
+        methylation_gdc = mtd.splitJson(path: "methylation_gdc").view()
+        cnv_tcgabiolinks = mtd.splitJson(path: "cnv_tcgabiolinks").view()
+        } else {
+
         expression_recount3 = Channel.fromPath(params.download_metadata).splitJson(path: "expression_recount3")
         mutation_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "mutation_tcgabiolinks")
         clinical_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "clinical_tcgabiolinks")
         methylation_gdc = Channel.fromPath(params.download_metadata).splitJson(path: "methylation_gdc")
         cnv_tcgabiolinks = Channel.fromPath(params.download_metadata).splitJson(path: "cnv_tcgabiolinks")
-
+        }
 
         // Process recount3 data
         if (expression_recount3!=[null]){

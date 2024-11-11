@@ -41,7 +41,7 @@ downloads_dir = opt$downloads_dir # where to temporarily cache the GDC data
 manifest_outpath = opt$manifest_outpath # where to save the manifest 
 pathlist_outpath = opt$pathlist_outpath # where to save the list of sample files
 header_outpath = opt$header_outpath # where to save the header for the final methylation data
-
+sample_list = opt$sample_list
 
 gdc_set_cache(directory = paste(c(downloads_dir,"tcga_methylation",gdc_cases.project.project_id),collapse="/"))
 
@@ -55,7 +55,7 @@ dim(ge_manifest)
 head(ge_manifest)
 
 # Adding support to filter the sample list
-if (nchar(opt$sample_list)>3){
+if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
   ong = NetworkDataCompanion::CreateNetworkDataCompanionObject()
   submitters = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
   print(submitters$V1)

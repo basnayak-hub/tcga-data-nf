@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     libxml2-dev
 
+RUN echo "alias python=python3" >> ~/.bashrc
+RUN echo "alias python=python3" >> ~/.profile
+
 # Upgrade pip and install Python dependencies
 RUN python3 -m pip install --upgrade pip
 COPY containers/requirements.txt ./

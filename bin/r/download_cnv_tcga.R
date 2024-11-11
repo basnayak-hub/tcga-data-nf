@@ -19,7 +19,7 @@ option_list = list(
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
-
+sample_list = opt$sample_list
 print(opt)
 
 project_id = opt$project_id # args[1]
@@ -29,7 +29,7 @@ output_table = opt$output_table
 output_rds = opt$output_rds
 
 #barcode = listSamples
-if (nchar(opt$sample_list)>3){
+if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
     
   queried <- GDCquery(
     project = project_id, 
@@ -48,7 +48,7 @@ if (nchar(opt$sample_list)>3){
 GDCdownload(queried,files.per.chunk = 50)
 cn_rds <- GDCprepare(queried)
 
-if (nchar(opt$sample_list)>3){
+if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
     barcodes = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
     nnn = nchar(barcodes$V1[1])
     # Check that this is correct

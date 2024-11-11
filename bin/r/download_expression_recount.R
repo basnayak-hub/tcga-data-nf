@@ -41,7 +41,7 @@ print(nchar(sample_list))
 print(sample_list)
 
 # Adding support to filter the sample list
-if (nchar(sample_list)>3){
+if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
   print('Filtering only samples in the sample list...')
   ong = NetworkDataCompanion::CreateNetworkDataCompanionObject()
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")

@@ -5,19 +5,19 @@
         "organism" : "human",
         "annotation" : "gencode_v26",
         "type" : "gene",
-        "samples" : "$baseDir/testdata/tcga_luad_samples.txt"
+        "samples" : "testdata/tcga_luad_samples.txt"
     },
     "mutation_tcgabiolinks": {
         "project" : "TCGA-LUAD",
         "data_category" : "Simple Nucleotide Variation",
         "data_type" : "Masked Somatic Mutation",
         "download_dir" : "gdc_tcga_mutation",
-        "samples" : "$baseDir/testdata/tcga_luad_mutation_samples.txt"
+        "samples" : "testdata/tcga_luad_mutation_samples.txt"
     },
     "cnv_tcgabiolinks":{
         "project" : "TCGA-LUAD",
         "workflow_type" : "ASCAT3",
-        "samples" : "$baseDir/testdata/tcga_luad_mutation_samples.txt"
+        "samples" : "testdata/tcga_luad_mutation_samples.txt"
     },
     "clinical_tcgabiolinks": {
         "project" : "TCGA-LUAD",
@@ -30,7 +30,7 @@
         "gdc_type" : "methylation_beta_value",
         "gdc_platform" : "illumina human methylation 450",
         "download_dir" : "gdc_tcga_methylation",
-        "samples" : "$baseDir/testdata/tcga_luad_samples.txt"
+        "samples" : "testdata/tcga_luad_samples.txt"
     }
   }
 }

@@ -38,7 +38,7 @@ print(length(unique(muts$Tumor_Sample_Barcode)))
 
 # Adding support to filter the sample list
 # This needs to be done after the GDC prepare because it reads the barcodes
-if (nchar(sample_list)>3){
+if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
   submitters = read.table(sample_list, header = FALSE, sep = "", dec = ".")
   print('Subselecting the samples...')
   # Check length of submitters

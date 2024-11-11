@@ -59,6 +59,20 @@ process copyMotd{
         """
 }
 
+process preprocessMetadata {
+    input:
+    path(templateFile)
+
+    output:
+    path "${baseDir}/processed_metadata.csv" into processedMetadata
+
+    script:
+    """
+    bash preprocess_metadata.sh ${templateFile} ${baseDir}/processed_metadata.csv ${params.testDataFolder}
+    """
+}
+
+
 // SAVE CONFIG, copy the motd and the config files into the results directory
 workflow saveConfig {
     mo = copyMotd()
@@ -105,32 +119,12 @@ workflow fullWf{
 }
 
 
-process copyTests{
-    output:
-        path("./testdata")
-    script:
-        """
-        cp -r "$workflow.projectDir/testdata/" "./testdata";ls ./testdata
-        """
-}
-
-process createTestLink
-{
-    script:
-        """
-        ln -s "$workflow.projectDir/testdata" "~/testdata/"
-        """
-}
-
 workflow {
 
     // First we copy the configuration files and motd into the resultsDir
     saveConfig()
 
     println "Pipeline: ${params.pipeline}"
-
-    //copyTests()
-    //createTestLink()
 
     // We separate pipelines for downloading, preparing, analyzing  the data
     // This allows for separate management of raw data and intermediate clean data
