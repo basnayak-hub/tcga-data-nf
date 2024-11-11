@@ -7,7 +7,7 @@ nextflow.enable.dsl=2
 include {fullDownloadWf; downloadRecount;downloadRecount3Wf; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf;  downloadWf} from './modules/download.nf'
 include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf} from './modules/prepare.nf'
 include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeExpressionWf; analyzeDragonWf} from './modules/tcga_wfs.nf'
-
+include { preprocessExpressionMetadata; preprocessDragonMetadata } from './modules/others.nf'
 
 // printing message of the day
 motd = """
@@ -59,18 +59,7 @@ process copyMotd{
         """
 }
 
-process preprocessAnalyzeMetadata {
-    input:
-        tuple path(templateFile), path(templateTestFile)
 
-    output:
-    path(templateTestFile)
-
-    script:
-    """
-    bash preprocess_metadata_test.sh ${templateFile} ${templateTestFile} ${params.testDataFolder}
-    """
-}
 
 
 // SAVE CONFIG, copy the motd and the config files into the results directory
@@ -140,25 +129,24 @@ workflow {
 
         if (params.profileName=='testAnalyze'){
             println "Test analyze"
-            testCh = Channel.fromList([tuple(params.metadata_expression, "${workDir}/testExprA.csv"), tuple(params.metadata_dragon, "${workDir}/testDragonA.csv")])
-            preprocessAnalyzeMetadata(testCh)
-
-            metadata_expression = "${workDir}/testExprA.csv"
-            metadata_dragon = "${workDir}/testDragonA.csv"
+            //testCh = Channel.fromList([tuple(params.metadata_expression, "${params.testDataFolder}/testExprA.csv"), tuple(params.metadata_dragon, "${params.testDataFolder}/testDragonA.csv")]).view()
+            //aaa = preprocessAnalyzeMetadata(testCh)
+            
+            metadata_expression = preprocessExpressionMetadata("${params.metadata_expression}")
+            metadata_dragon = preprocessDragonMetadata("${params.metadata_dragon}")
             
         } else {
-            metadata_expression = params.metadata_expression
-            metadata_dragon = params.metadata_dragon
+            metadata_expression = Channel.fromPath(params.metadata_expression)
+            metadata_dragon = Channel.fromPath(params.metadata_dragon)
         }
 
-        data = Channel
-                    .fromPath(metadata_expression, checkIfExists: true)
+
+        data = metadata_expression
                     .splitCsv(header:true)
                     .map { row -> tuple(row.uuid, file("${row.expression}"))}
 
         analyzeExpressionWf(data)
-        dataDragon = Channel
-                    .fromPath(metadata_dragon, checkIfExists: true)
+        dataDragon = metadata_dragon
                     .splitCsv(header:true)
                     .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
 
