@@ -14,7 +14,7 @@
                   "organism" : "human",
                   "annotation" : "gencode_v26",
                   "type" : "gene",
-                  "samples" : "NA"
+                  "samples" : "{{DATA_DIR}}/NA"
                 }
       },
       "mutation_tcgabiolinks":{
