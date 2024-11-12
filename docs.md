@@ -3,10 +3,12 @@ title:  Configurations
 filename: docs.md
 --- 
 
-
-Here are more detailts about conda. 
+# Documentaion tcga-data-nf 
 
 ## Conda
+
+Here are more details about conda. Each process uses a different environment, 
+which helps with keeping environments separated and reduce possible conflicts.
 
 The conda configurations are in `conda.conf`.
 
@@ -38,6 +40,13 @@ and to specify your own configurations read the [nextflow
 docs](https://www.nextflow.io/docs/latest/config.html#config-conda). 
 
 ## Docker
+
+We have now switched to a docker without conda. In previous iterations we were relying on micromamba 
+to install all packages, but we are now switching away from conda, as it seems to be giving issues to many institutions. 
+
+You can pull the docker directly from [dockerhub](https://hub.docker.com/r/violafanfani/tcga-data-nf). 
+
+`docker pull violafanfani/tcga-data-nf`
 
 
 ## Tests
@@ -269,7 +278,6 @@ different parameters.
   - `zoo.panda_lioness = "--with_header --fmt h5 --computing cpu --precision single --mode_process intersection
     --save_single_lioness  --as_adjacency --ignore_final"`: all CLI parameters for PANDA LIONESS
 - `zoo.panda = "--with_header --as_adjacency --mode_process intersection"`: all CLI parameters for PANDA 
-
 
 
 #### Make probe map
