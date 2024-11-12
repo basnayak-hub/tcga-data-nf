@@ -22,7 +22,6 @@ process CollectTableStats {
 
 
 process preprocessExpressionMetadata {
-    publishDir "${params.testDataFolder}", mode: 'copy'
 
     input:
         path(templateFile)
@@ -38,7 +37,6 @@ process preprocessExpressionMetadata {
 }
 
 process preprocessDragonMetadata {
-    publishDir "${params.testDataFolder}", mode: 'copy'
 
     input:
         path(templateFile)

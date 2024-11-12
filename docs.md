@@ -173,3 +173,121 @@ results/test_full
         ├── methylation
         └── recount3
 ```
+
+
+
+## Config file
+
+Here is a list of all available paramenters. 
+
+#### General parameters
+
+- `resultsDir = "results"`: general folder under which you want to find the results. This can directly reference an AWS S3 bucket
+- `batchName = "my-batch"`: name of the run, this is gonna create a subfolder where the results are stored.
+- `pipeline = 'download'`: name of the pipeline, one of download,prepare,analyze,full
+- `logInfoFile = 'log-info.txt'`: general log file (many processes will have their own detailed log)
+
+- `testDataFolder = "$baseDir/testdata"`: testdata folder, this shouldn't be changed by the user
+
+#### Define metadata tables
+
+Each file specifies a list of files or parameters to be used each workflow, 
+for instance: which cancers and samples to download, what files need to be used 
+in the pre-processing step...
+
+You'll need to change only the one that concerns your pipeline. The others won't be used.
+
+- `full_metadata = "$baseDir/testdata/conf/full_json.json"`: configuration file for the full pipeline
+
+- `download_metadata = "$baseDir/testdata/conf/download_json.json"`: configuration file for the download pipeline
+
+
+- `recount.metadata_prepare = "$baseDir/testdata/conf/prepare_recount_metadata.csv"`: configuration file for the
+  expression files that need to be preprocessed
+
+- `methylation.metadata_prepare = "$baseDir/testdata/conf/prepare_methylation_metadata.csv"`: configuration file for the
+  methylation files that need to be preprocessed
+
+- `metadata_expression = "$baseDir/testdata/conf/analyze_expression_metadata.csv"`: metadata file to be used with the
+  analysis pipeline. This is gonna be the list of expression files used to generate networks
+- `metadata_dragon = "$baseDir/testdata/conf/analyze_dragon_metadata.csv"`:  metadata file to be used with the
+  analysis pipeline. This is gonna be the list of expression files used to generate DRAGON networks
+
+#### Prepare expression parameters
+
+These parameters are used to generate pre-processed data. This is useful both for the prepare
+and the full pipelines.
+
+We enable users to specify multiple values for each parameter, such that the final files will be the combination of all
+different parameters. 
+
+- `recount.norm =['tpm', 'cpm', 'logcpm', 'logtpm']`: RNAseq normalization, you can set as many as you want
+- `recount.min_tpm=[1]`: minimum number of normalized counts that at least `recount.frac_samples` should have in order
+  to not filter out the gene.
+- `recount.frac_samples=[0.0001,0.2]`: minimum percentage of samples that should have at least `recount.min_tpm` in a
+  gene, in order
+  to not filter out the gene. For keeping all genes use the 0.0000001 value as 0 gives problems
+- `recount.th_purity=[0.00001,0.5]`: purity threshold for the samples, samples with less purity than this value will be
+  thrown out. For keeping all samples use the 0.0000001 value as 0 gives problems
+
+- Names of the tissues that need to be separated. **It is important to specify at least one value for each of the
+  cancer of interest, otherwise no analysis is gonna be run**
+`
+    tissues{
+    tcga_luad = ['all', 'tumor', 'normal']
+    tcga_blca = ['all', 'tumor', 'normal']
+    }
+    `. 
+'all' keeps all samples, 'tumor' keeps only the tumoral samples (with barcodes <10), and 'normal' keep only the adjacent normal samples (with barcodes >10)
+
+- Names of the column that needs to be used for batch correction. Please note, that we only found colorectal cancer
+  (TCGA_COAD) that needs to be batch corrected. `batch_correction{
+    tcga_coad = ['tcga.gdc_platform']
+    }`
+
+
+#### Prepare expression parameters
+
+- `methylation.probe_map =
+  "$baseDir/bin/r/local_assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv"`: probe map to map
+  probes to promoter regions. We have precomputed it, otherwise you can use the make-manifest.r function in the local
+  assets [or look here](#make-probe-map).
+
+- `methylation.tf_list = "$baseDir/bin/r/local_assets/TF_names_v_1.01.txt" `: list of TF used to restrict the number of
+  "genes" used. This is used mostly for the dragon analysis, where we need to subset the number of nodes.
+- `methylation.levine_exclusion = 's3://projectstcga/data/raw-data/mapping/methylation/levine_gene_exclusions.csv'`
+
+- `methylation.to_npn = 'FALSE'`: non parametric transformation
+- `methylation.to_mval = 'TRUE'`: transform the betas to mvalues
+
+#### Analysis parameters
+
+  - `zoo.animals = ['panda','dragon','panda_lioness','dragon_lioness']`: netZoo animals
+
+  - `zoo.motif = "$baseDir/testdata/other/test_motif_prior.txt"`: motif prior for PANDA
+  - `zoo.ppi = "$baseDir/testdata/other/test_ppi.txt"`: PPI prior for PANDA
+  - `zoo.panda_lioness = "--with_header --fmt h5 --computing cpu --precision single --mode_process intersection
+    --save_single_lioness  --as_adjacency --ignore_final"`: all CLI parameters for PANDA LIONESS
+- `zoo.panda = "--with_header --as_adjacency --mode_process intersection"`: all CLI parameters for PANDA 
+
+
+
+#### Make probe map
+
+This is the code inside the `make_manifest.r` file.
+
+```
+# Minimum working example of manifest creation
+# This sources the Illumina 450k manifest, annotated to the
+# HG38 genome build with gencode v36.
+# This is from the public manifest resources here: https://zwdzwd.github.io/InfiniumAnnotation
+
+library(NetSciDataCompanion)
+my_friend = NetSciDataCompanion::CreateNetSciDataCompanionObject()
+
+my_manifest = my_friend$mapProbesToGenes(probelist = NULL, # this is the default, and maps every probe in the manifest
+                                         rangeUp = 200,
+                                         rangeDown = 0)
+
+write.csv(my_manifest,file="450k_manifest_TSS200_TSS0_one_probe_to_many_genes.csv")
+```
