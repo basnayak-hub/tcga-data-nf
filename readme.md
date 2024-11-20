@@ -48,7 +48,9 @@ If you can run all these steps, you can procede defining your own configuration 
 
 The docker container is hosted on docker.io. 
 
-```docker pull violafanfani/tcga-data-nf:0.0.14```
+```
+docker pull violafanfani/tcga-data-nf:0.0.14
+```
 
 More details on the container can be found in the [docs](docs.md#Docker)
 
@@ -58,7 +60,9 @@ Alternatively, one can run the workflow with conda environments.
 In order to create and use conda one can pass it as a profile `-profile conda`
 as:
 
-```nextflow run QuackebushLab/tcga-data-nf -profile conda,test ...```
+```
+nextflow run QuackebushLab/tcga-data-nf -profile conda,test ...
+```
 
 For the moment we are using one single environment to be used with all the r
 scripts. This allows the pipeline to generate the environment only once (which can 
@@ -77,17 +81,20 @@ More details in the [docs](docs.md#conda).
 
 1. Clone the nextflow repo 
    ```bash
-   git clone git@github.com:QuackenbushLab/tcga-data-nf.git```
+   git clone git@github.com:QuackenbushLab/tcga-data-nf.git
+   ```
 2. Build docker locally 
     ```bash
-    docker build . -f containers/Dockerfile --build-arg CONDA_FILE=containers/env.base.python.yml --no-cache -t tcga-data-nf:latest```
+    docker build . -f containers/Dockerfile --build-arg CONDA_FILE=containers/env.base.python.yml --no-cache -t tcga-data-nf:latest
+    ```
 3. In alternative, check the R packages needed and install them manually. 
 4. **TO DOWNLOAD**: update the `download_metadata.config` file or pass a new one with the correct parameters (keep track
    of all config files you use)
 5. **To PREPARE**: use a correct `expression_prepare_table.csv`
 6. Run the workflow from the tcga-data-nf folder    
     ```bash
-    nextflow run .  -profile test --resultsDir myresults/ --pipeline download```
+    nextflow run .  -profile test --resultsDir myresults/ --pipeline download
+    ```
 
 ### Install or update the workflow
 
@@ -250,3 +257,4 @@ Detailed output folder structure can be found at the [docs](docs.md##result-fold
 - Panagiotis Mandros
 - Jonas Fischer
 - Enakshi Saha
+- Soel Micheletti
