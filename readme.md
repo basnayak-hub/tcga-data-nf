@@ -42,6 +42,9 @@ If you can run all these steps, you can procede defining your own configuration 
 
 :warning: The full workflow can be slow (>45minutes).  
 
+Check the docs for [AWS](docs.md#AWS) for the steps on how to run the workflow on a simple EC2 instance.
+These steps could also help as a quickstart to check that you have everything up and running.
+
 ## Running the workflow
 
 ### Docker
@@ -77,26 +80,10 @@ However, to improve portability, we use the process selectors labels to specify 
 
 More details in the [docs](docs.md#conda).
 
-### Temporarily (until this is published)
-
-1. Clone the nextflow repo 
-   ```bash
-   git clone git@github.com:QuackenbushLab/tcga-data-nf.git
-   ```
-2. Build docker locally 
-    ```bash
-    docker build . -f containers/Dockerfile --build-arg CONDA_FILE=containers/env.base.python.yml --no-cache -t tcga-data-nf:latest
-    ```
-3. In alternative, check the R packages needed and install them manually. 
-4. **TO DOWNLOAD**: update the `download_metadata.config` file or pass a new one with the correct parameters (keep track
-   of all config files you use)
-5. **To PREPARE**: use a correct `expression_prepare_table.csv`
-6. Run the workflow from the tcga-data-nf folder    
-    ```bash
-    nextflow run .  -profile test --resultsDir myresults/ --pipeline download
-    ```
 
 ### Install or update the workflow
+
+Before running the workflow we recommend pulling the last version with the following command
 
 ```bash
 nextflow pull QuackenbushLab/tcga-data-nf
@@ -104,9 +91,13 @@ nextflow pull QuackenbushLab/tcga-data-nf
 
 ### Run the analysis
 
+One can run the workflow by simply using the `nextflow run` command and using a custom configuration file.
+
 ```bash
-nextflow run QuackenbushLab/tcga-data-nf
+nextflow run QuackenbushLab/tcga-data-nf -c my-config.conf
 ```
+
+Below we give more details on the configuration steps
 
 ## Configuration
 
@@ -247,6 +238,26 @@ For each case we report the output of the testing profile:
 - full pipeline: `-profile test`
 
 Detailed output folder structure can be found at the [docs](docs.md##result-folders)
+
+## Development
+
+In case you wanted to make modifications to the workflow and/or run it locally
+
+0. Fork the repo into your own github
+  
+1. Clone the forked nextflow repo 
+   ```bash
+   git clone git@github.com:myaccount/tcga-data-nf.git
+   ```
+2. Build docker locally 
+    ```bash
+    docker build . -f containers/Dockerfile --build-arg CONDA_FILE=containers/env.base.python.yml --no-cache -t my-tcga-data-nf:latest
+    ```
+3. In alternative, use the conda profile
+4. Run your workflow
+    ```bash
+    nextflow run .  -profile testDownload --resultsDir myresults/ --pipeline download -with-docker my-tcga-data-nf:latest
+    ```
 
 
 ## Authors

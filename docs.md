@@ -3,7 +3,7 @@ title:  Configurations
 filename: docs.md
 --- 
 
-# Documentaion tcga-data-nf 
+# Documentation tcga-data-nf 
 
 ## Conda
 
@@ -299,3 +299,41 @@ my_manifest = my_friend$mapProbesToGenes(probelist = NULL, # this is the default
 
 write.csv(my_manifest,file="450k_manifest_TSS200_TSS0_one_probe_to_many_genes.csv")
 ```
+
+
+## AWS
+
+You can follow these steps to run the workflow on a new AWS EC2 machine. Please be aware that depending on the chosen
+configuration you might have to tweak these steps. 
+
+- Software image (AMI): Canonical, Ubuntu, 24.04, amd64 noble image
+- Virtual server type (instance type): t2.xlarge
+- Storage: 100GB
+
+
+1. `sudo apt update` (recommended AWS)
+2. Install java: `sudo apt install openjdk-21-jre-headless` (recommended AWS)
+3. Install nextflow: `curl -s https://get.nextflow.io | bash`
+4. Move nextflow to $PATH
+5. Try to pull test workflow `nextflow run helloworld`
+6. Pull workflow: `nextflow pull QuackenbushLab/tcga-data-nf`
+7. Install docker: `sudo snap install docker`
+8. Check docker installation `sudo docker run hello-world`
+9. Make docker available without sudo (add user to group): `sudo usermod -aG docker $USER`
+10. Pull tcga-data-nf docker `sudo docker pull violafanfani:tcga-data-nf:0.0.14`, check latest version or that of
+   interest (v0.0.14 is the current one, but could become obsolete)
+   You should see something like
+   ```
+   Digest: sha256:9eeb5af611da38cdd3dfb76fc0b2173991a42cde2adad79456d59c9a99e2f703
+  Status: Downloaded newer image for violafanfani/tcga-data-nf:0.0.14
+  docker.io/violafanfani/tcga-data-nf:0.0.14
+   ```
+11.  Run a test: `nextflow run QuackenbushLab/tcga-data-nf -profile testPrepare,docker -with-docker violafanfani/tcga-data-nf:0.0.14`
+  
+
+## General Advice:
+
+- The `testPrepare` workflow is the fastest and easiest to use. Start from here.
+- The `testDownload` is possibly the longest, although it should be straightforward. Beware that this worflow requires
+  downloading a lot of data, which might be a problem on an unstable internet connection.
+- 
