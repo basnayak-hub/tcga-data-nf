@@ -185,7 +185,7 @@ results/test_full
 
 
 
-## Config file
+## Configurations
 
 Here is a list of all available paramenters. 
 
