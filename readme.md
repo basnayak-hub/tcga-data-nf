@@ -3,7 +3,7 @@
 
 ![](https://github.com/QuackenbushLab/tcga-data-nf/workflows/build/badge.svg)
 
-version = '0.0.14'
+version = '0.0.15'
 
 Workflow to download and prepare TCGA data.
 
@@ -63,7 +63,7 @@ These steps could also help as a quickstart to check that you have everything up
 The docker container is hosted on docker.io. 
 
 ```
-docker pull violafanfani/tcga-data-nf:0.0.14
+docker pull violafanfani/tcga-data-nf:0.0.15
 ```
 
 More details on the container can be found in the [docs](docs.md#Docker)
