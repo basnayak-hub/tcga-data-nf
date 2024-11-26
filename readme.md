@@ -14,10 +14,21 @@ The workflow divides the process of downloading the data in two steps:
 
 The idea is that data should be downloaded once, and then prepared for the task at hand.
 
-:warning: For the moment the NetworkDataCompanion package needs to be installed locally. 
+**Where can I find more details about this workflow?**  
+If you want more details about the scope and use of this workflow, for instance, you want to decide if it's useful for your research, we
+recommend you check out the paper: ["Reproducible processing of TCGA regulatory
+networks"](https://www.biorxiv.org/content/early/2024/11/07/2024.11.05.622163).
+
+**Are there examples of how to configure the workflow or sample datasets?**  
+
+Of course! In the [QuackenbushLab/tcga-data-supplement](https://github.com/QuackenbushLab/tcga-data-supplement)
+repository you will find the companion data and configuration files for the paper. You can read about a full analysis we
+did on colon cancer and find all links/instructions for the precomputed GRNs of common cancer types.
 
 :warning: GitHub is still not allowing the QuackenbushLab to run actions. The docker image is built and pushed 
 manually.
+
+
 
 ## Getting started 
 
@@ -148,7 +159,6 @@ In case you wanted to make modifications to the workflow and/or run it locally
     ```bash
     nextflow run .  -profile testDownload --resultsDir myresults/ --pipeline download -with-docker my-tcga-data-nf:latest
     ```
-
 
 ## Authors
 
