@@ -14,13 +14,12 @@ The workflow divides the process of downloading the data in two steps:
 
 The idea is that data should be downloaded once, and then prepared for the task at hand.
 
-**Where can I find more details about this workflow?**  
+>**Where can I find more details about this workflow?**  
 If you want more details about the scope and use of this workflow, for instance, you want to decide if it's useful for your research, we
 recommend you check out the paper: ["Reproducible processing of TCGA regulatory
 networks"](https://www.biorxiv.org/content/early/2024/11/07/2024.11.05.622163).
 
-**Are there examples of how to configure the workflow or sample datasets?**  
-
+>**Are there examples of how to configure the workflow or sample datasets?**  
 Of course! In the [QuackenbushLab/tcga-data-supplement](https://github.com/QuackenbushLab/tcga-data-supplement)
 repository you will find the companion data and configuration files for the paper. You can read about a full analysis we
 did on colon cancer and find all links/instructions for the precomputed GRNs of common cancer types.
@@ -63,7 +62,7 @@ These steps could also help as a quickstart to check that you have everything up
 The docker container is hosted on docker.io. 
 
 ```
-docker pull violafanfani/tcga-data-nf:0.0.15
+docker pull violafanfani/tcga-data-nf:0.0.14
 ```
 
 More details on the container can be found in the [docs](docs.md#Docker)
