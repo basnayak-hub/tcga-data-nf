@@ -43,10 +43,10 @@ manually.
     - Install [conda](https://docs.anaconda.com/miniconda/).
     - Use the `-profile conda` option when running the workflow
 4. Run some test workflows  
-  4a. test the download: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, testDownload `  
-  4a. test the prepare: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, testPrepare`  
-  4a. test the analyze: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, testAnalyze`  
-  4a. test the full workflow: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>, test `  
+  4a. test the download: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>,testDownload `  
+  4a. test the prepare: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>,testPrepare`  
+  4a. test the analyze: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>,testAnalyze`  
+  4a. test the full workflow: `nextflow run QuackenbushLab/tcga-data-nf -profile <docker/conda>,test `  
 
 If you can run all these steps, you can procede defining your own configuration files and run your own analysis. 
 
@@ -74,7 +74,7 @@ In order to create and use conda one can pass it as a profile `-profile conda`
 as:
 
 ```
-nextflow run QuackebushLab/tcga-data-nf -profile conda,test ...
+nextflow run QuackenbushLab/tcga-data-nf -profile conda,test ...
 ```
 
 For the moment we are using one single environment to be used with all the r
