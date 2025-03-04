@@ -23,3 +23,29 @@ process runGENIE3 {
             touch genie3_${uuid}.txt
             """
 }
+
+
+process runWGCNA {
+
+    label "r_wgcna"
+
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/wgcna/",  pattern: 'wgcna*', mode: 'copy'
+
+        input:
+            tuple val(uuid), path(expression)
+
+        output:
+            tuple val(uuid), path(expression), path("wgcna_${uuid}.txt"), path("wgcna_${uuid}.log")
+        
+        script:
+        log.info "... Running WGCNA $uuid,$expression"
+            """
+                Rscript ${baseDir}/bin/r/run_wgcna.r -i ${expression} -o wgcna_${uuid}.txt --power ${params.wgcna.power} > wgcna_${uuid}.log
+            """
+
+        stub:
+            """
+            touch wgcna_${uuid}.txt
+            touch wgcna_${uuid}.log
+            """
+}

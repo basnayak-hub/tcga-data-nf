@@ -1,4 +1,4 @@
-include { runGENIE3 } from './grns.nf'
+include { runGENIE3; runWGCNA } from './grns.nf'
 
 process runTCGAPanda {
 
@@ -267,9 +267,13 @@ workflow analyzeExpressionWf{
 
     //LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
     // Print genie3 parameter
-    println "Run GENIE3: ${params.run_genie3}"
+    
     if (params.genie3.run_genie3){
         runGENIE3(data.map{it -> tuple(it[0], it[1])})
+    }
+
+    if (params.wgcna.run_wgcna){
+        runWGCNA(data.map{it -> tuple(it[0], it[1])})
     }
 
 }

@@ -21,3 +21,4 @@ dependencies:
   - r-data.table
   - r-huge
   - bioconductor-genie3
+  - r-wgcna
