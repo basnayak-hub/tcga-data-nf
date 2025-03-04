@@ -127,41 +127,42 @@ workflow {
     // This allows for separate management of raw data and intermediate clean data
     // Alongside, we have a full pipeline that does all the steps in one go
     if (params.pipeline == 'download'){
-        // DOWNLOAD
-        downloadWf()
-    } else if (params.pipeline == 'prepare'){
-        // PREPARE
-        prepareWf() 
+            // DOWNLOAD
+            downloadWf()
+        } else if (params.pipeline == 'prepare'){
+            // PREPARE
+            prepareWf() 
         } else if (params.pipeline == 'analyze'){
-        // ANALYZE
+            // ANALYZE
 
-        if (params.profileName=='testAnalyze'){
-            println "Test analyze"
-            //testCh = Channel.fromList([tuple(params.metadata_expression, "${params.testDataFolder}/testExprA.csv"), tuple(params.metadata_dragon, "${params.testDataFolder}/testDragonA.csv")]).view()
-            //aaa = preprocessAnalyzeMetadata(testCh)
+            if (params.profileName=='testAnalyze'){
+                // For the test we preprocess the metadata
+                println "Test analyze"
+                metadata_expression = preprocessExpressionMetadata("${params.metadata_expression}")
+                metadata_dragon = preprocessDragonMetadata("${params.metadata_dragon}")
+                
+                } else {
+                // For the full pipeline we read the metadata from the file
+                metadata_expression = Channel.fromPath(params.metadata_expression)
+                metadata_dragon = Channel.fromPath(params.metadata_dragon)
+                }
+
+            // PIPELINE FOR EXPRESSION ONLY (GRNs)
+            data = metadata_expression
+                        .splitCsv(header:true)
+                        .map { row -> tuple(row.uuid, file("${row.expression}"))}
+
+            analyzeExpressionWf(data)
+            // PIPELINE FOR DRAGON: EXPRESSION and METHYLATION
             
-            metadata_expression = preprocessExpressionMetadata("${params.metadata_expression}")
-            metadata_dragon = preprocessDragonMetadata("${params.metadata_dragon}")
-            
-        } else {
-            metadata_expression = Channel.fromPath(params.metadata_expression)
-            metadata_dragon = Channel.fromPath(params.metadata_dragon)
-        }
+            dataDragon = metadata_dragon
+                        .splitCsv(header:true)
+                        .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
 
-
-        data = metadata_expression
-                    .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.expression}"))}
-
-        analyzeExpressionWf(data)
-        dataDragon = metadata_dragon
-                    .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
-
-        analyzeDragonWf(dataDragon)
-    } else if (params.pipeline == 'full')
-        // FULL PIPELINE
-        fullWf()
+            analyzeDragonWf(dataDragon)
+        } else if (params.pipeline == 'full')
+            // FULL PIPELINE
+            fullWf()
     else
         // 
         error "Error: this pipeline name doesn't exist. \nChoose one between download/prepare/analyze/full as pipeline parameter"

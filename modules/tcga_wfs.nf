@@ -1,3 +1,4 @@
+include { runGENIE3 } from './grns.nf'
 
 process runTCGAPanda {
 
@@ -249,18 +250,9 @@ workflow analyzeExpressionWf{
 
     main:
 
-    // defaults results directory
-    //batchName = params.batchName ? params.batchName : "batch-${params.workflow}-null"
-
-    // 
-    //if (!params.metadata) exit 1, "requires a CSV metadata file."
-    // Data channel
-    // format uuid, file(network)
-
-
     zooAnimals = Channel.from(params.zoo.animals)
 
-    data.combine(zooAnimals).branch {
+    data.combine(zooAnimals).branch { 
                     panda: it[-1] == 'panda'
                     pandalioness: it[-1] == 'panda_lioness'
                     //otter: it[-1] == 'otter'
@@ -274,6 +266,11 @@ workflow analyzeExpressionWf{
     LionessPandaTCGAWf(zooAnalysisCh.pandalioness.map{it -> tuple(it[0], it[1])})
 
     //LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
+    // Print genie3 parameter
+    println "Run GENIE3: ${params.run_genie3}"
+    if (params.genie3.run_genie3){
+        runGENIE3(data.map{it -> tuple(it[0], it[1])})
+    }
 
 }
 

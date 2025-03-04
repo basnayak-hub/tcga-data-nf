@@ -20,3 +20,4 @@ dependencies:
   - bioconductor-recount
   - r-data.table
   - r-huge
+  - bioconductor-genie3
