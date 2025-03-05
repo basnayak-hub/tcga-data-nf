@@ -5,6 +5,23 @@ filename: extend_workflow.md
 
 # Extend Workflow
 
+Being modular, the workflow allows users to add steps. We do not expect or recommend 
+to drastically change the structure and length of the workflow, but we would welcome any bug-fix,
+"small" addition of GRNs tools, quality control steps.
+
+**BUGS**: please open an issue on Github if you encounter an error. If you know how to solve it, please open a PR with
+the bug fix. Refer to the fork-PR-merge cycle section below for guidance on how to do that.
+
+**EXTENSIONS**: first, we would recomment opening an issue or send an email to the maintainers 
+to gauge interest in the tool or feature you want to add. If we deem the feature useful for the
+broader community we'll ask you to open a PR, following the GENIE3 example below. If, instead, 
+you just want to have a personal version of the workflow, we recommend you fork the project 
+and appropriately cite it in your work.
+
+## Fork-PR-merge cycle
+
+TODO: How to
+Add here
 
 ## Example: add GENIE3
 

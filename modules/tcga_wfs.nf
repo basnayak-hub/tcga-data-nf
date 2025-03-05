@@ -186,6 +186,34 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",
     """
 }
 
+process runTCGAAlpaca {
+
+    label "netzoor"
+    
+
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid1}_${uuid2}/analysis/alpaca/",  pattern: "*${uuid1}_${uuid2}*", mode: 'copy'
+
+        input:
+            tuple val(uuid1), path(expression1), path(panda1), path(log1), val(uuid2), path(expression2), path(panda2), path(log2)
+
+        output:
+            tuple val(uuid1), path(expression1), path(panda1), path(log1), val(uuid2), path(expression2), path(panda2), path(log2), path("membership_${uuid1}_${uuid2}.csv"), path("alpaca_${uuid1}_${uuid2}.Rds"), path("top_genes_${uuid1}_${uuid2}.txt"), path("alpaca_${uuid1}_${uuid2}.log")
+        
+        script:
+        log.info "... Running ALPACA $uuid1-vs-$uuid2"
+            """
+                Rscript ${baseDir}/bin/r/run_alpaca.r -b ${panda1} -p ${panda2} -o membership_${uuid1}_${uuid2}.csv -a alpaca_${uuid1}_${uuid2}.Rds -t top_genes_${uuid1}_${uuid2}.txt > alpaca_${uuid1}_${uuid2}.log
+            """
+
+        stub:
+            """
+            touch "membership_${uuid1}_${uuid2}.txt"
+            touch "alpaca_${uuid1}_${uuid2}.Rds"
+            touch "top_genes_${uuid1}_${uuid2}.txt"
+            touch "alpaca_${uuid1}_${uuid2}.log"
+            """
+}
+
 
 
 
@@ -198,10 +226,10 @@ workflow PandaTCGAWf {
     take:data
     main:
     data
-    lio = runTCGAPanda(data)
+    panda = runTCGAPanda(data)
     //lio.take(3).view()
     //runTCGAPandaExplore(lio.take(3))
-
+    emit: panda
 }
 
 
@@ -215,6 +243,7 @@ workflow LionessPandaTCGAWf {
     //lio.take(3).view()
     //runTCGAPandaExplore(lio.take(3))
     //runTCGALionessExplore(lio)
+    emit: lio
 
 }
 
@@ -244,6 +273,15 @@ workflow DragonLionessTCGAWf {
 
 }
 
+workflow AlpacaPandaTCGAWf {
+
+    take:data
+    main:
+    alpacaCh = runTCGAAlpaca(data)
+    emit: alpacaCh
+
+}
+
 workflow analyzeExpressionWf{
     take:
         data
@@ -261,9 +299,24 @@ workflow analyzeExpressionWf{
                 
     
 
-    PandaTCGAWf(zooAnalysisCh.panda.map{it -> tuple(it[0], it[1])})
+    pandaOut = PandaTCGAWf(zooAnalysisCh.panda.map{it -> tuple(it[0], it[1])})
 
-    LionessPandaTCGAWf(zooAnalysisCh.pandalioness.map{it -> tuple(it[0], it[1])})
+
+    // Generate all combinations (pairs) of elements from pandaOut using two separate channels
+    channel1 = pandaOut
+    channel2 = pandaOut
+
+    // Cartesian product (every combination of two elements)
+    pandaOutPairs = channel1
+        .combine(channel2)
+        .filter {it[0].compareTo(it[4]) < 0 }  // Optional: Avoid self-pairs if needed
+
+    // Run ALPACAWf with each pair of pandaOut
+    alpacaOut = AlpacaPandaTCGAWf(pandaOutPairs)
+
+    lionessOut = LionessPandaTCGAWf(zooAnalysisCh.pandalioness.map{it -> tuple(it[0], it[1])})
+
+
 
     //LionessOtterTCGAWf(zooAnalysisCh.otterlioness) 
     // Print genie3 parameter
