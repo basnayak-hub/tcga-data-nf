@@ -1,4 +1,7 @@
 process preprocessMetadata {
+
+    label "process_low"
+
     input:
     path(templateFile)
 
@@ -13,7 +16,7 @@ process preprocessMetadata {
 
 process downloadRecount{
 
-    label "r_download"
+    label "r_download", "process_medium"
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/recount3/", pattern: "${uuid}.rds", mode: 'copy', overwrite: true
     
     input:
@@ -41,7 +44,7 @@ process downloadRecount{
 process mergeRecountMetadata{
 
     //conda 'containers/conda_envs/merge_tables.yml'
-    label 'merge_tables'
+    label 'merge_tables', "process_low"
 
     publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_recount_metadata.csv", mode: 'copy', overwrite: true
     
@@ -61,7 +64,7 @@ process mergeRecountMetadata{
 
 process downloadMutations{
     // Conda environment is managed by label
-    label "r_download"
+    label "r_download", "process_medium"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/mutations/", pattern: "${uuid}_mutations*", mode: 'copy', overwrite: true
     
@@ -92,7 +95,7 @@ process downloadMutations{
 process mergeMutationsMetadata{
 
     //conda 'containers/conda_envs/merge_tables.yml' is managed by label
-    label 'merge_tables'
+    label 'merge_tables', "process_low"
 
     publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_mutation_metadata.csv", mode: 'copy', overwrite: true
     
@@ -113,7 +116,7 @@ process mergeMutationsMetadata{
 
 process downloadMethylation{
 
-    label "r_download"
+    label "r_download", "process_medium"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/methylation/", pattern: "${uuid}_methylation*", mode: 'copy', overwrite: true
     
@@ -148,7 +151,7 @@ process downloadMethylation{
 
 process mergeMethylationMetadata{
     // label uses conda environment
-    label 'merge_tables'
+    label 'merge_tables', "process_low"
 
     publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_methylation_metadata.csv", mode: 'copy', overwrite: true
     
@@ -168,7 +171,7 @@ process mergeMethylationMetadata{
 
 process downloadClinical{
 
-    label "r_download"
+    label "r_download", "process_medium"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/clinical", pattern: "*.csv", mode: 'copy', overwrite: true
     
@@ -192,7 +195,8 @@ process downloadClinical{
 
 process downloadCNV{
 
-    label "r_download"
+    label "r_download", "process_medium"
+
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_download/cnv/", pattern: "${uuid}.*", mode: 'copy', overwrite: true
     
     input:
@@ -219,7 +223,7 @@ process downloadCNV{
 
 process mergeCNVMetadata{
     // label uses conda environment
-    label 'merge_tables'
+    label 'merge_tables', "process_low"
 
     publishDir "${params.resultsDir}/${params.batchName}/", pattern: "downloaded_cnv_metadata.csv", mode: 'copy', overwrite: true
     

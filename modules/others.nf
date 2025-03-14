@@ -23,6 +23,8 @@ process CollectTableStats {
 
 process preprocessExpressionMetadata {
 
+    label "process_low"
+
     input:
         path(templateFile)
 
@@ -38,6 +40,8 @@ process preprocessExpressionMetadata {
 
 process preprocessDragonMetadata {
 
+    label "process_low"
+
     input:
         path(templateFile)
 
@@ -52,6 +56,9 @@ process preprocessDragonMetadata {
 }
 
 process preprocessFullMetadata {
+    
+    label "process_low"
+    
     input:
     path(templateFile)
 

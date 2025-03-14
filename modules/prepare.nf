@@ -1,6 +1,6 @@
 process prepareTCGARecount{
 
-    label 'prepare_expression'
+    label 'prepare_expression', 'process_medium'
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/recount3/", pattern: "recount3_${uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.*", mode: 'copy', overwrite: true
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/recount3/", pattern: "recount3_${uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.log", mode: 'copy', overwrite: true
@@ -69,7 +69,7 @@ process prepareTCGARecount{
 
 process GetGeneLevelPromoterMethylation {
     
-    label 'prepare_methylation'
+    label 'prepare_methylation', 'process_medium'
     
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_raw.*",  overwrite: true
 
@@ -98,7 +98,7 @@ process GetGeneLevelPromoterMethylation {
 
 process CleanMethylationData {
 
-    label 'prepare_methylation'
+    label 'prepare_methylation', 'process_medium'
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}.*",  overwrite: true
 

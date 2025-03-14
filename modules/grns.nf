@@ -1,6 +1,6 @@
 process runGENIE3 {
 
-    label "r_genie3"
+    label "genie3"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/genie3/",  pattern: 'genie3*', mode: 'copy'
 
@@ -27,7 +27,7 @@ process runGENIE3 {
 
 process runWGCNA {
 
-    label "r_wgcna"
+    label "wgcna"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/wgcna/",  pattern: 'wgcna*', mode: 'copy'
 

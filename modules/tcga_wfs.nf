@@ -2,7 +2,7 @@ include { runGENIE3; runWGCNA } from './grns.nf'
 
 process runTCGAPanda {
 
-    label "netzoopy_panda"
+    label "netzoopy_panda", "process_panda"
     //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda/",  pattern: 'panda*', mode: 'copy'
@@ -30,7 +30,7 @@ process runTCGAPanda {
 process runTCGALioness {
 
     //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
-    label "netzoopy_pandalioness"
+    label "netzoopy_pandalioness", "process_panda"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/panda_lioness/",  pattern: '{panda,lioness}*', mode: 'copy'
 
@@ -58,6 +58,7 @@ process runTCGALioness {
 
 process runTCGAOtterLioness {
 
+    label "netzoopy_pandalioness", "process_panda"
     //conda "/Users/violafanfani/Documents/uni-harvard/workflows/tcga-data-nf/containers/env.netzoopy.yml"
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/otter_lioness/", mode: 'copy'
@@ -86,7 +87,7 @@ process runTCGAOtterLioness {
 
 process alignMethylationExpression {
 
-    label 'r_base'
+    label 'r_base', 'process_medium'
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
 
     input:
@@ -108,7 +109,7 @@ process alignMethylationExpression {
 
 process runTCGADragon {
 
-    label "netzoopy_dragon"
+    label "netzoopy_dragon", 'process_high'
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
 
     input:
@@ -134,7 +135,7 @@ process runTCGADragon {
 
 process runTCGALionessDragon{
 
-    label "netzoopy_dragonlioness"
+    label "netzoopy_dragonlioness", 'process_high'
     publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/lioness_dragon/", mode: 'copy', pattern:"*",  overwrite: true
 
     input:
@@ -156,6 +157,7 @@ process runTCGALionessDragon{
         """
 }
 
+// Fix this after 0.9.3 netzoopy
 process runTCGAPandaExplore {
 
 publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",  pattern: '*.png', mode: 'copy'
@@ -186,9 +188,10 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",
     """
 }
 
+
 process runTCGAAlpaca {
 
-    label "netzoor"
+    label "netzoor", 'process_ultra'
     
 
     publishDir "${params.resultsDir}/${params.batchName}/${uuid1}_${uuid2}/analysis/alpaca/",  pattern: "*${uuid1}_${uuid2}*", mode: 'copy'
