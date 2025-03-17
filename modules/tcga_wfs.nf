@@ -304,18 +304,22 @@ workflow analyzeExpressionWf{
 
     pandaOut = PandaTCGAWf(zooAnalysisCh.panda.map{it -> tuple(it[0], it[1])})
 
+    // Check if ALPACA is in animals
+    if (params.zoo.animals.contains('alpaca')){
+        // Generate all combinations (pairs) of elements from pandaOut using two separate channels
+        channel1 = pandaOut
+        channel2 = pandaOut
 
-    // Generate all combinations (pairs) of elements from pandaOut using two separate channels
-    channel1 = pandaOut
-    channel2 = pandaOut
+        // Cartesian product (every combination of two elements)
+        pandaOutPairs = channel1
+            .combine(channel2)
+            .filter {it[0].compareTo(it[4]) < 0 }  // Optional: Avoid self-pairs if needed
 
-    // Cartesian product (every combination of two elements)
-    pandaOutPairs = channel1
-        .combine(channel2)
-        .filter {it[0].compareTo(it[4]) < 0 }  // Optional: Avoid self-pairs if needed
+        // Run ALPACAWf with each pair of pandaOut
+        alpacaOut = AlpacaPandaTCGAWf(pandaOutPairs)
+    }
 
-    // Run ALPACAWf with each pair of pandaOut
-    alpacaOut = AlpacaPandaTCGAWf(pandaOutPairs)
+
 
     lionessOut = LionessPandaTCGAWf(zooAnalysisCh.pandalioness.map{it -> tuple(it[0], it[1])})
 
