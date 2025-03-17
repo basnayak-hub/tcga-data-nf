@@ -91,6 +91,14 @@ However, to improve portability, we use the process selectors labels to specify 
 More details in the [docs](docs.md#conda).
 
 
+### CPU and memory requirement
+
+CPU and memory requirements depend on the size of the datasets, but we report a whole execution report for the full
+pipeline. 
+
+You can find that at [full](execution_report_test_full.html) execution report that was obtained by running the v0.0.15
+version of tcga-data-nf with standard configuration files and no parallelization of processes on AWS EC2 instance c5.4xlarge with 32Gb of memory and 16 vCPUs. 
+
 ### Install or update the workflow
 
 Before running the workflow we recommend pulling the last version with the following command

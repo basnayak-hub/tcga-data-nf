@@ -333,7 +333,7 @@ configuration you might have to tweak these steps.
 
 ## General Advice:
 
-- The `testPrepare` workflow is the fastest and easiest to use. Start from here.
+- The `testAnalyze` workflow is the fastest and easiest to use. Start from here.
 - The `testDownload` is possibly the longest, although it should be straightforward. Beware that this worflow requires
   downloading a lot of data, which might be a problem on an unstable internet connection.
 - 
