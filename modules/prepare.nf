@@ -96,11 +96,32 @@ process GetGeneLevelPromoterMethylation {
 }
 
 
-process CleanMethylationData {
+process CleanDragonMethylationData {
 
     label 'prepare_methylation', 'process_medium'
 
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}.*",  overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/methylation/", mode: 'copy', pattern: "${uuid}_gene_cnv_npn_${tissueType}.*",  overwrite: true
+
+    input:
+	tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType)
+ 
+    // output: file of samples (rows) x genes (columns)
+    
+    output:
+        tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.csv"), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.log")
+    
+    script:
+    log.info "... Cleaning methylation data $uuid,$project"
+    """
+         Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
+    """
+}
+
+process CleanDragonCNVData {
+
+    label 'prepare_cnv', 'process_medium'
+
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/cnv/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}.*",  overwrite: true
 
     input:
 	tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType)
