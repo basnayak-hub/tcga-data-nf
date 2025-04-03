@@ -3,21 +3,7 @@ library("optparse")
 library(dplyr)
 library(stringr)
 library(huge)
-
-#args<-commandArgs(TRUE)
-
-# args[1] = project, tcga_luad
-# args[2] = clinical data, patient.csv
-# args[3] = expression data, expression.rds
-# args[4] = output rds file
-# args[5] = output txt file
-# args[6] = purity threshold
-# args[7] = minimum tpm
-# args[8] = fraction of samples for filtering
-# args[9] = tissue to be retrieved, 'Primary Tumor'/ 'Solid Tissue Normal'
-# args[10] = normalization strategy, 'logTPM', 'TPM', 'counts', 
-# args[11] = batch correction variable, 'logTPM', 'TPM', 'counts', 
-# args[10] = adjustment variable, 'logTPM', 'TPM', 'counts', 
+library(SummarizedExperiment)
 
 #/Users/violafanfani/Documents/uni-harvard/projects/tcga-data-supplement/data/processed/batch-coad-subtype-20240510/tcga_coad_cms1/data_download/cnv/tcga_coad_cms1.csv
 
@@ -26,12 +12,14 @@ option_list = list(
               help="project name (e.g. tcga_luad)", metavar="project_name"),
   make_option(c("-c", "--cnv"), type="character", default=NULL, 
               help="cnv data csv", metavar="cnv_cvs"),
-  make_option(c("-r", "--cnv_rds"), type="character", default="", 
-              help="cnv data rds", metavar="cnv_rds"), 
+  #make_option(c("-r", "--cnv_rds"), type="character", default="", 
+  #            help="cnv data rds", metavar="cnv_rds"), 
   make_option(c("-o", "--output"), type="character", default='output_cnv.csv', 
               help="output filename for csv", metavar="output_csv"),
   make_option(c("--th_std"), type="double", default=0.0,
-              help="std threshold, removes everything with std lower than threshold. By default removes everything that has zero std. Default:0.0", metavar="number")
+              help="std threshold, removes everything with std lower than threshold. By default removes everything that has zero std. Default:0.0", metavar="number"),
+  make_option(c("--tf_list"), type="character", default=" ", 
+              help="TF list filename. Pass a text file with TF names to filter the output", metavar="character")
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
@@ -41,6 +29,7 @@ project = opt$project #args[1]
 cnv_fn = opt$cnv#args[2]
 output_fn = opt$output#args[3]
 th_std = as.numeric(opt$th_std)
+tf_list_fn =  opt$tf_list
 
 project_name <- toupper(substring(project, 6))
 #patient_data <- "clinical_patient_luad.csv"
@@ -52,8 +41,35 @@ project_name <- toupper(substring(project, 6))
 print('We start pre-processing the CNV')
 print(paste0('Project:', project_name))
 
+
+
 # read cnv data
-cnv = read.csv(cnv_fn,check.names = F, row.names=1)
+#cnv = read.csv(cnv_fn,check.names = F, row.names=1)
+cnv_rds = readRDS(cnv_fn)
+
+if (tf_list_fn!=' '){
+  # Read TF list
+  print(paste(c('Reading TF list', tf_list_fn)), collapse = " ")
+  tf_list = read.table(tf_list_fn)[,1] #read.table(paste(baseDir,"ext/TF_names_v_1.01.txt",sep="/"))[,1]
+  print(head(tf_list))
+
+  # Check if entry of tf_list starts with "ENSG"
+  if (tf_list[1] %>% str_detect("^ENSG")) {
+    # If it does, we need to remove the "ENSG" part
+    print("Genes are in ENSG format, no need to change them now")
+    # Select the genes that are in the tf_list
+    cnv_rds = cnv_rds[cnv_rds@rowRanges$gene_id %in% tf_list]
+    # Print the new length
+    print(paste(c('There are', length(rownames(cnv_rds)), 'genes that are going to be used'), collapse = ' '))   
+  } else {
+    # Select the genes that are in the tf_list
+    cnv_rds = cnv_rds[cnv_rds@rowRanges$gene_name %in% tf_list]
+    rownames(cnv_rds) = cnv_rds@rowRanges$gene_name
+    # Print the new length
+    print(paste(c('There are', length(rownames(cnv_rds)), 'genes that are going to be used'), collapse = ' '))
+  }
+}
+cnv = assays(cnv_rds)$copy_number
 
 cnv_t = cnv %>%
   t() %>%
@@ -90,7 +106,32 @@ cnv_t_labeled = cnv_t_labeled %>%
   ) %>%
   mutate(
     tcga_sample_barcode = if_else(code1_num < code2_num, p1, p2)) %>% # Select the code with the smaller numeric part) 
-  relocate(tcga_sample_barcode)  # Drop intermediate columns
+  relocate(tcga_sample_barcode)  %>% 
+  dplyr::select(-p1,-p2,-code1,-code2,-code1_num, -code2_num)# Drop intermediate columns
+
+# Let's actually check that the code is tumor
+# We can do this by checking the last two characters of the code
+# If they are less than 10 we can assume it's a tumor sample
+
+cnv_t_labeled = cnv_t_labeled %>%
+  mutate(
+    code1 = substr(str_split(tcga_sample_barcode,";",simplify=T)[,1],start=14,stop=16),  # Split by semicolon
+    code1_num = as.numeric(substr(code1, 1, 2)),           # Extract the numeric part of the first code
+  ) 
+
+q = cnv_t_labeled %>% dplyr::filter(code1_num>9)
+
+if (nrow(q)>0){
+  print("WARNING: one or more samples discarded because non-tumor")
+  print( q$tcga_sample_barcode )
+  
+  cnv_t_labeled = cnv_t_labeled %>%
+  dplyr::filter(code1_num<10)
+}
+
+cnv_t_labeled = cnv_t_labeled%>% 
+  dplyr::select(-code1, -code1_num)# Drop intermediate columns
+
 
 # And then we check if there are any duplicated samples
 # If there are, we take the mean of the values for each gene across the samples
@@ -104,21 +145,18 @@ if (anyDuplicated(cnv_t_labeled$tcga_sample_barcode)) {
 }
 
 
+
 # Remove any gene with missingness (NO imputation done) and follow this by removing any gene with zero standard deviation (same copy number across all samples), as that breaks DRAGON. 
 
 cnv_t_no_miss = cnv_t_labeled %>% 
   dplyr::select(-which(apply(.,2,function(x){sum(is.na(x))>0}))) %>%
   dplyr::select(-which(apply(.,2,function(x){sd(x)<=th_std})))
 
+# Check that there are no NAs in the data (although we should remove them before)
+stopifnot(sum(is.na(cnv_t_no_miss))==0)
 
 # Apply nonparanormal transformation
 cnv_t_npn = huge.npn(cnv_t_no_miss)
-
-# sanity check that npn is operating on marginal level
-# it requires more than one variable, not sure why - looks like
-# just something with the vectorization of apply
-a = max(abs(cnv_t_npn[,1:2] -huge.npn(cnv_t_no_miss[,1:2])))
-stopifnot(a == 0)
 
 # Convert rownames to TCGA barcode,by splitting row names and shortening to base TCGA barcode (removing replicate and sample type info).
 

@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 // import from modules
 //include { downloadWf; downloadRecount; downloadRecount3Wf; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
 include {fullDownloadWf; downloadRecount;downloadRecount3Wf; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf;  downloadWf} from './modules/download.nf'
-include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf} from './modules/prepare.nf'
+include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf; prepareCNVWf} from './modules/prepare.nf'
 include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeExpressionWf; analyzeDragonWf} from './modules/tcga_wfs.nf'
 include { preprocessExpressionMetadata; preprocessDragonMetadata; preprocessFullMetadata} from './modules/others.nf'
 
@@ -103,6 +103,11 @@ workflow fullWf{
     fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}
     readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
 
+    // Prepare CNV
+    fullDownCh.cnv.map{it -> tuple(it[0], it[1], it[7], it[4])}.view()
+    readyCNV = prepareCNVWf(fullDownCh.cnv.map{it -> tuple(it[0], it[1], it[4])})
+
+
     // ANALYZE
     
     readyRecount.map{it -> tuple(it[0],it[11])}
@@ -110,9 +115,13 @@ workflow fullWf{
 
     analyzeExpressionWf(readyRecount.map{it -> tuple(it[0],it[11])})
 
-    methCh = readyMethylation.map{it -> tuple(it[0],it[5])}.combine(readyRecount.map{it -> tuple(it[0],it[10])}, by:0)
-    analyzeDragonWf(methCh) 
+    methCh = readyMethylation.map{it -> tuple(it[0],'methylation',it[5])}.combine(readyRecount.map{it -> tuple(it[0],"expression",it[10])}, by:0)
+    
 
+    cnvCh = readyCNV.map{it -> tuple(it[0],"cnv",it[3])}.combine(readyRecount.map{it -> tuple(it[0],"expression", it[10])}, by:0)
+
+    dragonCh = methCh.concaten(cnvCh).view{"dragon from full: ${it}"}
+    analyzeDragonWf(dragonCh) 
 }
 
 
@@ -155,9 +164,13 @@ workflow {
             analyzeExpressionWf(data)
             // PIPELINE FOR DRAGON: EXPRESSION and METHYLATION
             
+            //dataDragon = metadata_dragon
+            //            .splitCsv(header:true)
+            //            .map { row -> tuple(row.uuid, file("${row.methylation}"), file//("${row.expression}"))}
+
             dataDragon = metadata_dragon
                         .splitCsv(header:true)
-                        .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
+                        .map { row -> tuple(row.uuid, row.type1, file("${row.methylation}"),row.type2, file("${row.expression}"))}
 
             analyzeDragonWf(dataDragon)
         } else if (params.pipeline == 'full')

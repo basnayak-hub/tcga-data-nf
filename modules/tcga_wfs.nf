@@ -88,46 +88,46 @@ process runTCGAOtterLioness {
 process alignMethylationExpression {
 
     label 'r_base', 'process_medium'
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_${type1}_${type2}_dragon*",  overwrite: true
 
     input:
-        tuple val(uuid),path(methylationData),path(expressionData)
+        tuple val(uuid),val(type1), path(methylationData),val(type2), path(expressionData)
     	// output: file of samples (rows) x genes (columns)
     output:
-        tuple val(uuid),path(methylationData),path(expressionData),path("${uuid}_dragon_filtered_expression.csv")
+        tuple val(uuid),val(type1),path(methylationData),val(type2),path(expressionData),path("${uuid}_${type1}_${type2}_dragon_filtered_expression.csv")
     
     script:
         log.info "... Align methylation and expression $uuid,$expressionData, $methylationData"
     """
-        Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_dragon_filtered_expression.csv";
+        Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_${type1}_${type2}_dragon_filtered_expression.csv";
     """
     stub:
         """
-        touch "${uuid}_dragon_filtered_expression.csv"
+        touch "${uuid}_${type1}_${type2}_dragon_filtered_expression.csv"
         """
 }
 
 process runTCGADragon {
 
     label "netzoopy_dragon", 'process_high'
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_dragon*",  overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/dragon/", mode: 'copy', pattern:"${uuid}_${type1}_${type2}_dragon*",  overwrite: true
 
     input:
-        tuple val(uuid),path(methylationData),path(expressionData), path(expressionAlignedData)
+        tuple val(uuid),val(type1),path(methylationData),val(type2), path(expressionAlignedData)
     	// output: file of samples (rows) x genes (columns)
     output:
-        tuple val(uuid),path(methylationData),path(expressionData),path(expressionAlignedData), path("${uuid}_dragon_mat.tsv"), path("${uuid}_dragon_input.tsv"), path("${uuid}_dragon.log")
+        tuple val(uuid),val(type1),path(methylationData),val(type2),path(expressionAlignedData), path("${uuid}_${type1}_${type2}_dragon_mat.tsv"), path("${uuid}_${type1}_${type2}_dragon_input.tsv"), path("${uuid}_${type1}_${type2}_dragon.log")
     
     script:
-        log.info "... Running DRAGON $uuid,$expressionAlignedData"
+        log.info "... Running DRAGON $uuid,$methylationData,$expressionAlignedData,$type1,$type2"
         """
-        run_dragon.py dragon -m ${methylationData} -e ${expressionAlignedData} -i "${uuid}_dragon_input.tsv" -o "${uuid}_dragon_mat.tsv" > "${uuid}_dragon.log"
+        run_dragon.py dragon -m ${methylationData} -e ${expressionAlignedData} -i "${uuid}_${type1}_${type2}_dragon_input.tsv" -o "${uuid}_${type1}_${type2}_dragon_mat.tsv" > "${uuid}_${type1}_${type2}_dragon.log"
         """
     stub:
         """
-        touch "${uuid}_dragon_input.tsv"
-        touch "${uuid}_dragon_mat.tsv" 
-        touch "${uuid}_dragon.log"
+        touch "${uuid}_${type1}_${type2}_dragon_input.tsv"
+        touch "${uuid}_${type1}_${type2}_dragon_mat.tsv" 
+        touch "${uuid}_${type1}_${type2}_dragon.log"
         """
 }
 
@@ -136,24 +136,24 @@ process runTCGADragon {
 process runTCGALionessDragon{
 
     label "netzoopy_dragonlioness", 'process_high'
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/lioness_dragon/", mode: 'copy', pattern:"*",  overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/lioness_dragon_${type1}_${type2}/", mode: 'copy', pattern:"*",  overwrite: true
 
     input:
-        tuple val(uuid),path(methylationData),path(expressionData), path(expressionAlignedData)
+        tuple val(uuid),val(type1),path(methylationData),val(type2), path(expressionAlignedData)
 
     output:
-        tuple val(uuid),path(methylationData),path(expressionData), path(expressionAlignedData), path("lioness_dragon/", type:'dir'), path("${uuid}_lioness_dragon.log")
+        tuple val(uuid),val(type1),path(methylationData),val(type2), path(expressionAlignedData), path("lioness_dragon_${type1}_${type2}/", type:'dir'), path("${uuid}_${type1}_${type2}_lioness_dragon.log")
 
     script:
     log.info "... Running LIONESS DRAGON $uuid,$expressionAlignedData"
     """
-    run_dragon.py lioness-dragon -m ${methylationData} -e ${expressionAlignedData} -o lioness_dragon > "${uuid}_lioness_dragon.log"
+    run_dragon.py lioness-dragon -m ${methylationData} -e ${expressionAlignedData} -o lioness_dragon_${type1}_${type2} > "${uuid}_${type1}_${type2}_lioness_dragon.log"
     """
 
     stub:
         """
-        mkdir lioness_dragon
-        touch "${uuid}_lioness_dragon.log"
+        mkdir lioness_dragon_${type1}_${type2}
+        touch "${uuid}_${type1}_${type2}_lioness_dragon.log"
         """
 }
 
@@ -167,9 +167,11 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",
 
     output:
         tuple val(uuid), path(expression), path(panda),path('panda_scores.png')
-    """
-    explore.py plot-panda-scores ${panda} panda_scores.png --is_adj
-    """
+    
+    script:
+        """
+        explore.py plot-panda-scores ${panda} panda_scores.png --is_adj
+        """
 }
 
 
@@ -183,9 +185,11 @@ publishDir "${params.resultsDir}/${params.batchName}/${uuid}/analysis/figures/",
 
     output:
         tuple val(uuid), path(expression), path(panda),path(lioness),path('lioness_scores.png'),path('correlation_panda_lioness.png'),path('single_correlation.png')
-    """
-    explore.py plot-lioness-scores ${lioness} lioness_scores.png --panda_filename ${panda} --correlation correlation_panda_lioness.png --singles single_correlation.png
-    """
+
+    script:
+        """
+        explore.py plot-lioness-scores ${lioness} lioness_scores.png --panda_filename ${panda} --correlation correlation_panda_lioness.png --singles single_correlation.png
+        """
 }
 
 
@@ -262,8 +266,25 @@ workflow DragonTCGAWf {
 
     take:data
     main:
-    dragonCh = alignMethylationExpression(data)
+    // If the second input is expression, the workflow will align the data, otherwise it will just assume the two files are aligned nd will run dragon on them.
+    data.branch { 
+                    toalign: it[3] == 'expression'
+                    aligned: it[3] != 'expression'
+                }.set { dataAlignCh }
+
+    // Align type1 and expression data
+    toalignDragonCh = alignMethylationExpression(dataAlignCh.toalign)
+    // Remove the original "expression" column
+    toalignDragonCh.map{it -> tuple(it[0], it[1], it[2], it[3], it[5])}.view{"toalign: ${it}"}
+    
+    // Concatenate the aligned data with the already aligned data
+    dragonCh = dataAlignCh.aligned.concat(
+        toalignDragonCh.map{it -> tuple(it[0], it[1], it[2], it[3], it[5])}
+        ).view(){"dragonCh: ${it}"}
+    // Run dragon on the aligned data (all of it)
     dragon = runTCGADragon(dragonCh)
+    emit:
+        dragon
 
 }
 
@@ -271,8 +292,23 @@ workflow DragonLionessTCGAWf {
 
     take:data
     main:
-    dragonCh = alignMethylationExpression(data)
-    dragon = runTCGALionessDragon(dragonCh)
+
+    data.branch { 
+                    toalign: it[3] == 'expression'
+                    aligned: it[3] != 'expression'
+                }.set { dataAlignCh }
+
+    toalignDragonCh = alignMethylationExpression(dataAlignCh.toalign)
+    toalignDragonCh.map{it -> tuple(it[0], it[1], it[2], it[3], it[5])}.view{"toalign: ${it}"}
+    
+    dragonCh = dataAlignCh.aligned.concat(
+        toalignDragonCh.map{it -> tuple(it[0], it[1], it[2], it[3], it[5])}
+        ).view(){"dragonCh: ${it}"}
+
+    dragonLioness = runTCGALionessDragon(dragonCh)
+    emit:
+        dragonLioness
+    
 
 }
 
@@ -350,7 +386,7 @@ workflow analyzeDragonWf{
                     dragonlioness: it[-1] == 'dragon_lioness'
                 }.set { zooAnalysisCh }
 
-    DragonTCGAWf(zooAnalysisCh.dragon.map{it -> tuple(it[0], it[1], it[2])})
-    DragonLionessTCGAWf(zooAnalysisCh.dragonlioness.map{it -> tuple(it[0], it[1], it[2])})
+    DragonTCGAWf(zooAnalysisCh.dragon.map{it -> tuple(it[0], it[1], it[2], it[3], it[4])})
+    DragonLionessTCGAWf(zooAnalysisCh.dragonlioness.map{it -> tuple(it[0], it[1], it[2], it[3], it[4])})
 
 }

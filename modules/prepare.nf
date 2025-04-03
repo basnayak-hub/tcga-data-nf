@@ -117,25 +117,30 @@ process CleanDragonMethylationData {
     """
 }
 
-process CleanDragonCNVData {
-
+process prepareCNV {
+    
     label 'prepare_cnv', 'process_medium'
+    
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/cnv/", mode: 'copy', pattern: "${uuid}_cnv_clean.*",  overwrite: true
 
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/cnv/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}.*",  overwrite: true
-
+    // input: path to file of probes (rows) x samples (columns)
+    // assume local for starters 
     input:
-	tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType)
- 
+       tuple val(uuid), val(project), path(cnvdata)
+       path tf_list
+
     // output: file of samples (rows) x genes (columns)
-    
     output:
-        tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.csv"), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.log")
-    
+        tuple val(uuid), val(project), path(cnvdata), path("${uuid}_cnv_clean.csv"), path("${uuid}_cnv_clean.log")
+
+    // return gene-level methylation measurements
     script:
-    log.info "... Cleaning methylation data $uuid,$project"
+    log.info "... Getting gene level promoter methylation $uuid,$project"
+    def filter = tf_list.name != 'NO_FILE' ? "--tf_list ${tf_list}" : ""
     """
-         Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
+        Rscript ${baseDir}/bin/r/prepare_cnv.r -p ${project} -m ${cnvdata} -o "${uuid}_cnv_clean.csv"  ${filter} > "${uuid}_cnv_clean.log" 
     """
+
 }
 
 
@@ -202,6 +207,15 @@ workflow prepareMethylationWf{
     emit:
         readyMethCh
 
+}
+
+workflow prepareCNVWf{
+    take:
+        prepareCNVCh
+    main:
+    readyCNVCh = prepareCNV(prepareCNVCh, file(params.cnv.tf_list))
+    emit:
+        readyCNVCh
 }
 
 workflow prepareWf{
