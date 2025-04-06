@@ -30,12 +30,14 @@ output_rds = opt$output_rds
 
 #barcode = listSamples
 if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
-    
+  barcodes = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
+  
   queried <- GDCquery(
     project = project_id, 
     data.category = "Copy Number Variation", 
     data.type = "Gene Level Copy Number",
-    workflow.type = analysis_workflow_type)
+    workflow.type = analysis_workflow_type,
+    barcode = barcodes$V1)
   } else {
   queried <- GDCquery(
     project = project_id, 
@@ -48,15 +50,6 @@ if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
 GDCdownload(queried,files.per.chunk = 50)
 cn_rds <- GDCprepare(queried)
 
-if (nchar(sample_list) > 3 && !grepl("NA$", sample_list)){
-    barcodes = read.table(opt$sample_list, header = FALSE, sep = "", dec = ".")
-    nnn = nchar(barcodes$V1[1])
-    # Check that this is correct
-    if (nnn>12){nnn=12}
-    # select based on nnn
-    barcodes = substr(barcodes$V1,1,nnn)
-    cn_rds = cn_rds[,substr(cn_rds$sample,1,nnn) %in% barcodes]
-}
 
 
 saveRDS(cn_rds, output_rds)

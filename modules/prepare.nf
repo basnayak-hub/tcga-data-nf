@@ -96,7 +96,7 @@ process GetGeneLevelPromoterMethylation {
 }
 
 
-process CleanDragonMethylationData {
+process CleanMethylationData {
 
     label 'prepare_methylation', 'process_medium'
 
@@ -131,15 +131,21 @@ process prepareCNV {
 
     // output: file of samples (rows) x genes (columns)
     output:
-        tuple val(uuid), val(project), path(cnvdata), path("${uuid}_cnv_clean.csv"), path("${uuid}_cnv_clean.log")
+        tuple val(uuid), val(project), path(cnvdata), path("${uuid}_cnv_clean.csv"), path("${uuid}_cnv_clean.log"), path("${uuid}_remove.txt")
 
     // return gene-level methylation measurements
     script:
     log.info "... Getting gene level promoter methylation $uuid,$project"
     def filter = tf_list.name != 'NO_FILE' ? "--tf_list ${tf_list}" : ""
     """
-        Rscript ${baseDir}/bin/r/prepare_cnv.r -p ${project} -m ${cnvdata} -o "${uuid}_cnv_clean.csv"  ${filter} > "${uuid}_cnv_clean.log" 
+        Rscript ${baseDir}/bin/r/prepare_cnv.r -p ${project} -c ${cnvdata} -o "${uuid}_cnv_clean.csv"  ${filter} > "${uuid}_cnv_clean.log" 
+        touch "${uuid}_remove.txt"
     """
+
+    stub:
+        """
+        touch "${uuid}_cnv_clean.log" 
+        """
 
 }
 
@@ -213,6 +219,7 @@ workflow prepareCNVWf{
     take:
         prepareCNVCh
     main:
+
     readyCNVCh = prepareCNV(prepareCNVCh, file(params.cnv.tf_list))
     emit:
         readyCNVCh

@@ -11,7 +11,7 @@ option_list = list(
   make_option(c("-p", "--project"), type="character", default=NULL, 
               help="project name (e.g. tcga_luad)", metavar="project_name"),
   make_option(c("-c", "--cnv"), type="character", default=NULL, 
-              help="cnv data csv", metavar="cnv_cvs"),
+              help="cnv data rds", metavar="cnv_rds"),
   #make_option(c("-r", "--cnv_rds"), type="character", default="", 
   #            help="cnv data rds", metavar="cnv_rds"), 
   make_option(c("-o", "--output"), type="character", default='output_cnv.csv', 
@@ -30,6 +30,7 @@ cnv_fn = opt$cnv#args[2]
 output_fn = opt$output#args[3]
 th_std = as.numeric(opt$th_std)
 tf_list_fn =  opt$tf_list
+
 
 project_name <- toupper(substring(project, 6))
 #patient_data <- "clinical_patient_luad.csv"
@@ -115,7 +116,7 @@ cnv_t_labeled = cnv_t_labeled %>%
 
 cnv_t_labeled = cnv_t_labeled %>%
   mutate(
-    code1 = substr(str_split(tcga_sample_barcode,";",simplify=T)[,1],start=14,stop=16),  # Split by semicolon
+    code1 = substr(tcga_sample_barcode,start=14,stop=16),  # Split by semicolon
     code1_num = as.numeric(substr(code1, 1, 2)),           # Extract the numeric part of the first code
   ) 
 
@@ -136,13 +137,18 @@ cnv_t_labeled = cnv_t_labeled%>%
 # And then we check if there are any duplicated samples
 # If there are, we take the mean of the values for each gene across the samples
 # This is a sanity check, but it should not happen if the data is clean
-
 if (anyDuplicated(cnv_t_labeled$tcga_sample_barcode)) {
   print('WARNING: duplicated samples')
   cnv_t_labeled <- cnv_t_labeled %>%
     group_by(tcga_sample_barcode) %>%
     summarize(across(everything(), ~ mean(.x, na.rm = TRUE), .groups = "drop"))
 }
+
+# replace the rownames with the tcga_sample_barcode
+rownames(cnv_t_labeled) = cnv_t_labeled$tcga_sample_barcode
+# remove the TCGAbarcode column
+cnv_t_labeled = cnv_t_labeled %>%
+  dplyr::select(-tcga_sample_barcode)
 
 
 
@@ -151,19 +157,22 @@ if (anyDuplicated(cnv_t_labeled$tcga_sample_barcode)) {
 cnv_t_no_miss = cnv_t_labeled %>% 
   dplyr::select(-which(apply(.,2,function(x){sum(is.na(x))>0}))) %>%
   dplyr::select(-which(apply(.,2,function(x){sd(x)<=th_std})))
-
+  
 # Check that there are no NAs in the data (although we should remove them before)
 stopifnot(sum(is.na(cnv_t_no_miss))==0)
 
 # Apply nonparanormal transformation
 cnv_t_npn = huge.npn(cnv_t_no_miss)
 
-# Convert rownames to TCGA barcode,by splitting row names and shortening to base TCGA barcode (removing replicate and sample type info).
+# Create a data frame with the transformed data
+cnv_final = cnv_t_npn %>%
+  data.frame()
+cnv_final$TCGAbarcode = rownames(cnv_final)
 
 # get final datasets
 print('Saving table...')
-print(paste('LOG:',"Table dimensions:",dim(cnv_t_npn)[1],"x",dim(cnv_t_npn)[2], sep = " ", ""))
+print(paste('LOG:',"Table dimensions:",dim(cnv_final)[1],"x",dim(cnv_final)[2], sep = " ", ""))
 
-write.table(cnv_t_npn, file = output_fn, sep = ',', quote = F, col.names=NA)
+write.table(cnv_final, file = output_fn, sep = ',', quote = F, col.names=T, row.names = F)
 print('DONE!')
 

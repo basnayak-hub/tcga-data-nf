@@ -97,7 +97,7 @@ process alignMethylationExpression {
         tuple val(uuid),val(type1),path(methylationData),val(type2),path(expressionData),path("${uuid}_${type1}_${type2}_dragon_filtered_expression.csv")
     
     script:
-        log.info "... Align methylation and expression $uuid,$expressionData, $methylationData"
+        log.info "... Align $uuid: $type2:$expressionData to $type1:$methylationData"
     """
         Rscript ${baseDir}/bin/r/get_dragon_expression_data.r "${expressionData}" "${methylationData}" "${uuid}_${type1}_${type2}_dragon_filtered_expression.csv";
     """
@@ -121,7 +121,7 @@ process runTCGADragon {
     script:
         log.info "... Running DRAGON $uuid,$methylationData,$expressionAlignedData,$type1,$type2"
         """
-        run_dragon.py dragon -m ${methylationData} -e ${expressionAlignedData} -i "${uuid}_${type1}_${type2}_dragon_input.tsv" -o "${uuid}_${type1}_${type2}_dragon_mat.tsv" > "${uuid}_${type1}_${type2}_dragon.log"
+        run_dragon.py dragon -m ${methylationData} -e ${expressionAlignedData} -i "${uuid}_${type1}_${type2}_dragon_input.tsv" -o "${uuid}_${type1}_${type2}_dragon_mat.tsv" --type1 ${type1} --type2 ${type2} > "${uuid}_${type1}_${type2}_dragon.log"
         """
     stub:
         """
@@ -147,7 +147,7 @@ process runTCGALionessDragon{
     script:
     log.info "... Running LIONESS DRAGON $uuid,$expressionAlignedData"
     """
-    run_dragon.py lioness-dragon -m ${methylationData} -e ${expressionAlignedData} -o lioness_dragon_${type1}_${type2} > "${uuid}_${type1}_${type2}_lioness_dragon.log"
+    run_dragon.py lioness-dragon -m ${methylationData} -e ${expressionAlignedData} -o lioness_dragon_${type1}_${type2} --type1 ${type1} --type2 ${type2} > "${uuid}_${type1}_${type2}_lioness_dragon.log"
     """
 
     stub:
@@ -275,12 +275,12 @@ workflow DragonTCGAWf {
     // Align type1 and expression data
     toalignDragonCh = alignMethylationExpression(dataAlignCh.toalign)
     // Remove the original "expression" column
-    toalignDragonCh.map{it -> tuple(it[0], it[1], it[2], it[3], it[5])}.view{"toalign: ${it}"}
+    toalignDragonCh.map{it -> tuple(it[0], it[1], it[2], it[3], it[5])}
     
     // Concatenate the aligned data with the already aligned data
     dragonCh = dataAlignCh.aligned.concat(
         toalignDragonCh.map{it -> tuple(it[0], it[1], it[2], it[3], it[5])}
-        ).view(){"dragonCh: ${it}"}
+        )
     // Run dragon on the aligned data (all of it)
     dragon = runTCGADragon(dragonCh)
     emit:

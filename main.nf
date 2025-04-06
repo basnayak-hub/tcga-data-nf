@@ -66,6 +66,7 @@ process copyMotd{
 workflow saveConfig {
     mo = copyMotd()
     cf = Channel.from(workflow.configFiles)
+    println "Config files: ${workflow.configFiles}"
     copyConfigFiles(cf,mo)
 }
 
@@ -104,8 +105,8 @@ workflow fullWf{
     readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
 
     // Prepare CNV
-    fullDownCh.cnv.map{it -> tuple(it[0], it[1], it[7], it[4])}.view()
-    readyCNV = prepareCNVWf(fullDownCh.cnv.map{it -> tuple(it[0], it[1], it[4])})
+    fullDownCh.dcnv.map{it -> tuple(it[0], it[1], it[7], it[4])}.view()
+    readyCNV = prepareCNVWf(fullDownCh.dcnv.map{it -> tuple(it[0], it[1], it[4])})
 
 
     // ANALYZE
@@ -120,7 +121,7 @@ workflow fullWf{
 
     cnvCh = readyCNV.map{it -> tuple(it[0],"cnv",it[3])}.combine(readyRecount.map{it -> tuple(it[0],"expression", it[10])}, by:0)
 
-    dragonCh = methCh.concaten(cnvCh).view{"dragon from full: ${it}"}
+    dragonCh = methCh.concat(cnvCh).view{"dragon from full: ${it}"}
     analyzeDragonWf(dragonCh) 
 }
 

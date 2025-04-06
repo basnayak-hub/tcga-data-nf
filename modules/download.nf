@@ -246,6 +246,7 @@ workflow downloadCNVWf{
     take: channelCNV
     main:
             dcnv = downloadCNV(channelCNV)
+            dcnv.view{"downloaded CNV for ${it[0]} ${it[1]}"}
             mergeCNVMetadata(dcnv.map{it -> it[-1]}.collect())
     emit: dcnv
 }
@@ -460,6 +461,7 @@ workflow fullDownloadWf{
         dmu = Channel.empty()
         dme = Channel.empty()
         dc = Channel.empty()
+        dcnv = Channel.empty()
 
         // DOWNLOAD RECOUNT3
         dChRe = dataCh.map{
@@ -502,7 +504,7 @@ workflow fullDownloadWf{
                     file(it.value.get('cnv_tcgabiolinks').samples)
                 )
             }
-        }
+        }.view()
         dcnv = downloadCNVWf(dChCNV)
 
         // DOWNLOAD METHYLATION
