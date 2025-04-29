@@ -11,7 +11,7 @@ option_list = list(
               help="methylation data filename", metavar="methylation"),
  make_option(c("-o", "--output_table"), type="character", default='gene_level_methylation.txt', 
               help="output filename for table", metavar="output_txt"),
-make_option(c("--probemap"), type="character", default = 'bin/r/local_assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv',
+make_option(c("--probemap"), type="character", default = 'assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv',
               help="probe map file", metavar="probemap"),
  make_option(c("--tf_list"), type="character", default=" ", 
               help="TF list filename. Pass a text file with TF names to filter the output", metavar="character")

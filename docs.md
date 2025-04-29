@@ -258,11 +258,11 @@ different parameters.
 #### Prepare expression parameters
 
 - `methylation.probe_map =
-  "$baseDir/bin/r/local_assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv"`: probe map to map
+  "$baseDir/assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv"`: probe map to map
   probes to promoter regions. We have precomputed it, otherwise you can use the make-manifest.r function in the local
   assets [or look here](#make-probe-map).
 
-- `methylation.tf_list = "$baseDir/bin/r/local_assets/TF_names_v_1.01.txt" `: list of TF used to restrict the number of
+- `methylation.tf_list = "$baseDir/assets/TF_names_v_1.01.txt" `: list of TF used to restrict the number of
   "genes" used. This is used mostly for the dragon analysis, where we need to subset the number of nodes.
 - `methylation.levine_exclusion = 's3://projectstcga/data/raw-data/mapping/methylation/levine_gene_exclusions.csv'`
 
