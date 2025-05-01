@@ -28,7 +28,6 @@ did on colon cancer and find all links/instructions for the precomputed GRNs of 
 manually.
 
 
-
 ## Getting started 
 
 1. First you'll need to [install](https://www.nextflow.io/docs/latest/install.html) nextflow on your machine. Follow the
@@ -62,7 +61,7 @@ These steps could also help as a quickstart to check that you have everything up
 The docker container is hosted on docker.io. 
 
 ```
-docker pull violafanfani/tcga-data-nf:0.0.14
+docker pull violafanfani/tcga-data-nf:0.0.15
 ```
 
 More details on the container can be found in the [docs](docs.md#Docker)
@@ -131,9 +130,6 @@ Secondly, you'll need a
 
 
 For a full list of the configuration parameters check [here](docs.md##configurations).
-
-
-
 
 ## Results
 

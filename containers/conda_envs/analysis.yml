@@ -1,9 +1,9 @@
 name: analysis
 channels:
-  - defaults
   - bioconda
   - conda-forge
   - netzoo
+  - nodefaults
 dependencies:
   - python>3.9
   - click

@@ -2,8 +2,6 @@
 nextflow.enable.dsl=2
 
 
-// import from modules
-//include { downloadWf; downloadRecount; downloadRecount3Wf; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
 include {fullDownloadWf; downloadRecount;downloadRecount3Wf; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf;  downloadWf} from './modules/download.nf'
 include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf; prepareCNVWf} from './modules/prepare.nf'
 include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeExpressionWf; analyzeDragonWf} from './modules/tcga_wfs.nf'
@@ -84,14 +82,11 @@ workflow fullWf{
         metadata_full = Channel.fromPath(params.full_metadata)
     }
     dCh = metadata_full.splitJson()
-
-    //dCh.map{it -> it.value.keySet()}.toString()
-    //fullDownloadWf(dCh)
     
     // Full download
     fullDownCh = fullDownloadWf(dCh)
-
-    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}.view{"full: ${it}"}
+    // Split the download in expression, methylation, cnv\
+    // View the channels
     fullDownCh.dmu.map{it -> tuple(it[0], it[1], it[7], it[7])}.view{"full: ${it}"}
 
     // view fullDownCh
@@ -110,17 +105,16 @@ workflow fullWf{
 
 
     // ANALYZE
-    
-    readyRecount.map{it -> tuple(it[0],it[11])}
-    readyMethylation.map{it -> tuple(it[0],it[5])}
 
+    // Expression analysis wf (PANDA, LIONESS...)
     analyzeExpressionWf(readyRecount.map{it -> tuple(it[0],it[11])})
 
+    // DRAGON analysis (CNV + Methylation)
+    // Methylation 
     methCh = readyMethylation.map{it -> tuple(it[0],'methylation',it[5])}.combine(readyRecount.map{it -> tuple(it[0],"expression",it[10])}, by:0)
-    
-
+    // CNV 
     cnvCh = readyCNV.map{it -> tuple(it[0],"cnv",it[3])}.combine(readyRecount.map{it -> tuple(it[0],"expression", it[10])}, by:0)
-
+    // CNV + Methylation
     dragonCh = methCh.concat(cnvCh).view{"dragon from full: ${it}"}
     analyzeDragonWf(dragonCh) 
 }
@@ -164,10 +158,6 @@ workflow {
 
             analyzeExpressionWf(data)
             // PIPELINE FOR DRAGON: EXPRESSION and METHYLATION
-            
-            //dataDragon = metadata_dragon
-            //            .splitCsv(header:true)
-            //            .map { row -> tuple(row.uuid, file("${row.methylation}"), file//("${row.expression}"))}
 
             dataDragon = metadata_dragon
                         .splitCsv(header:true)
