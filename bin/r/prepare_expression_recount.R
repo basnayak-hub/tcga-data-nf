@@ -47,18 +47,20 @@ make_option(c("--normalization"), type="character", default='logtpm',
 make_option(c("--batch_correction"), type="character", default='', 
               help="batch correction variable, By default is none. Default: '' ", metavar="character"),
 make_option(c("--adjustment_variable"), type="character", default='', 
-              help="adjustment variable for batch correction. By default is empty. Default: '' ", metavar="character")
+              help="adjustment variable for batch correction. By default is empty. Default: '' ", metavar="character"),
+make_option(c("--purity_method"), type="character", default='CPE',
+            help="Purity method to be used, one of (ESTIMATE, ABSOLUTE, LUMP, IHC, CPE). Default: 'CPE' ", metavar="character")
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-project = opt$project #args[1]
-patient_data = opt$clinical#args[2]
-exp_data = opt$expression#args[3]
-output_rds = opt$output_rds#args[4]
-output_table = opt$output_table#args[5]
-output_pca = opt$output_pca#args[5]
+project = opt$project 
+patient_data = opt$clinical
+exp_data = opt$expression
+output_rds = opt$output_rds
+output_table = opt$output_table
+output_pca = opt$output_pca
 th_purity = as.numeric(opt$th_purity)
 min_tpm = as.numeric(opt$min_tpm)
 frac_samples = as.numeric(opt$frac_samples)
@@ -66,16 +68,10 @@ tissue_type = opt$tissue_type
 normalization = opt$normalization
 to_batch_correct_nominal_name = opt$batch_correction
 adjustment_variable = opt$adjustment_variable
+purity_method = opt$purity_method
 
 project_name <- toupper(substring(project, 6))
 print(paste0('Preparing Project:', project_name))
-#patient_data <- "clinical_patient_luad.csv"
-#exp_data <- "tcga_luad.rds"
-#mut_data <- "tcga_luad_mutations.txt"
-#mut_pivot_data <- "tcga_luad_mutations_pivot.csv"
-#meth_data <- "tcga_luad_methylations.txt"
-
-print('Hereeeeee')
 
 # Definitions
 tumor_tissues=c("Primary Solid Tumor",
@@ -301,7 +297,8 @@ if (th_purity==0){
    # Get indices of samples passing purity filtering
     if (project_name %in% with_purity){
       print(paste("Purity threshold: ",th_purity, sep = " ", " "))
-    idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity, method="CPE")
+      print(paste("Using method: ", purity_method, sep = " ", " "))
+    idcs_purity <- obj$filterPurity(colnames(test_exp_final), threshold = th_purity, method=purity_method)
     } else {
       print(paste("WARNING: no purity for", project_name))
       idcs_purity = idcs_nonduplicate

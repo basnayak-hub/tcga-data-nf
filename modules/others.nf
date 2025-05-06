@@ -1,33 +1,14 @@
-
-process CollectTableStats {
-    tag "Final stats "
-
-    publishDir "${resultsDir}/data", pattern: "stats.csv", mode: 'copy'
-
-    input:
-        val(uuid)
-        val(results)
-
-    output:
-        path "stats.csv"
-
-    script:
-    id = uuid.collect{"$it"}.join(',')
-	values = results.flatten().collect{"$it"}.join(',')
-    """
-        # collect stats
-        collect_stats.py collect-generic stats.csv --data ${values} --uuid ${id}
-    """
-}
-
+// This is a Nextflow script that processes metadata files for different types of data.
 
 process preprocessExpressionMetadata {
 
+    label "process_low"
+
     input:
-        path(templateFile)
+    path templateFile
 
     output:
-        file("processed_expression_metadata.csv")
+    file "processed_expression_metadata.csv"
 
     script:
     """
@@ -38,11 +19,13 @@ process preprocessExpressionMetadata {
 
 process preprocessDragonMetadata {
 
+    label "process_low"
+
     input:
-        path(templateFile)
+    path templateFile
 
     output:
-        file("processed_dragon_metadata.csv")
+    file "processed_dragon_metadata.csv"
 
     script:
     """
@@ -52,8 +35,11 @@ process preprocessDragonMetadata {
 }
 
 process preprocessFullMetadata {
+
+    label "process_low"
+
     input:
-    path(templateFile)
+    path templateFile
 
     output:
     path "processed_full.config"

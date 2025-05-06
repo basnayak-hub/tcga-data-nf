@@ -5,6 +5,13 @@ filename: docs.md
 
 # Documentation tcga-data-nf 
 
+## General Advice:
+
+- The `testAnalyze` workflow is the fastest and easiest to use. Start from here.
+- The `testDownload` is possibly the longest, although it should be straightforward. Beware that this worflow requires
+  downloading a lot of data, which might be a problem on an unstable internet connection.
+
+
 ## Conda
 
 Here are more details about conda. Each process uses a different environment, 
@@ -258,11 +265,11 @@ different parameters.
 #### Prepare expression parameters
 
 - `methylation.probe_map =
-  "$baseDir/bin/r/local_assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv"`: probe map to map
+  "$baseDir/assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv"`: probe map to map
   probes to promoter regions. We have precomputed it, otherwise you can use the make-manifest.r function in the local
   assets [or look here](#make-probe-map).
 
-- `methylation.tf_list = "$baseDir/bin/r/local_assets/TF_names_v_1.01.txt" `: list of TF used to restrict the number of
+- `methylation.tf_list = "$baseDir/assets/TF_names_v_1.01.txt" `: list of TF used to restrict the number of
   "genes" used. This is used mostly for the dragon analysis, where we need to subset the number of nodes.
 - `methylation.levine_exclusion = 's3://projectstcga/data/raw-data/mapping/methylation/levine_gene_exclusions.csv'`
 
@@ -332,9 +339,32 @@ You may need to log out and log back in to your session before the next steps wi
 11.  Run a test: `nextflow run QuackenbushLab/tcga-data-nf -profile testPrepare,docker -with-docker violafanfani/tcga-data-nf:0.0.14`
   
 
-## General Advice:
 
-- The `testPrepare` workflow is the fastest and easiest to use. Start from here.
-- The `testDownload` is possibly the longest, although it should be straightforward. Beware that this worflow requires
-  downloading a lot of data, which might be a problem on an unstable internet connection.
-- 
+
+
+## Visualize the workflows
+Here are the Directed Acyclic Graphs of the four different pipelines.
+
+To generate your own DAG image run: 
+```
+nextflow run . -c myconf.config -preview -with-dag flowchart.png
+```
+
+To generate flowcharts similar to those in the paper, use Mermaid (.mmd):
+
+```
+nextflow run . -c myconf.config -preview -with-dag flowchart.mmd
+```
+
+### Full flowchart
+ ![full](assets/flowchart_full.png)
+
+### Download flowchart
+ ![full](assets/flowchart_download.png)
+
+### Prepare flowchart
+ ![full](assets/flowchart_prepare.png)
+
+ ### Analyze flowchart
+ ![full](assets/flowchart_analyze.png)
+

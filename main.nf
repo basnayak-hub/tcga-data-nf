@@ -2,10 +2,8 @@
 nextflow.enable.dsl=2
 
 
-// import from modules
-//include { downloadWf; downloadRecount; downloadRecount3Wf; mergeRecountMetadata; downloadMutations; mergeMutationsMetadata; downloadMethylation; mergeMethylationMetadata; downloadClinical} from './modules/download.nf'
 include {fullDownloadWf; downloadRecount;downloadRecount3Wf; downloadMutationsWf; downloadMethylationWf; downloadClinicalWf;  downloadWf} from './modules/download.nf'
-include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf} from './modules/prepare.nf'
+include { prepareRecountWf; prepareWf; prepareTCGARecount; prepareMethylationWf; prepareCNVWf} from './modules/prepare.nf'
 include { LionessPandaTCGAWf; LionessOtterTCGAWf; PandaTCGAWf; analyzeExpressionWf; analyzeDragonWf} from './modules/tcga_wfs.nf'
 include { preprocessExpressionMetadata; preprocessDragonMetadata; preprocessFullMetadata} from './modules/others.nf'
 
@@ -66,6 +64,7 @@ process copyMotd{
 workflow saveConfig {
     mo = copyMotd()
     cf = Channel.from(workflow.configFiles)
+    println "Config files: ${workflow.configFiles}"
     copyConfigFiles(cf,mo)
 }
 
@@ -83,14 +82,11 @@ workflow fullWf{
         metadata_full = Channel.fromPath(params.full_metadata)
     }
     dCh = metadata_full.splitJson()
-
-    //dCh.map{it -> it.value.keySet()}.toString()
-    //fullDownloadWf(dCh)
     
     // Full download
     fullDownCh = fullDownloadWf(dCh)
-
-    fullDownCh.dr.map{it -> tuple(it[0], it[1], it[7], it[7])}.view{"full: ${it}"}
+    // Split the download in expression, methylation, cnv\
+    // View the channels
     fullDownCh.dmu.map{it -> tuple(it[0], it[1], it[7], it[7])}.view{"full: ${it}"}
 
     // view fullDownCh
@@ -103,16 +99,24 @@ workflow fullWf{
     fullDownCh.dme.map{it -> tuple(it[0], it[1], it[6], it[7])}
     readyMethylation = prepareMethylationWf(fullDownCh.dme.map{it -> tuple(it[0], it[1], it[7])})
 
-    // ANALYZE
-    
-    readyRecount.map{it -> tuple(it[0],it[11])}
-    readyMethylation.map{it -> tuple(it[0],it[5])}
+    // Prepare CNV
+    fullDownCh.dcnv.map{it -> tuple(it[0], it[1], it[7], it[4])}.view()
+    readyCNV = prepareCNVWf(fullDownCh.dcnv.map{it -> tuple(it[0], it[1], it[4])})
 
+
+    // ANALYZE
+
+    // Expression analysis wf (PANDA, LIONESS...)
     analyzeExpressionWf(readyRecount.map{it -> tuple(it[0],it[11])})
 
-    methCh = readyMethylation.map{it -> tuple(it[0],it[5])}.combine(readyRecount.map{it -> tuple(it[0],it[10])}, by:0)
-    analyzeDragonWf(methCh) 
-
+    // DRAGON analysis (CNV + Methylation)
+    // Methylation 
+    methCh = readyMethylation.map{it -> tuple(it[0],'methylation',it[5])}.combine(readyRecount.map{it -> tuple(it[0],"expression",it[10])}, by:0)
+    // CNV 
+    cnvCh = readyCNV.map{it -> tuple(it[0],"cnv",it[3])}.combine(readyRecount.map{it -> tuple(it[0],"expression", it[10])}, by:0)
+    // CNV + Methylation
+    dragonCh = methCh.concat(cnvCh).view{"dragon from full: ${it}"}
+    analyzeDragonWf(dragonCh) 
 }
 
 
@@ -127,41 +131,42 @@ workflow {
     // This allows for separate management of raw data and intermediate clean data
     // Alongside, we have a full pipeline that does all the steps in one go
     if (params.pipeline == 'download'){
-        // DOWNLOAD
-        downloadWf()
-    } else if (params.pipeline == 'prepare'){
-        // PREPARE
-        prepareWf() 
+            // DOWNLOAD
+            downloadWf()
+        } else if (params.pipeline == 'prepare'){
+            // PREPARE
+            prepareWf() 
         } else if (params.pipeline == 'analyze'){
-        // ANALYZE
+            // ANALYZE
 
-        if (params.profileName=='testAnalyze'){
-            println "Test analyze"
-            //testCh = Channel.fromList([tuple(params.metadata_expression, "${params.testDataFolder}/testExprA.csv"), tuple(params.metadata_dragon, "${params.testDataFolder}/testDragonA.csv")]).view()
-            //aaa = preprocessAnalyzeMetadata(testCh)
-            
-            metadata_expression = preprocessExpressionMetadata("${params.metadata_expression}")
-            metadata_dragon = preprocessDragonMetadata("${params.metadata_dragon}")
-            
-        } else {
-            metadata_expression = Channel.fromPath(params.metadata_expression)
-            metadata_dragon = Channel.fromPath(params.metadata_dragon)
-        }
+            if (params.profileName=='testAnalyze'){
+                // For the test we preprocess the metadata
+                println "Test analyze"
+                metadata_expression = preprocessExpressionMetadata("${params.metadata_expression}")
+                metadata_dragon = preprocessDragonMetadata("${params.metadata_dragon}")
+                
+                } else {
+                // For the full pipeline we read the metadata from the file
+                metadata_expression = Channel.fromPath(params.metadata_expression)
+                metadata_dragon = Channel.fromPath(params.metadata_dragon)
+                }
 
+            // PIPELINE FOR EXPRESSION ONLY (GRNs)
+            data = metadata_expression
+                        .splitCsv(header:true)
+                        .map { row -> tuple(row.uuid, file("${row.expression}"))}
 
-        data = metadata_expression
-                    .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.expression}"))}
+            analyzeExpressionWf(data)
+            // PIPELINE FOR DRAGON: EXPRESSION and METHYLATION
 
-        analyzeExpressionWf(data)
-        dataDragon = metadata_dragon
-                    .splitCsv(header:true)
-                    .map { row -> tuple(row.uuid, file("${row.methylation}"), file("${row.expression}"))}
+            dataDragon = metadata_dragon
+                        .splitCsv(header:true)
+                        .map { row -> tuple(row.uuid, row.type1, file("${row.methylation}"),row.type2, file("${row.expression}"))}
 
-        analyzeDragonWf(dataDragon)
-    } else if (params.pipeline == 'full')
-        // FULL PIPELINE
-        fullWf()
+            analyzeDragonWf(dataDragon)
+        } else if (params.pipeline == 'full')
+            // FULL PIPELINE
+            fullWf()
     else
         // 
         error "Error: this pipeline name doesn't exist. \nChoose one between download/prepare/analyze/full as pipeline parameter"

@@ -39,10 +39,21 @@ summary(apply(expr_std,2,sd))
 
 expr_std_labeled = expr_std %>% as.data.frame()
 
-names(expr_std_labeled) = gene_name_map$gene_name
 
-df <- read.csv(file=dragon_tf,nrows=2)  
+
+# Read header of cnv/methylation data to match the names
+df <- read.csv(file=dragon_tf,nrows=2)
 tfs = colnames(df)[2:length(colnames(df))-1]
+# Check if tfs are in symbol or ENSG format
+if (tfs[1] %>% str_detect("^ENSG")) {
+  # If it does, we need to remove the "ENSG" part
+  print("Genes are in ENSG format, no need to change them now")
+} else {
+  # Select the genes that are in the tf_list
+  names(expr_std_labeled) = gene_name_map$gene_name
+  print("Genes are in symbol format, translating them")
+}
+
 expr_std_labeled <- expr_std_labeled %>% dplyr::select(any_of(tfs))
 
 expr_std_labeled$TCGAbarcode = substr(expr_rds@colData$tcga.tcga_barcode, 1, 16)

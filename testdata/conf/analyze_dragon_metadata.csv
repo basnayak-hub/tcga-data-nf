@@ -1,2 +1,2 @@
-uuid,methylation,expression
-tcga_paad,{{DATA_DIR}}/tcga_test/tcga_paad_tf_promoter_methylation_clean_shuffle.csv,{{DATA_DIR}}/tcga_test/recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull_shuffle.rds
+uuid,type1,methylation,type2,expression
+tcga_paad,methylation,{{DATA_DIR}}/tcga_test/tcga_paad_tf_promoter_methylation_clean_shuffle.csv,expression,{{DATA_DIR}}/tcga_test/recount3_tcga_paad_purity01_normtpm_mintpm1_fracsamples02_tissueall_batchnull_adjnull_shuffle.rds

@@ -26,6 +26,9 @@ RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
 RUN R -e "devtools::install_github('immunogenomics/presto')"
 RUN R -e "devtools::install_github('aet21/EpiSCORE')"
 RUN R -e "devtools::install_github('https://github.com/QuackenbushLab/NetworkDataCompanion')"
+RUN R -r "BiocManager::install('GENIE3')" 
+RUN R -r "install.packages('WGCNA')"
+RUN R -r "BiocManager::install('netZooR')"
 
 # Final clean-up if necessary
 # RUN apt-get clean && rm -rf /var/lib/apt/lists/*

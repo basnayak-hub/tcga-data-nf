@@ -28,7 +28,6 @@ did on colon cancer and find all links/instructions for the precomputed GRNs of 
 manually.
 
 
-
 ## Getting started 
 
 1. First you'll need to [install](https://www.nextflow.io/docs/latest/install.html) nextflow on your machine. Follow the
@@ -62,7 +61,7 @@ These steps could also help as a quickstart to check that you have everything up
 The docker container is hosted on docker.io. 
 
 ```
-docker pull violafanfani/tcga-data-nf:0.0.14
+docker pull violafanfani/tcga-data-nf:0.0.15
 ```
 
 More details on the container can be found in the [docs](docs.md#Docker)
@@ -90,6 +89,14 @@ However, to improve portability, we use the process selectors labels to specify 
 
 More details in the [docs](docs.md#conda).
 
+
+### CPU and memory requirement
+
+CPU and memory requirements depend on the size of the datasets, but we report a whole execution report for the full
+pipeline. 
+
+You can find that at [full](execution_report_test_full.html) execution report that was obtained by running the v0.0.15
+version of tcga-data-nf with standard configuration files and no parallelization of processes on AWS EC2 instance c5.4xlarge with 32Gb of memory and 16 vCPUs. 
 
 ### Install or update the workflow
 
@@ -124,9 +131,6 @@ Secondly, you'll need a
 
 For a full list of the configuration parameters check [here](docs.md##configurations).
 
-
-
-
 ## Results
 
 Below is the structure you can expect in the output folder when you run each pipeline. 
@@ -158,6 +162,11 @@ In case you wanted to make modifications to the workflow and/or run it locally
     ```bash
     nextflow run .  -profile testDownload --resultsDir myresults/ --pipeline download -with-docker my-tcga-data-nf:latest
     ```
+
+
+### Add a tool
+
+[extend_workflow](extend_workflow.md)
 
 ## Authors
 
@@ -195,3 +204,22 @@ bioRxiv 2024.11.05.622163; doi: https://doi.org/10.1101/2024.11.05.622163
 	journal = {bioRxiv}
 }
 ```
+
+## Changelog
+
+### v0.0.16
+
+:warning: DRAGON :dragon:: Be careful, now DRAGON allows to run it with any input. By default, in the full pipeline we run it for
+both methylation-expression and CNV-expression. Here are the things you'll find different: 
+- Input: the configuration metadata will now need 5 fields `uuid,type1,methylation,type2,expression`. This way the used
+  can now specify what is the type of the two files, for instance methylation-expression or cnv-expression. 
+  Also, if type2 is not "expression" dragon will assume you already aligned the data and will run it with any data type
+  as long as they are compatible tables.
+- Output: the files will now have structure `uuid_type1_type2_dragon`
+
+
+:dromedary_camel: ALPACA: The ALPACA method is now available and can be run just by specifying the right parameters in the
+configuration file
+
+:sparkles: Other GRN: We have now added GENIE3 and WGCNA to the methods, and included a #howto guide on 
+[how to add new methods](extend_workflow.md).

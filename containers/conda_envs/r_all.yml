@@ -1,9 +1,9 @@
 name: r_all
 channels:
-  - defaults
   - conda-forge
   - bioconda
   - r
+  - nodefaults
 dependencies:
   - r-essentials
   - r-base
@@ -20,3 +20,6 @@ dependencies:
   - bioconductor-recount
   - r-data.table
   - r-huge
+  - bioconductor-genie3
+  - r-wgcna
+  - bioconductor-netzoor
