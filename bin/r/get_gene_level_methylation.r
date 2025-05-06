@@ -96,9 +96,11 @@ my_friend = NetworkDataCompanion::CreateNetworkDataCompanionObject(project_name=
 
 # Read probe map
 my_map = data.frame(fread(probe_map_fn,sep=",",header=T),row.names=1)
+
 # get only probes annotated to transcription factors at this point
 # download.file('http://humantfs.ccbr.utoronto.ca/download/v_1.01/TF_names_v_1.01.txt', 
 #              destfile = "TF_names_v_1.01.txt")
+
 
 # Get all gene names
 #names(my_map)[2]="geneName"
@@ -140,7 +142,7 @@ if (tf_list_fn!=' '){
 
   # Read TF list
   print(paste(c('Reading TF list', tf_list_fn)), collapse = " ")
-  tf_list = read.table(tf_list_fn)[,1] #read.table(paste(baseDir,"ext/TF_names_v_1.01.txt",sep="/"))[,1]
+  tf_list = read.table(tf_list_fn)[,1] 
   print(head(tf_list))
 
   tf_list_filtered = intersect(tf_list,all_genes)
@@ -149,14 +151,12 @@ if (tf_list_fn!=' '){
   gene_map = my_friend$probeToMeanPromoterMethylation(methylation_betas = meth_df, 
                                     probe_gene_map = my_map, 
                                     genesOfInterest = tf_list_filtered)
+
   } else {
     # Use all genes
     gene_map = my_friend$probeToMeanPromoterMethylation(methylation_betas = meth_df, 
                                     probe_gene_map = my_map, genesOfInterest = NULL)
   }
-
-
-
 
 # Get TCGA barcodes
 barcodes = my_friend$mapUUIDtoTCGA(row.names(gene_map))

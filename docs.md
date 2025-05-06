@@ -325,7 +325,8 @@ configuration you might have to tweak these steps.
 5. Try to pull test workflow `nextflow run helloworld`
 6. Pull workflow: `nextflow pull QuackenbushLab/tcga-data-nf`
 7. Install docker: `sudo snap install docker`
-8. Check docker installation `sudo docker run hello-world`
+8. Check docker installation `sudo docker run hello-world`.
+You may need to log out and log back in to your session before the next steps will work.
 9. Make docker available without sudo (add user to group): `sudo usermod -aG docker $USER`
 10. Pull tcga-data-nf docker `sudo docker pull violafanfani:tcga-data-nf:0.0.14`, check latest version or that of
    interest (v0.0.14 is the current one, but could become obsolete)
