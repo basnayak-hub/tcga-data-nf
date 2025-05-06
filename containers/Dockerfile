@@ -1,11 +1,11 @@
 FROM violafanfani/tcga-data-base-r:0.0.5
 
 LABEL maintainer="Viola Fanfani, viola.fanfani@gmail.com" \
-      version="0.0.15" \
+      version="0.0.16" \
       description="Container that allows to run the whole tcga-data-nf workflow analysis" \
       org.opencontainers.image.title="tcga-data-nf" \
       org.opencontainers.image.description="Container that allows to run the whole tcga-data-nf workflow analysis" \
-      org.opencontainers.image.version="0.0.15" \
+      org.opencontainers.image.version="0.0.16" \
       org.opencontainers.image.authors="Viola Fanfani, viola.fanfani@gmail.com" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf/containers" \

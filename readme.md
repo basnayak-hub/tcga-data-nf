@@ -3,7 +3,7 @@
 
 ![](https://github.com/QuackenbushLab/tcga-data-nf/workflows/build/badge.svg)
 
-version = '0.0.15'
+version = '0.0.16'
 
 Workflow to download and prepare TCGA data.
 
@@ -61,7 +61,7 @@ These steps could also help as a quickstart to check that you have everything up
 The docker container is hosted on docker.io. 
 
 ```
-docker pull violafanfani/tcga-data-nf:0.0.15
+docker pull violafanfani/tcga-data-nf:0.0.16
 ```
 
 More details on the container can be found in the [docs](docs.md#Docker)
@@ -95,7 +95,7 @@ More details in the [docs](docs.md#conda).
 CPU and memory requirements depend on the size of the datasets, but we report a whole execution report for the full
 pipeline. 
 
-You can find that at [full](execution_report_test_full.html) execution report that was obtained by running the v0.0.15
+You can find that at [full](execution_report_test_full.html) execution report that was obtained by running the v0.0.16
 version of tcga-data-nf with standard configuration files and no parallelization of processes on AWS EC2 instance c5.4xlarge with 32Gb of memory and 16 vCPUs. 
 
 ### Install or update the workflow
