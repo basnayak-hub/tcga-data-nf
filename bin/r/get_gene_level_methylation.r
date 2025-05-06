@@ -3,6 +3,7 @@ library(stringr)
 library("recount3")
 library(NetworkDataCompanion)
 library("optparse")
+library(dplyr)
 
 option_list = list(
   make_option(c("-p", "--project"), type="character", default=NULL, 
@@ -14,7 +15,9 @@ option_list = list(
 make_option(c("--probemap"), type="character", default = 'assets/450k_promoter_probe_map_TSS200_TSS0_one_probe_to_many_genes.csv',
               help="probe map file", metavar="probemap"),
  make_option(c("--tf_list"), type="character", default=" ", 
-              help="TF list filename. Pass a text file with TF names to filter the output", metavar="character")
+              help="TF list filename. Pass a text file with TF names to filter the output", metavar="character"),
+  make_option("--filter_duplicates_missingness", action = "store_true", default = FALSE,
+              help = "Filter duplicate or missing values [default: %default]")
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
@@ -26,6 +29,7 @@ output_fn = opt$output_table #args[3]
 probe_map_fn = opt$probemap #args[4]
 # These: if none, keep everything
 tf_list_fn =  opt$tf_list #args[5]
+filter_duplicates_missingness = opt$filter_duplicates_missingness #args[7]
 
 #project = gsub("-","_",str_to_lower(gsub("\\[|\\]", "", project)))
 print(paste("Project:",project))
@@ -33,6 +37,7 @@ print(paste("Methylation file:",methpath))
 
 # Read methylation data
 meth_df = fread(methpath,data.table=F)
+
 # Probe list
 probe_list = meth_df$probeID
 # Get NetsciDataCompanion object
@@ -46,10 +51,17 @@ my_map = data.frame(fread(probe_map_fn,sep=",",header=T),row.names=1)
 
 # Get all gene names
 #names(my_map)[2]="geneName"
-print(head(my_map))
-print('all genes')
+#print(head(my_map))
+#print('all genes')
 all_genes = unique(na.omit(my_map$geneNames))
-print(head(all_genes))
+#print(head(all_genes))
+
+if(filter_duplicates_missingness)
+{
+  keep_uuids = my_friend$filterDuplicatesMethylationMissingness(meth_df)
+  print(paste(c("Keeping",length(keep_uuids),"samples after filtering duplicates")))
+  meth_df <- meth_df[, c("probeID", keep_uuids)]
+}
 
 # filter methylation beta to only probes that are in the tf list
 # Manage list of TF
@@ -69,8 +81,9 @@ if (tf_list_fn!=' '){
 } else {
   # Use all genes
   gene_map = my_friend$probeToMeanPromoterMethylation(methylation_betas = meth_df, 
-                                   probe_gene_map = my_map, genesOfInterest = all_genes)
+                                   probe_gene_map = my_map, genesOfInterest = NULL)
 }
+
 
 # Get TCGA barcodes
 barcodes = my_friend$mapUUIDtoTCGA(row.names(gene_map))

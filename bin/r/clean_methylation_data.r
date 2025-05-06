@@ -2,12 +2,43 @@ library(NetworkDataCompanion)
 
 library("optparse")
 
+###############################################
+################ PCA FUNCTIONS ################
+###############################################
+
+plotPCA = function(df, output_fn)
+{
+  # Perform PCA (scale the data)
+  pca <- prcomp(df, scale. = TRUE)
+
+  # Get PCA results
+  pca_df <- as.data.frame(pca$x)
+  pca_df$Sample <- rownames(pca_df)
+
+  # Plot PCA
+  p <- ggplot(pca_df, aes(x = PC1, y = PC2, label = Sample)) +
+    geom_point(color = "steelblue", size = 3) +
+    geom_text(vjust = 1.5, hjust = 1.2, size = 3) +
+    xlab(paste0("PC1 (", round(summary(pca)$importance[2,1] * 100, 1), "%)")) +
+    ylab(paste0("PC2 (", round(summary(pca)$importance[2,2] * 100, 1), "%)")) +
+    theme_minimal()
+
+  # Save the plot
+  ggsave(output_fn, plot = p, width = 8, height = 6)
+  
+  }
+
+
+
+
 ################################################
 ############ CLEANING FUNCTIONS ################
 ################################################
 
 library(huge)
 library(tidyverse)
+library(ggplot2)
+library(cowplot)
 
 meanImpute = function(x)
 {
@@ -33,9 +64,22 @@ betaToM = function(beta)
 }
 
 # this function does imputation and transformation and should be applied within subtype
-cleanMethylationData = function(meth_df, npn=T, mval=F) # meth_df is a data frame of beta means, 
+cleanMethylationData = function(meth_df, npn=T, mval=F, diagnostic_pca = NULL) # meth_df is a data frame of beta means, 
 # rows=samples, first column=sample ids,  cols=genes
 {
+  print('Diagnose')
+  # Choose name of diagnostic PCA output
+  if (!is.null(diagnostic_pca)) {
+    print("TRUE")
+    diagnose_pca <- TRUE
+    output_pca <- diagnostic_pca
+  } else {
+    print("FALSE")
+    diagnose_pca <- FALSE
+    output_pca <- NULL
+    message("No PCA diagnostic.")
+  }
+
   meth_dfWhole = removeMissing(meth_df,thres = 0.2)
   # skip anything w/more than 0.2 missing
   
@@ -49,6 +93,11 @@ cleanMethylationData = function(meth_df, npn=T, mval=F) # meth_df is a data fram
   summary(apply(meth_dfComplete,2,function(x){sum(is.na(x))}))
   summary(apply(meth_dfComplete[,-1],2,sd))
   
+  if (diagnose_pca) {
+    print("PCA diagnostic plot")
+    p2 <- plotPCA(meth_dfComplete[,2:ncol(meth_dfComplete)], output_pca)
+  }
+
   if(mval & !npn)
   {
     transf_data = data.frame(apply(meth_dfComplete[,-1],2,betaToM))
@@ -96,7 +145,9 @@ option_list = list(
  make_option(c("--to_npn"), type="character", default="FALSE", 
               help="to_npn", metavar="character"),
  make_option(c("--to_mval"), type="character", default="TRUE", 
-              help="to_mval", metavar="character")
+              help="to_mval", metavar="character"),
+make_option(c("--diagnostic_pca"), type = "character", default = NULL,
+              help = "Optional output filename to save the figure (e.g., 'plot.png'). If not provided, figure is not saved.")
 );
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
@@ -109,22 +160,12 @@ probe_map_fn = opt$probemap #args[4]
 tissue_type =  opt$tissue_type #args[5]
 to_npn = as.logical(opt$to_npn) #args[6]
 to_mval = as.logical(opt$to_mval) #args[7]
+diagnostic_pca = opt$diagnostic_pca #args[8]
 
 meth_raw = read.csv(methpath,row.names=1)
 
 # there are duplicates to handle
 my_friend = NetworkDataCompanion::CreateNetworkDataCompanionObject()
-
-# tissueDF = my_friend$getTissueType(meth_raw$TCGA_barcode[1])
-# for(i in 2:nrow(meth_raw))
-# {
-#   tissueDF = rbind.data.frame(tissueDF,my_friend$getTissueType(meth_raw$TCGA_barcode[i]))
-# }
-# for tumor, use tissueType = "Primary Solid Tumor"
-
-# primaryTumorBarcodes = tissueDF %>% 
-#  dplyr::filter(description == tissueType) %>%
-#  dplyr::select(TCGA_barcode)
 
 dupes = meth_raw$TCGA_barcode[duplicated(meth_raw$TCGA_barcode)]
 
@@ -140,7 +181,7 @@ print(dim(meth_tumor))
 if (to_mval){print('yes')
 }
 meth_tumor_clean = meth_tumor %>% dplyr::relocate(TCGA_barcode) %>%
-  cleanMethylationData(npn=to_npn,mval=to_mval)
+  cleanMethylationData(npn=to_npn,mval=to_mval, diagnostic_pca=diagnostic_pca)
 
 meth_tumor_clean$TCGAbarcode = row.names(meth_tumor_clean)
 write.csv(meth_tumor_clean,output_fn)

@@ -66,7 +66,7 @@ workflow prepareMethylationWf {
     readyMethCh = CleanMethylationData(promoterMethCh.combine(channelTissues, by: 0))
 
     emit:
-    readyMethCh
+    readyMethCh[0]
 }
 
 workflow prepareCNVWf {
@@ -159,7 +159,8 @@ process prepareTCGARecount {
                 --frac_samples ${frac_samples} \
                 --batch_correction ${batch_correction} \
                 --adjustment_variable ${adjustment_variable} \
-                --tissue_type ${tissue_type} >> "recount3_${uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.log"
+                --tissue_type ${tissue_type} \
+                ${params.recount.extra} >> "recount3_${uuid}_purity0${th_purity.toString().substring(2)}_norm${norm}_mintpm${min_tpm}_fracsamples0${frac_samples.toString().substring(2)}_tissue${tissue_type}_batch${batch_correction.minus('.').minus(' ').minus('-').minus('_')}_adj${adjustment_variable.minus('.').minus(' ').minus('-').minus('_')}.log"
 """
 }
 
@@ -183,7 +184,6 @@ process GetGeneLevelPromoterMethylation {
     def filter = tf_list.name != 'NO_FILE' ? "--tf_list ${tf_list}" : ""
     """
         Rscript ${baseDir}/bin/r/get_gene_level_methylation.r -p ${project} -m ${methdata} -o "${uuid}_tf_promoter_methylation_raw.csv" --probemap ${probe_map} ${filter} > "${uuid}_tf_promoter_methylation_raw.log" 
-
     """
 }
 
@@ -192,18 +192,27 @@ process CleanMethylationData {
 
     label 'prepare_methylation', 'process_medium'
 
-    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/methylation/", mode: 'copy', pattern: "${uuid}_gene_cnv_npn_${tissueType}.*", overwrite: true
+    publishDir "${params.resultsDir}/${params.batchName}/${uuid}/data_prepared/methylation/", mode: 'copy', pattern: "${uuid}_tf_promoter_methylation_clean_${tissueType}*", overwrite: true
 
     input:
     tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType)
 
     output:
     tuple val(uuid), val(project), path(methdata), path(rawMethylation), val(tissueType), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.csv"), path("${uuid}_tf_promoter_methylation_clean_${tissueType}.log")
+    path("${uuid}_tf_promoter_methylation_clean_${tissueType}_pca.png"), optional: true
+    
 
     script:
     log.info("... Cleaning methylation data ${uuid},${project}")
     """
-         Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
+        if ${params.methylation.diagnostic_pca}; then
+            save_opt="--diagnostic_pca ${uuid}_tf_promoter_methylation_clean_${tissueType}_pca.png"
+        else
+            save_opt=""
+        fi
+        echo \${save_opt}
+        echo "hello"
+        Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" \${save_opt} > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
     """
 }
 

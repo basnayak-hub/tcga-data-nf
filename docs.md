@@ -5,6 +5,13 @@ filename: docs.md
 
 # Documentation tcga-data-nf 
 
+## General Advice:
+
+- The `testAnalyze` workflow is the fastest and easiest to use. Start from here.
+- The `testDownload` is possibly the longest, although it should be straightforward. Beware that this worflow requires
+  downloading a lot of data, which might be a problem on an unstable internet connection.
+
+
 ## Conda
 
 Here are more details about conda. Each process uses a different environment, 
@@ -331,9 +338,32 @@ configuration you might have to tweak these steps.
 11.  Run a test: `nextflow run QuackenbushLab/tcga-data-nf -profile testPrepare,docker -with-docker violafanfani/tcga-data-nf:0.0.14`
   
 
-## General Advice:
 
-- The `testAnalyze` workflow is the fastest and easiest to use. Start from here.
-- The `testDownload` is possibly the longest, although it should be straightforward. Beware that this worflow requires
-  downloading a lot of data, which might be a problem on an unstable internet connection.
-- 
+
+
+## Visualize the workflows
+Here are the Directed Acyclic Graphs of the four different pipelines.
+
+To generate your own DAG image run: 
+```
+nextflow run . -c myconf.config -preview -with-dag flowchart.png
+```
+
+To generate flowcharts similar to those in the paper, use Mermaid (.mmd):
+
+```
+nextflow run . -c myconf.config -preview -with-dag flowchart.mmd
+```
+
+### Full flowchart
+ ![full](assets/flowchart_full.png)
+
+### Download flowchart
+ ![full](assets/flowchart_download.png)
+
+### Prepare flowchart
+ ![full](assets/flowchart_prepare.png)
+
+ ### Analyze flowchart
+ ![full](assets/flowchart_analyze.png)
+
