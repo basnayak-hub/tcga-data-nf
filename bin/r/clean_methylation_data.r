@@ -67,7 +67,7 @@ betaToM = function(beta)
 cleanMethylationData = function(meth_df, npn=T, mval=F, diagnostic_pca = NULL) # meth_df is a data frame of beta means, 
 # rows=samples, first column=sample ids,  cols=genes
 {
-  print('Diagnose')
+  
   # Choose name of diagnostic PCA output
   if (!is.null(diagnostic_pca)) {
     print("TRUE")
