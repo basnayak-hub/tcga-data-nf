@@ -1,4 +1,4 @@
-FROM violafanfani/tcga-data-base-r:0.0.6
+FROM violafanfani/tcga-data-base-r:0.0.7
 
 LABEL maintainer="Viola Fanfani, viola.fanfani@gmail.com" \
       version="0.0.16" \
@@ -29,13 +29,11 @@ RUN echo "alias python=python3" >> ~/.profile
 # Upgrade pip and install Python dependencies
 RUN python3 -m pip install --upgrade pip
 COPY containers/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir git+https://github.com/netZoo/netZooPy.git
+RUN pip install --no-cache-dir  -r requirements.txt
+RUN pip install --no-cache-dir --break-system-packages git+https://github.com/netZoo/netZooPy.git
 
 # Install R dependencies
 RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
-RUN R -e "devtools::install_github('immunogenomics/presto')"
-RUN R -e "devtools::install_github('aet21/EpiSCORE')"
 RUN R -e "devtools::install_github('https://github.com/QuackenbushLab/NetworkDataCompanion')"
 RUN R -e "BiocManager::install('GENIE3')" 
 RUN R -e "BiocManager::install(c('GO.db', 'preprocessCore', 'impute'))"

@@ -168,6 +168,7 @@ if (normalization %in% c('count','tpm','logtpm') ){
   #### Filters
   # Get indices of nonduplicates
   # This works for gtex too, because the first 15 characters are the sample name
+  
   idcs_nonduplicate <- obj$filterDuplicatesSeqDepth(expression_count_matrix = test_exp_count)
   print(paste('LOG:',"There are",length(idcs_nonduplicate),"non duplicate samples", sep = " ", ""))
 

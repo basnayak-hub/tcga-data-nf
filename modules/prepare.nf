@@ -213,7 +213,7 @@ process CleanMethylationData {
         else
             save_opt=""
         fi
-        Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" \${save_opt} > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
+        Rscript ${baseDir}/bin/r/clean_methylation_data.r -p ${project} -m  ${rawMethylation} --tissue_type "${tissueType}" -o "${uuid}_tf_promoter_methylation_clean_${tissueType}.csv" --th_missing ${params.methylation.th_missing} \${save_opt} > "${uuid}_tf_promoter_methylation_clean_${tissueType}.log"
     """
 }
 
