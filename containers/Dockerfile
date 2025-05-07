@@ -1,4 +1,4 @@
-FROM violafanfani/tcga-data-base-r:0.0.5
+FROM violafanfani/tcga-data-base-r:0.0.6
 
 LABEL maintainer="Viola Fanfani, viola.fanfani@gmail.com" \
       version="0.0.16" \
@@ -37,9 +37,10 @@ RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
 RUN R -e "devtools::install_github('immunogenomics/presto')"
 RUN R -e "devtools::install_github('aet21/EpiSCORE')"
 RUN R -e "devtools::install_github('https://github.com/QuackenbushLab/NetworkDataCompanion')"
-RUN R -r "BiocManager::install('GENIE3')" 
-RUN R -r "install.packages('WGCNA')"
-RUN R -r "BiocManager::install('netZooR')"
+RUN R -e "BiocManager::install('GENIE3')" 
+RUN R -e "BiocManager::install(c('GO.db', 'preprocessCore', 'impute'))"
+RUN R -e "install.packages('WGCNA')"
+RUN R -e "BiocManager::install('netZooR')"
 
 # Final clean-up if necessary
 # RUN apt-get clean && rm -rf /var/lib/apt/lists/*

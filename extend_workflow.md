@@ -18,10 +18,6 @@ broader community we'll ask you to open a PR, following the GENIE3 example below
 you just want to have a personal version of the workflow, we recommend you fork the project 
 and appropriately cite it in your work.
 
-## Fork-PR-merge cycle
-
-TODO: How to
-Add here
 
 ## Example: add GENIE3
 
