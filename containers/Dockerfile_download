@@ -1,0 +1,32 @@
+FROM violafanfani/tcga-data-base-r:0.0.7
+
+LABEL maintainer="Viola Fanfani, viola.fanfani@gmail.com" \
+      version="0.0.17" \
+      description="Container that allows to run the download tcga-data-nf workflow analysis" \
+      org.opencontainers.image.title="tcga-data-nf-download" \
+      org.opencontainers.image.description="Container that allows to run the download tcga-data-nf workflow analysis" \
+      org.opencontainers.image.version="0.0.17" \
+      org.opencontainers.image.authors="Viola Fanfani, viola.fanfani@gmail.com" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf/containers" \
+      org.opencontainers.image.documentation="https://github.com/QuackenbushLab/tcga-data-nf/containers"
+
+USER root
+
+# Combine apt-get update and install dependencies
+RUN apt-get update && apt-get install -y \
+    iputils-ping \
+    ca-certificates \
+    python3 \
+    python3-pip \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev
+
+RUN echo "alias python=python3" >> ~/.bashrc
+RUN echo "alias python=python3" >> ~/.profile
+
+# Upgrade pip and install Python dependencies
+RUN python3 -m pip install --upgrade pip
+COPY containers/requirements.txt ./
+RUN pip install --no-cache-dir  -r requirements.txt
