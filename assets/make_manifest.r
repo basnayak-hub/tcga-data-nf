@@ -9,6 +9,6 @@ my_friend = NetworkDataCompanion::CreateNetworkDataCompanionObject()
 my_manifest = my_friend$mapProbesToGenes(probelist = NULL, # this is the default, and maps every probe in the manifest
                                          rangeUp = 200,
                                          rangeDown = 0,
-                                         localManifestPath="/home/ubuntu/tcga-ov-subtype/data/config/HM27.hg38.manifest.tsv")
+                                         localManifestPath='/home/ubuntu/tcga-ov-subtype/data/config/HM27.hg38.manifest.gencode.v36.tsv')
 
 write.csv(my_manifest,file="27k_manifest_TSS200_TSS0_one_probe_to_many_genes.csv")
