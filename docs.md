@@ -55,6 +55,15 @@ You can pull the docker directly from [dockerhub](https://hub.docker.com/r/viola
 
 `docker pull violafanfani/tcga-data-nf`
 
+We have now added two partial containers to run the Download and Prepare steps. 
+
+`docker pull violafanfani/tcga-data-nf-download:0.0.17`
+
+and 
+
+`docker pull violafanfani/tcga-data-nf-prepare:0.0.17`
+
+This can be set using the labels, the same way it was described for conda.
 
 ## Tests
 

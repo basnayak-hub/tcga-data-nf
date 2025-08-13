@@ -1,11 +1,11 @@
-FROM violafanfani/tcga-data-base-r:0.0.8
+FROM violafanfani/tcga-data-base-r:0.0.7
 
 LABEL maintainer="Viola Fanfani, viola.fanfani@gmail.com" \
       version="0.0.17" \
-      description="Container that allows to run the whole tcga-data-nf workflow analysis" \
+      description="Container that allows to run the prepare tcga-data-nf workflow analysis" \
       org.opencontainers.image.title="tcga-data-nf" \
-      org.opencontainers.image.description="Container that allows to run the whole tcga-data-nf workflow analysis" \
-      org.opencontainers.image.version="0.0.18" \
+      org.opencontainers.image.description="Container that allows to run the prepare tcga-data-nf workflow analysis" \
+      org.opencontainers.image.version="0.0.17" \
       org.opencontainers.image.authors="Viola Fanfani, viola.fanfani@gmail.com" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://github.com/QuackenbushLab/tcga-data-nf/containers" \
@@ -30,15 +30,11 @@ RUN echo "alias python=python3" >> ~/.profile
 RUN python3 -m pip install --upgrade pip
 COPY containers/requirements.txt ./
 RUN pip install --no-cache-dir  -r requirements.txt
-RUN pip install --no-cache-dir --break-system-packages git+https://github.com/netZoo/netZooPy.git
+
 
 # Install R dependencies
 RUN R -e "devtools::install_github('pmandros/TCGAPurityFiltering')"
 RUN R -e "devtools::install_github('https://github.com/QuackenbushLab/NetworkDataCompanion')"
-RUN R -e "BiocManager::install('GENIE3')" 
-RUN R -e "BiocManager::install(c('GO.db', 'preprocessCore', 'impute'))"
-RUN R -e "install.packages('WGCNA')"
-RUN R -e "BiocManager::install('netZooR')"
 
 # Final clean-up if necessary
 # RUN apt-get clean && rm -rf /var/lib/apt/lists/*

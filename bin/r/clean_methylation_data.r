@@ -64,7 +64,7 @@ betaToM = function(beta)
 }
 
 # this function does imputation and transformation and should be applied within subtype
-cleanMethylationData = function(meth_df, npn=T, mval=F, diagnostic_pca = NULL) # meth_df is a data frame of beta means, 
+cleanMethylationData = function(meth_df, npn=T, mval=F, diagnostic_pca = NULL, th_missing = 0.2) # meth_df is a data frame of beta means, 
 # rows=samples, first column=sample ids,  cols=genes
 {
   
@@ -80,9 +80,8 @@ cleanMethylationData = function(meth_df, npn=T, mval=F, diagnostic_pca = NULL) #
     message("No PCA diagnostic.")
   }
 
-  meth_dfWhole = removeMissing(meth_df,thres = 0.2)
-  # skip anything w/more than 0.2 missing
-  
+  meth_dfWhole = removeMissing(meth_df,thres = th_missing) # remove genes with > 0.2 missing, now variable
+
   meth_dfComplete = meth_dfWhole
   for(i in 2:ncol(meth_dfComplete))
   {
@@ -145,7 +144,9 @@ option_list = list(
  make_option(c("--to_npn"), type="character", default="FALSE", 
               help="to_npn", metavar="character"),
  make_option(c("--to_mval"), type="character", default="TRUE", 
-              help="to_mval", metavar="character"),
+              help="to_mval", metavar="character"),  
+make_option(c("--th_missing"), type="double", default=0.2,
+              help="Any gene that has missing promoter methylation values for more than th_missing (20% by default) of the samples is removed from the analysis. Default:0.2", metavar="number"),
 make_option(c("--diagnostic_pca"), type = "character", default = NULL,
               help = "Optional output filename to save the figure (e.g., 'plot.png'). If not provided, figure is not saved.")
 );
@@ -161,6 +162,7 @@ tissue_type =  opt$tissue_type #args[5]
 to_npn = as.logical(opt$to_npn) #args[6]
 to_mval = as.logical(opt$to_mval) #args[7]
 diagnostic_pca = opt$diagnostic_pca #args[8]
+th_missing = opt$th_missing
 
 meth_raw = read.csv(methpath,row.names=1)
 
@@ -181,7 +183,7 @@ print(dim(meth_tumor))
 if (to_mval){print('yes')
 }
 meth_tumor_clean = meth_tumor %>% dplyr::relocate(TCGA_barcode) %>%
-  cleanMethylationData(npn=to_npn,mval=to_mval, diagnostic_pca=diagnostic_pca)
+  cleanMethylationData(npn=to_npn,mval=to_mval, diagnostic_pca=diagnostic_pca, th_missing=th_missing)
 
 meth_tumor_clean$TCGAbarcode = row.names(meth_tumor_clean)
 write.csv(meth_tumor_clean,output_fn)
