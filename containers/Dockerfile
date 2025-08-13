@@ -1,7 +1,7 @@
 FROM violafanfani/tcga-data-base-r:0.0.8
 
 LABEL maintainer="Viola Fanfani, viola.fanfani@gmail.com" \
-      version="0.0.17" \
+      version="0.0.18" \
       description="Container that allows to run the whole tcga-data-nf workflow analysis" \
       org.opencontainers.image.title="tcga-data-nf" \
       org.opencontainers.image.description="Container that allows to run the whole tcga-data-nf workflow analysis" \
